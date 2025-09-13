@@ -1,85 +1,96 @@
 import pyautogui
 import time
 import random
-import library as lib   # a helper függvények
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import library as lib
 
-def run_cycle():
-    """Egy teljes kör lefuttatása. Siker esetén True-t ad vissza."""
-    
-    # 1. Várjuk a png1-et
-    coords = lib.wait_for_image("images/png1.png", delay=2)
+
+def analyze_farm(farm_type, image_path):
+    """Megkeresi a farmot és kiszámolja a megtelési időt."""
+    # Változóként használjuk az image_path-ot
+    coords = lib.wait_for_image_forever(image_path, delay=2)
     if not coords:
-        return False
+        print(f"❌ Nem találtam farmot: {farm_type}")
+        return None
+
+    # katt a farmra
     pyautogui.click(coords)
-    print("Kattintottam: png1")
+    time.sleep(2)
+    pyautogui.click(coords)
+    print(f"✅ Kattintottam {farm_type} farmra")
     time.sleep(random.uniform(1.0, 2.5))
 
-    # 2. png2 + backup képek
-    coords = lib.find_with_backups(
-        "images/png2.png",
-        "images/png2b.png",
-        "images/png2c.png",
-        retries=10,
-        delay=2
-    )
-    if not coords:
-        # ha semmit nem talált, akkor vissza a png5-höz
-        coords = lib.wait_for_image("images/png5.png", delay=2)
-        if coords:
-            pyautogui.click(coords)
-            print("Nem találtam png2-t vagy backupjait → vissza png5")
-        return False
-    pyautogui.click(coords)
-    print("Kattintottam: png2 (vagy backup)")
+    # information ikon
+    coords_info = lib.find_with_backups("../images/information_icon.png", retries=10, delay=2)
+    if not coords_info:
+        print("❌ Nem találtam information_icon-t")
+        return None
+    pyautogui.click(coords_info)
     time.sleep(random.uniform(1.0, 2.5))
 
-    # 3. png3
-    coords = lib.wait_for_image("images/png3.png", delay=2)
-    if not coords:
-        return False
-    pyautogui.click(coords)
-    print("Kattintottam: png3")
-    time.sleep(random.uniform(1.0, 2.5))
+    # Production/Hour
+    prod = lib.find_label_and_two_numbers("Production/Hour")
+    if not prod:
+        print("❌ Nem találtam Production/Hour feliratot")
+        return None
 
-    # 4. png4
-    coords = lib.wait_for_image("images/png4.png", delay=2)
-    if not coords:
-        return False
-    pyautogui.click(coords)
-    print("Kattintottam: png4")
-    time.sleep(random.uniform(1.0, 2.5))
+    # Capacity
+    cap = lib.find_label_and_two_numbers("Capacity")
+    if not cap:
+        print("❌ Nem találtam Capacity feliratot")
+        return None
 
-    # 5. "gathering" szöveg
-    coords = lib.wait_for_text("gathering", delay=2)
-    if not coords:
-        return False
-    pyautogui.click(coords)
-    print("Kattintottam: gathering")
-    time.sleep(random.uniform(1.0, 2.5))
+    # számítás
+    seconds, prod_total, cap_total = lib.calculate_fill_time(prod, cap)
+    print(f"📊 {farm_type} farm → Prod: {prod_total}, Cap: {cap_total}, Time: {seconds}s")
 
-    # 6. png5
-    coords = lib.wait_for_image("images/png5.png", delay=2)
-    if not coords:
+    return {
+        "type": farm_type,
+        "coords": coords,
+        "production": prod_total,
+        "capacity": cap_total,
+        "time_to_fill": seconds,
+    }
+
+
+def run_cycle(farm_type, image_path):
+    """Kiválasztja a leggyorsabban megtelő farmot és visszatér oda a szükséges idő múlva."""
+    best_farm = analyze_farm(farm_type, image_path)
+    if not best_farm:
         return False
+
+    # Várakozás a megtelésig
+    wait_time = best_farm["time_to_fill"]
+    print(f"⏳ Várakozás {wait_time} mp-ig ({wait_time/60:.1f} perc)...")
+    time.sleep(wait_time)
+
+    # Visszatérés a farmra
+    coords = best_farm["coords"]
     pyautogui.click(coords)
-    print("Kattintottam: png5")
-    time.sleep(random.uniform(1.0, 2.5))
+    time.sleep(2)
+    pyautogui.click(coords)
+    print(f"🌾 Leharatva a {farm_type} farm!")
 
     return True
 
 
 def main():
-    success_count = 0
-    while success_count < 80:
-        print(f"\n--- {success_count+1}. kör ---")
-        success = run_cycle()
-        if success:
-            success_count += 1
-            print(f"Sikeres kör! ({success_count}/80)")
-        else:
-            print("Sikertelen kör, újrapróbálkozom...")
+    farm_types = {
+        "stone": "../images/stone_farm.png",
+        "wheat": "../images/wheat_farm.png",
+        "gold": "../images/gold_farm.png",
+        "wood": "../images/wood_farm.png",
+    }
 
-    print("✅ Script befejezte a 80 sikeres ciklust.")
+    while True:
+        for farm_type, img in farm_types.items():
+            print(f"\n=== {farm_type.upper()} farm ciklus ===")
+            success = run_cycle(farm_type, img)
+            if not success:
+                print(f"❌ {farm_type} farm ciklus sikertelen, újrapróbálkozás...")
+            time.sleep(3)  # kis pihenő minden kör között
 
 
 if __name__ == "__main__":
