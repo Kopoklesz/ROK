@@ -1,11 +1,11 @@
 {
-  "repeat_count": 4,
+  "repeat_count": 3,
   "max_cycles": 100,
-  "human_wait_min": 3,
-  "human_wait_max": 8,
+  "human_wait_min": 5,
+  "human_wait_max": 10,
   "startup_wait_min": 20,
   "startup_wait_max": 25,
   "gather_retry_attempts": 25,
-  "default_time_A": 60,
-  "default_time_B": 5400
+  "default_march_time": 300,
+  "default_gather_time": 5400
 }

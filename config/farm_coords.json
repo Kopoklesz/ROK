@@ -1,0 +1,106 @@
+{
+  "wheat": {
+    "resource_icon": [
+      676,
+      950
+    ],
+    "level_button": [
+      582,
+      604
+    ],
+    "search_button": [
+      669,
+      733
+    ],
+    "new_troops": [
+      1588,
+      216
+    ],
+    "march_button": [
+      1401,
+      956
+    ],
+    "screen_center": [
+      949,
+      517
+    ]
+  },
+  "wood": {
+    "resource_icon": [
+      961,
+      951
+    ],
+    "level_button": [
+      868,
+      606
+    ],
+    "search_button": [
+      960,
+      736
+    ],
+    "new_troops": [
+      1505,
+      211
+    ],
+    "march_button": [
+      1392,
+      949
+    ],
+    "screen_center": [
+      968,
+      530
+    ]
+  },
+  "stone": {
+    "resource_icon": [
+      1247,
+      945
+    ],
+    "level_button": [
+      1157,
+      602
+    ],
+    "search_button": [
+      1245,
+      733
+    ],
+    "new_troops": [
+      1496,
+      224
+    ],
+    "march_button": [
+      1395,
+      952
+    ],
+    "screen_center": [
+      959,
+      529
+    ]
+  },
+  "gold": {
+    "resource_icon": [
+      1540,
+      946
+    ],
+    "level_button": [
+      1440,
+      604
+    ],
+    "search_button": [
+      1534,
+      731
+    ],
+    "new_troops": [
+      1501,
+      216
+    ],
+    "march_button": [
+      1400,
+      952
+    ],
+    "screen_center": [
+      967,
+      530
+    ]
+  }
+}

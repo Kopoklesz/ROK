@@ -39,8 +39,8 @@ class BaseFarm:
         self.human_wait_min = self.settings.get('human_wait_min', 3)
         self.human_wait_max = self.settings.get('human_wait_max', 8)
         self.gather_retry = self.settings.get('gather_retry_attempts', 25)
-        self.default_time_A = self.settings.get('default_time_A', 60)
-        self.default_time_B = self.settings.get('default_time_B', 5400)
+        self.default_march_time = self.settings.get('default_march_time', 60)
+        self.default_gather_time = self.settings.get('default_gather_time', 5400)
     
     def _load_settings(self):
         """Settings.json betöltése"""
@@ -91,14 +91,14 @@ class BaseFarm:
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            log.action("F billentyű lenyomása (térkép megnyitás)")
-            press_key('f')
+            log.action("B billentyű lenyomása (térkép megnyitás)")
+            press_key('b')
             
             # 3. NYERSANYAG SELECT
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            coords = self.coords.get('resource_select', [0, 0])
+            coords = self.coords.get('resource_icon', [0, 0])
             log.click(f"{self.farm_type.upper()} alapanyag kiválasztása → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
@@ -106,7 +106,7 @@ class BaseFarm:
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            coords = self.coords.get('farm_position_1', [0, 0])
+            coords = self.coords.get('level_button', [0, 0])
             log.click(f"Farm pozíció #1 → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
@@ -114,7 +114,7 @@ class BaseFarm:
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            coords = self.coords.get('farm_position_2', [0, 0])
+            coords = self.coords.get('search_button', [0, 0])
             log.click(f"Farm pozíció #2 → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
@@ -140,36 +140,36 @@ class BaseFarm:
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            coords = self.coords.get('confirm', [0, 0])
+            coords = self.coords.get('new_troops', [0, 0])
             log.click(f"Megerősítés gomb → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
-            # 8. IDŐ A KIOLVASÁS
+            # 8. IDŐ A KIOLVASÁS (MARCH TIME)
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
             
-            region = self.time_regions.get('time_A', {})
-            log.ocr(f"Idő A kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
+            region = self.time_regions.get('march_time', {})
+            log.ocr(f"March Time (Idő A) kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
             
-            time_A = self.read_time('time_A')
+            march_time = self.read_time('march_time')
             
-            if time_A is None:
-                time_A = self.default_time_A
-                log.warning(f"Idő A nem olvasható! Default érték: {time_A} sec ({format_time(time_A)})")
+            if march_time is None:
+                march_time = self.default_march_time
+                log.warning(f"March Time nem olvasható! Default érték: {march_time} sec ({format_time(march_time)})")
             else:
-                log.success(f"Idő A sikeresen kiolvasva: {format_time(time_A)} ({time_A} sec)")
+                log.success(f"March Time sikeresen kiolvasva: {format_time(march_time)} ({march_time} sec)")
             
             # 9. FIX KOORDINÁTA
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            coords = self.coords.get('other', [0, 0])
+            coords = self.coords.get('march_button', [0, 0])
             log.click(f"Fix koordináta kattintás → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
             # 10. VÁRNI A IDŐ + 1 SEC
-            wait_duration = time_A + 1
+            wait_duration = march_time + 1
             log.wait(f"Várakozás {wait_duration} sec (A idő + 1 sec) = {format_time(wait_duration)}")
             time.sleep(wait_duration)
             
@@ -178,32 +178,41 @@ class BaseFarm:
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
             screen_center = get_screen_center()
-            log.click(f"Képernyő közép kattintás → ({screen_center[0]}, {screen_center[1]})")
-            safe_click(screen_center)
+            coords = self.coords.get('screen_center', screen_center)
+            log.click(f"Képernyő közép kattintás → ({coords[0]}, {coords[1]})")
+            safe_click(coords)
             
             # 12. IDŐ B KIOLVASÁS
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            
-            region = self.time_regions.get('time_B', {})
-            log.ocr(f"Idő B kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
-            
-            time_B = self.read_time('time_B')
-            
-            if time_B is None:
-                time_B = self.default_time_B
-                log.warning(f"Idő B nem olvasható! Default érték: {time_B} sec ({format_time(time_B)})")
-            else:
-                log.success(f"Idő B sikeresen kiolvasva: {format_time(time_B)} ({time_B} sec)")
-            
-            # 13. C_i SZÁMÍTÁS
-            C_i = time_A + time_B
+
+            region = self.time_regions.get('gather_time', {})
+            log.ocr(f"Idő B kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, "
+                    f"w:{region.get('width',0)}, h:{region.get('height',0)})")
+
+            gather_time = None
+            for attempt in range(30):
+                gather_time = self.read_time('gather_time')
+                if gather_time is not None:
+                    log.success(f"Idő B sikeresen kiolvasva {attempt+1}. próbálkozásra: "
+                                f"{format_time(gather_time)} ({gather_time} sec)")
+                    break
+                log.warning(f"Idő B nem olvasható ({attempt+1}/30), újrapróbálkozás...")
+                time.sleep(0.5)
+
+            if gather_time is None:
+                gather_time = self.default_gather_time
+                log.warning(f"Idő B nem olvasható 30 próbálkozás után sem! "
+                            f"Default érték: {gather_time} sec ({format_time(gather_time)})")
+
+            # 14. C_i SZÁMÍTÁS
+            C_i = march_time + gather_time
             collected_times.append(C_i)
             
-            log.success(f"C{i+1} idő kiszámítva: {format_time(time_A)} + {format_time(time_B)} = {format_time(C_i)} ({C_i} sec)")
+            log.success(f"C{i+1} idő kiszámítva: {format_time(march_time)} + {format_time(gather_time)} = {format_time(C_i)} ({C_i} sec)")
             
-            # 14. SPACE
+            # 15. SPACE
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)

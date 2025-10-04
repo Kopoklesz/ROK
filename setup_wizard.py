@@ -77,29 +77,84 @@ class SetupWizard:
         print("  python farm_manager.py")
         print("\n" + "="*60)
     
+    def wait_for_enter_or_esc(self, prompt="ENTER = folytatás"):
+        """Vár ENTER-re vagy ESC-re"""
+        print(f"  {prompt}, ESC = kihagyás")
+        
+        cancelled = [False]
+        
+        def on_press(key):
+            try:
+                if key == keyboard.Key.enter:
+                    return False  # Stop
+                elif key == keyboard.Key.esc:
+                    cancelled[0] = True
+                    print(f"  ⏹️  ESC - Kihagyva")
+                    return False  # Stop
+            except:
+                pass
+        
+        listener = keyboard.Listener(on_press=on_press)
+        listener.start()
+        listener.join()
+        
+        return not cancelled[0]  # True = ENTER, False = ESC
+    
     def setup_farm_regions(self):
         """Erőforrás OCR régiók beállítása"""
         print("\nJelöld ki az erőforrás számokat a képernyőn!")
-        print("Ha egy erőforrást nem akarsz használni, nyomd meg az ESC-et.\n")
+        print("ESC = megtartja a régi értéket (ha van)\n")
         
         resources = ['wheat', 'wood', 'stone', 'gold']
-        regions = {}
+        
+        # Meglévő régiók betöltése (ha vannak)
+        regions_file = self.config_dir / 'farm_regions.json'
+        if regions_file.exists():
+            try:
+                with open(regions_file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    if content:
+                        regions = json.loads(content)
+                    else:
+                        regions = {}
+                print("ℹ️  Meglévő régiók betöltve. ESC = régi érték megtartása\n")
+            except json.JSONDecodeError:
+                print("⚠️ Hibás JSON, új régiók létrehozása...\n")
+                regions = {}
+        else:
+            regions = {}
         
         for resource in resources:
-            print(f"\n📍 {resource.upper()} erőforrás szám kijelölése...")
-            input("  Nyomj ENTER-t a folytatáshoz...")
+            # Régi érték kiírása
+            old_value = regions.get(resource)
+            if old_value:
+                print(f"\n📍 {resource.upper()} - Jelenlegi: {old_value}")
+            else:
+                print(f"\n📍 {resource.upper()} - Nincs beállítva")
+            
+            # Vár ENTER-re vagy ESC-re
+            if not self.wait_for_enter_or_esc("ENTER = új érték"):
+                # ESC = régi megtartása
+                if old_value:
+                    print(f"  ℹ️  {resource.upper()} régi érték megtartva")
+                else:
+                    regions[resource] = None
+                    print(f"  ⚠️ {resource.upper()} kihagyva")
+                continue
             
             region = self.selector.select_region(f"{resource.upper()} számláló")
             
             if region:
                 regions[resource] = region
-                print(f"  ✅ {resource.upper()} régió mentve: {region}")
+                print(f"  ✅ {resource.upper()} régió frissítve")
             else:
-                regions[resource] = None
-                print(f"  ⚠️ {resource.upper()} kihagyva")
+                if old_value:
+                    print(f"  ℹ️  {resource.upper()} régi érték megtartva")
+                else:
+                    regions[resource] = None
+                    print(f"  ⚠️ {resource.upper()} kihagyva")
         
         # Mentés
-        regions_file = self.config_dir / 'farm_regions.json'
         with open(regions_file, 'w', encoding='utf-8') as f:
             json.dump(regions, f, indent=2)
         
@@ -109,27 +164,74 @@ class SetupWizard:
     def setup_time_regions(self):
         """Idő OCR régiók beállítása"""
         print("\nJelöld ki az idő megjelenítő területeket!")
-        print("  - Idő A: Első idő (pl. march idő)")
-        print("  - Idő B: Második idő (pl. gather idő)\n")
+        print("  - March Time: March idő (első idő)")
+        print("  - Gather Time: Gather idő (második idő)")
+        print("ESC = megtartja a régi értéket (ha van)\n")
         
-        time_regions = {}
+        # Meglévő régiók betöltése
+        time_file = self.config_dir / 'time_regions.json'
+        if time_file.exists():
+            try:
+                with open(time_file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    if content:
+                        time_regions = json.loads(content)
+                    else:
+                        time_regions = {}
+                print("ℹ️  Meglévő idő régiók betöltve.\n")
+            except json.JSONDecodeError:
+                print("⚠️ Hibás JSON, új idő régiók létrehozása...\n")
+                time_regions = {}
+        else:
+            time_regions = {}
         
-        # Idő A
-        print("\n📍 IDŐ A terület kijelölése...")
-        input("  Nyomj ENTER-t a folytatáshoz...")
-        region_a = self.selector.select_region("IDŐ A")
-        time_regions['time_A'] = region_a
-        print(f"  ✅ Idő A mentve: {region_a}")
+        # March Time (Idő A)
+        old_value_a = time_regions.get('march_time')
+        if old_value_a:
+            print(f"\n📍 MARCH TIME - Jelenlegi: {old_value_a}")
+        else:
+            print(f"\n📍 MARCH TIME - Nincs beállítva")
         
-        # Idő B
-        print("\n📍 IDŐ B terület kijelölése...")
-        input("  Nyomj ENTER-t a folytatáshoz...")
-        region_b = self.selector.select_region("IDŐ B")
-        time_regions['time_B'] = region_b
-        print(f"  ✅ Idő B mentve: {region_b}")
+        if not self.wait_for_enter_or_esc("ENTER = új érték"):
+            if old_value_a:
+                print(f"  ℹ️  March Time régi érték megtartva")
+            else:
+                print(f"  ⚠️ March Time kihagyva")
+        else:
+            region_a = self.selector.select_region("MARCH TIME")
+            if region_a:
+                time_regions['march_time'] = region_a
+                print(f"  ✅ March Time frissítve")
+            else:
+                if old_value_a:
+                    print(f"  ℹ️  March Time régi érték megtartva")
+                else:
+                    print(f"  ⚠️ March Time kihagyva")
+        
+        # Gather Time (Idő B)
+        old_value_b = time_regions.get('gather_time')
+        if old_value_b:
+            print(f"\n📍 GATHER TIME - Jelenlegi: {old_value_b}")
+        else:
+            print(f"\n📍 GATHER TIME - Nincs beállítva")
+        
+        if not self.wait_for_enter_or_esc("ENTER = új érték"):
+            if old_value_b:
+                print(f"  ℹ️  Gather Time régi érték megtartva")
+            else:
+                print(f"  ⚠️ Gather Time kihagyva")
+        else:
+            region_b = self.selector.select_region("GATHER TIME")
+            if region_b:
+                time_regions['gather_time'] = region_b
+                print(f"  ✅ Gather Time frissítve")
+            else:
+                if old_value_b:
+                    print(f"  ℹ️  Gather Time régi érték megtartva")
+                else:
+                    print(f"  ⚠️ Gather Time kihagyva")
         
         # Mentés
-        time_file = self.config_dir / 'time_regions.json'
         with open(time_file, 'w', encoding='utf-8') as f:
             json.dump(time_regions, f, indent=2)
         
@@ -139,22 +241,52 @@ class SetupWizard:
     def setup_farm_coordinates(self, farm_regions):
         """Farm koordináták beállítása"""
         print("\nFarm koordináták beállítása kattintással!")
-        print("Minden farm típushoz 5 koordinátát kell megadni:\n")
-        print("  1. Nyersanyag ikon (búza/fa/kő/arany gomb a térképen)")
-        print("  2. Farm pozíció #1 (első farm helye)")
-        print("  3. Farm pozíció #2 (második farm helye)")
-        print("  4. Confirm/Send gomb")
-        print("  5. Other (egyéb fix koordináta)\n")
+        print("\n📋 FARM FOLYAMAT (helyes sorrend):")
+        print("  1. Nyersanyag ikon")
+        print("  2. Szint gomb")
+        print("  3. Keresés gomb")
+        print("  4. ⚫ HOLT KATTINTÁS (gather helyett - NEM mentődik)")
+        print("  5. Új egység gomb")
+        print("  6. March gomb")
+        print("  7. Képernyő közepe")
+        print("\nESC = kihagyás (régi érték megtartása)\n")
         
         coord_names = [
-            'resource_select',
-            'farm_position_1',
-            'farm_position_2',
-            'confirm',
-            'other'
+            'resource_icon',      # 1. Nyersanyag ikon
+            'level_button',       # 2. Szint
+            'search_button',      # 3. Keresés
+            'dead_click',         # 4. HOLT KATTINTÁS (NEM mentődik)
+            'new_troops',         # 5. Új egység
+            'march_button',       # 6. March
+            'screen_center'       # 7. Képernyő közepe
         ]
         
-        all_coords = {}
+        coord_labels = {
+            'resource_icon': 'Nyersanyag ikon',
+            'level_button': 'Szint gomb',
+            'search_button': 'Keresés gomb',
+            'dead_click': '⚫ HOLT KATTINTÁS (gather helyett)',
+            'new_troops': 'Új egység gomb',
+            'march_button': 'March gomb',
+            'screen_center': 'Képernyő közepe'
+        }
+        
+        # Meglévő koordináták betöltése
+        coords_file = self.config_dir / 'farm_coords.json'
+        if coords_file.exists():
+            try:
+                with open(coords_file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    if content:
+                        all_coords = json.loads(content)
+                    else:
+                        all_coords = {}
+                print("ℹ️  Meglévő koordináták betöltve.\n")
+            except json.JSONDecodeError:
+                print("⚠️ Hibás JSON, új koordináták létrehozása...\n")
+                all_coords = {}
+        else:
+            all_coords = {}
         
         # Csak azokhoz a farmokhoz kérjük a koordinátákat, amikhez van régió
         active_farms = [name for name, region in farm_regions.items() if region is not None]
@@ -164,20 +296,53 @@ class SetupWizard:
             print(f"🌾 {farm_type.upper()} FARM KOORDINÁTÁK")
             print(f"{'='*60}")
             
-            coords = {}
+            # Meglévő koordináták a farm típushoz
+            coords = all_coords.get(farm_type)
+            if coords is None or not isinstance(coords, dict):
+                coords = {}
             
             for coord_name in coord_names:
-                print(f"\n📍 {coord_name} koordináta beállítása...")
-                print(f"   Kattints a játékban a megfelelő helyre!")
+                label = coord_labels[coord_name]
+                
+                # Holt kattintás jelzése
+                if coord_name == 'dead_click':
+                    print(f"\n⚫ {label}")
+                    print(f"   ⚠️  NEM MENTŐDIK - csak a setup folytonosságához")
+                    print(f"   Kattints bárhova a folytatáshoz...")
+                else:
+                    old_coord = coords.get(coord_name)
+                    
+                    if old_coord:
+                        print(f"\n📍 {label} - Jelenlegi: {old_coord}")
+                    else:
+                        print(f"\n📍 {label} - Nincs beállítva")
+                    
+                    print(f"   Kattints a játékban, vagy ESC = régi megtartása")
                 
                 coord = self.get_single_coordinate()
-                coords[coord_name] = coord
-                print(f"   ✅ {coord_name}: {coord}")
+                
+                # Holt kattintást NEM mentjük
+                if coord_name == 'dead_click':
+                    if coord:
+                        print(f"   ✅ Holt kattintás OK (nem mentve)")
+                    else:
+                        print(f"   ⏹️  ESC - Kihagyva")
+                    continue  # ← NEM menti el!
+                
+                # Többi koordináta normálisan
+                if coord and coord != [0, 0]:
+                    coords[coord_name] = coord
+                    print(f"   ✅ {label} frissítve: {coord}")
+                else:
+                    if old_coord:
+                        print(f"   ℹ️  {label} régi érték megtartva")
+                    else:
+                        coords[coord_name] = [0, 0]
+                        print(f"   ⚠️ {label} default: [0, 0]")
             
             all_coords[farm_type] = coords
         
         # Mentés
-        coords_file = self.config_dir / 'farm_coords.json'
         with open(coords_file, 'w', encoding='utf-8') as f:
             json.dump(all_coords, f, indent=2)
         
@@ -187,25 +352,68 @@ class SetupWizard:
     def get_single_coordinate(self):
         """Egyetlen koordináta bekérése kattintással"""
         coord = [None]
+        cancelled = [False]
+        done = [False]
         
         def on_click(x, y, button, pressed):
             if pressed and button == mouse.Button.left:
                 coord[0] = [x, y]
+                done[0] = True
                 print(f"   🖱️ Koordináta: ({x}, {y})")
-                return False  # Stop listener
+                return False
         
-        listener = mouse.Listener(on_click=on_click)
-        listener.start()
-        listener.join()
+        def on_press(key):
+            try:
+                if key == keyboard.Key.esc:
+                    print(f"   ⏹️  ESC - Kihagyva")
+                    cancelled[0] = True
+                    done[0] = True
+                    return False
+            except:
+                pass
+        
+        # Listeners indítása
+        mouse_listener = mouse.Listener(on_click=on_click)
+        keyboard_listener = keyboard.Listener(on_press=on_press)
+        
+        mouse_listener.start()
+        keyboard_listener.start()
+        
+        # Várakozás bármelyik befejezésére
+        import time
+        while not done[0]:
+            time.sleep(0.1)
+        
+        # Listeners leállítása
+        mouse_listener.stop()
+        keyboard_listener.stop()
+        
+        # Ha ESC volt, None-t ad vissza
+        if cancelled[0]:
+            return None
         
         return coord[0] if coord[0] else [0, 0]
     
     def setup_gather_template(self):
         """Gather.png template mentése"""
         print("\nGather gomb template mentése!")
-        print("Jelöld ki a Gather gombot a képernyőn.\n")
+        print("⚠️  FONTOS: A gather gomb RANDOM helyen lehet!")
+        print("Ezért NEM koordinátát, hanem KÉPET mentünk róla.\n")
         
-        input("Nyomj ENTER-t a folytatáshoz...")
+        gather_path = self.images_dir / 'gather.png'
+        
+        if gather_path.exists():
+            print(f"ℹ️  Meglévő gather.png: {gather_path}")
+        else:
+            print("Nincs meglévő gather.png\n")
+        
+        # Vár ENTER-re vagy ESC-re
+        if not self.wait_for_enter_or_esc("ENTER = új képernyőkép"):
+            if gather_path.exists():
+                print(f"  ℹ️  Gather template megtartva")
+            else:
+                print("  ⚠️ Gather template kihagyva")
+            return
         
         region = self.selector.select_region("GATHER GOMB")
         
@@ -218,13 +426,16 @@ class SetupWizard:
             cropped = screen_np[y:y+h, x:x+w]
             
             # Mentés
-            gather_path = self.images_dir / 'gather.png'
             cv2.imwrite(str(gather_path), cropped)
             
             print(f"\n✅ Gather template mentve: {gather_path}")
             print(f"   Méret: {w}x{h} pixel")
+            print(f"   ⚠️  Template matching fogja használni (0.7 threshold)")
         else:
-            print("\n⚠️ Gather template kihagyva")
+            if gather_path.exists():
+                print(f"  ℹ️  Gather template megtartva")
+            else:
+                print("  ⚠️ Gather template kihagyva")
     
     def create_default_settings(self):
         """Alapértelmezett settings.json létrehozása"""
@@ -236,8 +447,8 @@ class SetupWizard:
             "startup_wait_min": 20,
             "startup_wait_max": 25,
             "gather_retry_attempts": 25,
-            "default_time_A": 60,
-            "default_time_B": 5400
+            "default_march_time": 60,
+            "default_gather_time": 5400
         }
         
         settings_file = self.config_dir / 'settings.json'
@@ -245,8 +456,10 @@ class SetupWizard:
             json.dump(settings, f, indent=2)
         
         print("\n✅ Alapértelmezett beállítások:")
-        for key, value in settings.items():
-            print(f"   {key}: {value}")
+        print(f"   Repeat count: {settings['repeat_count']}")
+        print(f"   Max cycles: {settings['max_cycles']}")
+        print(f"   Human wait: {settings['human_wait_min']}-{settings['human_wait_max']} sec")
+        print(f"   Gather retry: {settings['gather_retry_attempts']}x")
         
         print(f"\n💾 Mentve: {settings_file}")
 
@@ -255,7 +468,7 @@ def main():
     """Main entry point"""
     
     # Játék ablak ellenőrzése
-    if not initialize_game_window("BlueStacks"):  # Módosítsd!
+    if not initialize_game_window("BlueStacks"):
         print("\n⚠️ Játék ablak nem található!")
         print("Indítsd el a játékot, majd futtasd újra a setup-ot.\n")
         return
