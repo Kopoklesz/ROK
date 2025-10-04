@@ -1,94 +1,92 @@
 """
-Logging utility
+Auto Farm - Logger
+Színes, részletes logging minden művelethez
 """
-import json
 from datetime import datetime
-from pathlib import Path
-from config.settings import LOGS_DIR
 
 
-class TrainingLogger:
-    """
-    Training adatok logolása
-    """
+class FarmLogger:
+    """Részletes logging rendszer"""
     
-    def __init__(self):
-        self.episodes_data = []
-        self.log_file = LOGS_DIR / f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        
-        print(f"📝 Logger inicializálva: {self.log_file}")
-    
-    def log_episode(self, episode, steps, reward, epsilon, loss, duration, info=None):
-        """
-        Epizód adatok logolása
-        """
-        data = {
-            'episode': episode,
-            'steps': steps,
-            'reward': reward,
-            'epsilon': epsilon,
-            'loss': loss,
-            'duration': duration,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        if info:
-            data['info'] = info
-        
-        self.episodes_data.append(data)
-        
-        # Folyamatos mentés
-        self._save_to_file()
-    
-    def _save_to_file(self):
-        """JSON file mentés"""
-        with open(self.log_file, 'w') as f:
-            json.dump(self.episodes_data, f, indent=2)
-    
-    def print_summary(self):
-        """Training összefoglaló"""
-        if not self.episodes_data:
-            return
-        
-        total_episodes = len(self.episodes_data)
-        total_steps = sum(ep['steps'] for ep in self.episodes_data)
-        avg_reward = sum(ep['reward'] for ep in self.episodes_data) / total_episodes
-        max_reward = max(ep['reward'] for ep in self.episodes_data)
-        min_reward = min(ep['reward'] for ep in self.episodes_data)
-        
-        print("\n" + "="*60)
-        print("📊 TRAINING ÖSSZEFOGLALÓ")
-        print("="*60)
-        print(f"Összes epizód:    {total_episodes}")
-        print(f"Összes lépés:     {total_steps}")
-        print(f"Átlag reward:     {avg_reward:+.2f}")
-        print(f"Max reward:       {max_reward:+.2f}")
-        print(f"Min reward:       {min_reward:+.2f}")
-        print(f"Log fájl:         {self.log_file}")
-        print("="*60 + "\n")
-
-
-class ConsoleLogger:
-    """
-    Színes console log
-    """
+    COLORS = {
+        'RESET': '\033[0m',
+        'BLUE': '\033[94m',
+        'GREEN': '\033[92m',
+        'YELLOW': '\033[93m',
+        'RED': '\033[91m',
+        'CYAN': '\033[96m',
+        'MAGENTA': '\033[95m',
+        'WHITE': '\033[97m'
+    }
     
     @staticmethod
-    def info(msg):
-        print(f"ℹ️  {msg}")
+    def _timestamp():
+        """Időbélyeg generálás"""
+        return datetime.now().strftime("%H:%M:%S")
     
     @staticmethod
-    def success(msg):
-        print(f"✅ {msg}")
+    def _color(text, color):
+        """Színes szöveg (opcionális)"""
+        try:
+            return f"{FarmLogger.COLORS[color]}{text}{FarmLogger.COLORS['RESET']}"
+        except:
+            return text
     
     @staticmethod
-    def warning(msg):
-        print(f"⚠️  {msg}")
+    def info(message):
+        """Általános információ (kék)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] ℹ️  {FarmLogger._color(message, 'BLUE')}")
     
     @staticmethod
-    def error(msg):
-        print(f"❌ {msg}")
+    def success(message):
+        """Sikeres művelet (zöld)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] ✅ {FarmLogger._color(message, 'GREEN')}")
     
     @staticmethod
-    def debug(msg):
-        print(f"🐛 {msg}")
+    def warning(message):
+        """Figyelmeztetés (sárga)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] ⚠️  {FarmLogger._color(message, 'YELLOW')}")
+    
+    @staticmethod
+    def error(message):
+        """Hiba (piros)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] ❌ {FarmLogger._color(message, 'RED')}")
+    
+    @staticmethod
+    def action(message):
+        """Akció végrehajtás (cián)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] 🎬 {FarmLogger._color(message, 'CYAN')}")
+    
+    @staticmethod
+    def wait(message):
+        """Várakozás (magenta)"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] ⏳ {FarmLogger._color(message, 'MAGENTA')}")
+    
+    @staticmethod
+    def ocr(message):
+        """OCR olvasás"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] 📖 {message}")
+    
+    @staticmethod
+    def click(message):
+        """Kattintás"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] 🖱️  {message}")
+    
+    @staticmethod
+    def search(message):
+        """Keresés"""
+        timestamp = FarmLogger._timestamp()
+        print(f"[{timestamp}] 🔍 {message}")
+    
+    @staticmethod
+    def separator(char='=', length=60):
+        """Elválasztó vonal"""
+        print(char * length)
