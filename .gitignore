@@ -1,0 +1,62 @@
+# ROK Auto Farm Manager - Git Ignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Config fájlok (tartalmazzák a személyes beállításokat)
+config/settings.json
+config/farm_regions.json
+config/farm_coords.json
+config/time_regions.json
+
+# DE ne ignorálja a template-eket
+!config/*_template.json
+
+# Template képek
+images/*.png
+!images/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Teszt fájlok
+test_*.py
+debug_*.py
+
+# Backup fájlok
+*.bak
+*.tmp
