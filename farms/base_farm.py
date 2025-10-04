@@ -1,6 +1,7 @@
 """
 Auto Farm - Base Farm
 Közös farm logika minden típushoz
+JAVÍTOTT VERZIÓ - Gathering Time retry 60x, 1.0 sec késleltetéssel
 """
 import time
 import json
@@ -182,28 +183,31 @@ class BaseFarm:
             log.click(f"Képernyő közép kattintás → ({coords[0]}, {coords[1]})")
             safe_click(coords)
             
-            # 12. IDŐ B KIOLVASÁS
+            # ===== 12. IDŐ B KIOLVASÁS - JAVÍTOTT RETRY LOGIKA =====
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
 
             region = self.time_regions.get('gather_time', {})
-            log.ocr(f"Idő B kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, "
+            log.ocr(f"Gathering Time (Idő B) kiolvasása → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, "
                     f"w:{region.get('width',0)}, h:{region.get('height',0)})")
 
             gather_time = None
-            for attempt in range(30):
+            
+            # ===== VÁLTOZTATÁSOK: 30 → 60 próba, 0.5 → 1.0 sec delay =====
+            for attempt in range(60):  # 30 → 60 (dupla esély)
                 gather_time = self.read_time('gather_time')
                 if gather_time is not None:
-                    log.success(f"Idő B sikeresen kiolvasva {attempt+1}. próbálkozásra: "
+                    log.success(f"Gathering Time sikeresen kiolvasva {attempt+1}. próbálkozásra: "
                                 f"{format_time(gather_time)} ({gather_time} sec)")
                     break
-                log.warning(f"Idő B nem olvasható ({attempt+1}/30), újrapróbálkozás...")
-                time.sleep(0.5)
+                log.warning(f"Gathering Time nem olvasható ({attempt+1}/60), újrapróbálkozás...")
+                time.sleep(1.0)  # 0.5 → 1.0 sec (teljes villogási ciklus kivárása)
+            # =========================================================
 
             if gather_time is None:
                 gather_time = self.default_gather_time
-                log.warning(f"Idő B nem olvasható 30 próbálkozás után sem! "
+                log.warning(f"Gathering Time nem olvasható 60 próbálkozás után sem! "
                             f"Default érték: {gather_time} sec ({format_time(gather_time)})")
 
             # 14. C_i SZÁMÍTÁS

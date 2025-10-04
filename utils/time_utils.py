@@ -1,6 +1,7 @@
 """
 Auto Farm - Time Utils
 Idő parsing és formázás: HH:MM:SS ↔ másodperc
+JAVÍTOTT VERZIÓ - "Gathering Time: 01:13:48" formátum kezelése
 """
 import re
 
@@ -10,6 +11,7 @@ def parse_time(ocr_text):
     OCR szövegből időt parse-ol
     
     Támogatott formátumok:
+    - "Gathering Time: 01:13:48" → 4428 sec (ÚJ!)
     - "01:05:30" → 3930 sec
     - "1:5:30" → 3930 sec
     - "00:05:00" → 300 sec
@@ -23,6 +25,20 @@ def parse_time(ocr_text):
     try:
         # Tisztítás
         text = ocr_text.strip()
+        
+        # ======= ÚJ: PREFIX ELTÁVOLÍTÁS =======
+        # Ha van "Gathering Time:" vagy hasonló prefix, vágjuk le
+        if ':' in text:
+            # Keressük meg a HH:MM:SS formátumot a szövegben
+            # Split szóközökre és keressük az időformátumot
+            parts = text.split()
+            
+            for part in reversed(parts):  # Hátulról nézzük (utolsó elem az idő)
+                # Ha legalább 2 kettőspont van benne → HH:MM:SS vagy MM:SS
+                if part.count(':') >= 1:
+                    text = part
+                    break
+        # ======================================
         
         # Csak számok és kettőspont megtartása
         text = re.sub(r'[^0-9:]', '', text)
@@ -92,15 +108,21 @@ def add_times(time_a_sec, time_b_sec):
 
 # Tesztek
 if __name__ == "__main__":
-    print("Time Utils Tesztek:\n")
+    print("Time Utils Tesztek (JAVÍTOTT VERZIÓ):\n")
     
     # Parse tesztek
     test_cases = [
+        # Régi formátumok
         ("01:05:30", 3930),
         ("1:5:30", 3930),
         ("00:05:00", 300),
         ("10:00", 600),
         ("02:30:45", 9045),
+        
+        # ÚJ: Gathering Time formátumok
+        ("Gathering Time: 01:13:48", 4428),
+        ("Gathering Time: 00:05:00", 300),
+        ("March Time: 01:05:30", 3930),
     ]
     
     print("Parse tesztek:")
@@ -115,6 +137,7 @@ if __name__ == "__main__":
         (3930, "01:05:30"),
         (300, "00:05:00"),
         (9045, "02:30:45"),
+        (4428, "01:13:48"),
     ]
     
     for seconds, expected in format_tests:
