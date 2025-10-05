@@ -305,19 +305,19 @@ class GatheringManager:
             log.click(f"Képernyő közép → {coords}")
             safe_click(coords)
             
-            # 12. Gather Time OCR (retry 30x)
+            # 12. Gather Time OCR (retry 60x, 1.0 sec)
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"Várakozás {delay:.1f} mp")
             time.sleep(delay)
             
             gather_time = None
-            for attempt in range(30):
+            for attempt in range(60):
                 gather_time = farm.read_time('gather_time')
                 if gather_time is not None:
                     log.success(f"Gather Time: {format_time(gather_time)} ({gather_time} sec) - {attempt+1}. próba")
                     break
-                log.warning(f"Gather Time OCR hiba ({attempt+1}/30), retry...")
-                time.sleep(0.5)
+                log.warning(f"Gather Time OCR hiba ({attempt+1}/60), retry...")
+                time.sleep(1.0)
             
             if gather_time is None:
                 gather_time = self.default_gather_time
@@ -348,21 +348,3 @@ class GatheringManager:
 
 # Globális singleton instance
 gathering_manager = GatheringManager()
-
-
-# ===== TESZT =====
-if __name__ == "__main__":
-    log.separator('=', 60)
-    log.info("GATHERING MANAGER TESZT")
-    log.separator('=', 60)
-    
-    # Initial start
-    gathering_manager.initial_start_all_commanders()
-    
-    # Commander run (mock)
-    # result = gathering_manager.run_commander(1)
-    # print(f"Result: {result}")
-    
-    log.separator('=', 60)
-    log.info("TESZT VÉGE")
-    log.separator('=', 60)

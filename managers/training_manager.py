@@ -160,9 +160,6 @@ class TrainingManager:
         """
         prep_time = building_config.get('prep_time_seconds', 300)
         
-        # Ha remaining_time <= prep_time, akkor már most beállítjuk a timer-t
-        # Különben még várunk
-        
         timer_id = f"training_{building_name}"
         task_id = f"{building_name}_restart"
         
@@ -177,9 +174,7 @@ class TrainingManager:
             )
             log.success(f"{building_name.upper()} timer: {format_time(remaining_time)} múlva restart")
         else:
-            # Később timer (remaining - prep_time után újra OCR)
-            # De mivel nincs periodic check, inkább most beállítjuk a teljes időt
-            # És a restart után újra OCR
+            # Teljes idő timer (restart után újra OCR)
             timer_manager.add_timer(
                 timer_id=timer_id,
                 deadline_seconds=remaining_time,
@@ -278,17 +273,3 @@ class TrainingManager:
 
 # Globális singleton instance
 training_manager = TrainingManager()
-
-
-# ===== TESZT =====
-if __name__ == "__main__":
-    log.separator('=', 60)
-    log.info("TRAINING MANAGER TESZT")
-    log.separator('=', 60)
-    
-    # Start
-    training_manager.start()
-    
-    log.separator('=', 60)
-    log.info("TESZT VÉGE")
-    log.separator('=', 60)

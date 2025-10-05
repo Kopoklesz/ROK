@@ -102,7 +102,6 @@ class Scheduler:
         
         if result == "RESTART":
             log.warning("Gathering restart szükséges!")
-            # TODO: Re-queue task?
     
     def _execute_training(self, task, task_data):
         """Training task futtatás"""
@@ -178,36 +177,3 @@ class Scheduler:
 
 # Globális singleton instance
 scheduler = Scheduler()
-
-
-# ===== TESZT =====
-if __name__ == "__main__":
-    print("="*60)
-    print("SCHEDULER TESZT")
-    print("="*60)
-    
-    from utils.queue_manager import queue_manager
-    
-    # Queue tisztítás
-    queue_manager.clear_queue()
-    
-    # Test task hozzáadás
-    print("\n1. Test task hozzáadás:")
-    queue_manager.add_task("test_task_1", "gathering", {"commander_id": 1})
-    
-    # Scheduler tick (nincs manager, mock)
-    print("\n2. Scheduler tick (manager nincs, hiba várható):")
-    try:
-        result = scheduler.tick()
-        print(f"  Tick result: {result}")
-    except Exception as e:
-        print(f"  Hiba (várható): {e}")
-    
-    # Task running check
-    print("\n3. Task running check:")
-    print(f"  Van futó task? {scheduler.is_task_running()}")
-    
-    print("\n" + "="*60)
-    print("TESZT VÉGE")
-    print("Figyelem: Manager-ek nincsenek implementálva, hibás futás várható!")
-    print("="*60)

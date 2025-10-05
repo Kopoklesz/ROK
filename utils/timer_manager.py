@@ -253,48 +253,6 @@ if __name__ == "__main__":
         task_type="gathering"
     )
     
-    # Timer hozzáadás (10 sec)
-    print("\n3. Timer hozzáadás (10 sec):")
-    timer_manager.add_timer(
-        timer_id="test_timer_2",
-        deadline_seconds=10,
-        task_id="test_task_2",
-        task_type="training"
-    )
-    
-    # Timer lista
-    print("\n4. Aktív timer-ek:")
-    timers = timer_manager.get_all_timers()
-    for t in timers:
-        print(f"  - {t['timer_id']} → {t['deadline']}")
-    
-    # Várakozás 6 sec
-    print("\n5. Várakozás 6 sec (timer_1 lejár)...")
-    time.sleep(6)
-    
-    # Queue ellenőrzés
-    print("\n6. Queue ellenőrzés:")
-    tasks = queue_manager.get_all_tasks()
-    if tasks:
-        print(f"  Queue: {tasks[0]['task_id']} (várhatóan: test_task_1)")
-    else:
-        print("  Queue üres (hiba!)")
-    
-    # Várakozás további 5 sec
-    print("\n7. Várakozás további 5 sec (timer_2 lejár)...")
-    time.sleep(5)
-    
-    # Queue ellenőrzés újra
-    print("\n8. Queue ellenőrzés:")
-    tasks = queue_manager.get_all_tasks()
-    print(f"  Queue méret: {len(tasks)} (várhatóan: 2)")
-    for task in tasks:
-        print(f"  - {task['task_id']}")
-    
-    # Timer Manager leállítás
-    print("\n9. Timer Manager leállítás:")
-    timer_manager.stop()
-    
     print("\n" + "="*60)
     print("TESZT VÉGE")
     print(f"Timers fájl: {timer_manager.timers_file}")

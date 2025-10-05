@@ -216,27 +216,6 @@ if __name__ == "__main__":
     for task in tasks:
         print(f"  - {task['task_id']} ({task['type']})")
     
-    # Peek
-    print("\n4. Peek (első elem törlés nélkül):")
-    next_task = queue_manager.peek_next_task()
-    print(f"  Következő: {next_task['task_id']}")
-    print(f"  Queue méret: {queue_manager.get_queue_size()}")
-    
-    # Get next (törlés)
-    print("\n5. Get next (törlés):")
-    task = queue_manager.get_next_task()
-    print(f"  Kivett task: {task['task_id']}")
-    print(f"  Queue méret: {queue_manager.get_queue_size()}")
-    
-    # Remove
-    print("\n6. Task törlés ID alapján:")
-    queue_manager.remove_task("commander_2_start")
-    
-    tasks = queue_manager.get_all_tasks()
-    print("  Maradék:")
-    for task in tasks:
-        print(f"  - {task['task_id']}")
-    
     print("\n" + "="*60)
     print("TESZT VÉGE")
     print(f"Queue fájl: {queue_manager.queue_file}")

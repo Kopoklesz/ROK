@@ -154,27 +154,3 @@ class AntiAFKManager:
 
 # Globális singleton instance
 anti_afk_manager = AntiAFKManager()
-
-
-# ===== TESZT =====
-if __name__ == "__main__":
-    log.separator('=', 60)
-    log.info("ANTI-AFK MANAGER TESZT")
-    log.separator('=', 60)
-    
-    # Logger inicializálás (teszt)
-    log.initialize()
-    
-    # Start (háttérszál)
-    anti_afk_manager.start()
-    
-    # Várakozás 5 sec
-    log.info("Várakozás 5 sec...")
-    time.sleep(5)
-    
-    # Stop
-    anti_afk_manager.stop()
-    
-    log.separator('=', 60)
-    log.info("TESZT VÉGE")
-    log.separator('=', 60)

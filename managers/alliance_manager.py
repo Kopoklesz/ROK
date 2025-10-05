@@ -119,7 +119,6 @@ class AllianceManager:
             
             log.search(f"hand.png keresés location #1 ({x1}, {y1})...")
             
-            # TODO: Region-based template match (jelenleg teljes képernyő)
             coords = ImageManager.find_image(str(hand_template), threshold=0.7)
             
             if coords:
@@ -168,24 +167,3 @@ class AllianceManager:
 
 # Globális singleton instance
 alliance_manager = AllianceManager()
-
-
-# ===== TESZT =====
-if __name__ == "__main__":
-    log.separator('=', 60)
-    log.info("ALLIANCE MANAGER TESZT")
-    log.separator('=', 60)
-    
-    # Start (háttérszál)
-    alliance_manager.start()
-    
-    # Várakozás 5 sec (teszteléshez)
-    log.info("Várakozás 5 sec...")
-    time.sleep(5)
-    
-    # Stop
-    alliance_manager.stop()
-    
-    log.separator('=', 60)
-    log.info("TESZT VÉGE")
-    log.separator('=', 60)

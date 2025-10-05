@@ -1,209 +1,180 @@
 """
-ROK Auto Farm Manager
-Fő ciklus - erőforrás ellenőrzés és farm kiválasztás
+ROK Auto Farm Manager - Orchestrator
+Új architektúra: Queue + Timer + Scheduler + Managers
 """
-import json
 import time
-import random
-from pathlib import Path
+import signal
+import sys
 
-from library import ImageManager, initialize_game_window
+from library import initialize_game_window
 from utils.logger import FarmLogger as log
-from utils.ocr_parser import parse_resource_value
+from utils.queue_manager import queue_manager
+from utils.timer_manager import timer_manager
+from utils.scheduler import scheduler
 
-from farms.wheat_farm import WheatFarm
-from farms.wood_farm import WoodFarm
-from farms.stone_farm import StoneFarm
-from farms.gold_farm import GoldFarm
+from managers.gathering_manager import gathering_manager
+from managers.training_manager import training_manager
+from managers.alliance_manager import alliance_manager
+from managers.anti_afk_manager import anti_afk_manager
 
 
-class FarmManager:
-    """Auto Farm Manager - fő koordinátor"""
+def signal_handler(sig, frame):
+    """CTRL+C graceful shutdown"""
+    log.separator('#', 60)
+    log.warning("⚠️  CTRL+C - Leállítás...")
+    log.separator('#', 60)
     
-    def __init__(self):
-        self.config_dir = Path(__file__).parent / 'config'
-        
-        # Konfigurációk betöltése
-        self.settings = self._load_settings()
-        self.farm_regions = self._load_farm_regions()
-        
-        # Paraméterek
-        self.max_cycles = self.settings.get('max_cycles', 100)
-        self.repeat_count = self.settings.get('repeat_count', 4)
-        
-        # Farm instance-ok
-        self.farms = {
-            'wheat': WheatFarm(),
-            'wood': WoodFarm(),
-            'stone': StoneFarm(),
-            'gold': GoldFarm()
-        }
+    # Managers leállítás
+    log.info("Timer Manager leállítás...")
+    timer_manager.stop()
     
-    def _load_settings(self):
-        """Settings.json betöltése"""
-        settings_file = self.config_dir / 'settings.json'
-        if settings_file.exists():
-            with open(settings_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {}
+    log.info("Training Manager leállítás...")
+    training_manager.stop()
     
-    def _load_farm_regions(self):
-        """Erőforrás OCR régiók betöltése"""
-        regions_file = self.config_dir / 'farm_regions.json'
-        if regions_file.exists():
-            with open(regions_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {}
+    log.info("Alliance Manager leállítás...")
+    alliance_manager.stop()
     
-    def read_all_resources(self):
-        """Összes erőforrás kiolvasása OCR-rel"""
-        log.separator('=', 60)
-        log.info("📊 ERŐFORRÁSOK KIOLVASÁSA")
-        log.separator('=', 60)
-        
-        resources = {}
-        
-        for resource_name, region in self.farm_regions.items():
-            if region is None:
-                log.info(f"{resource_name.upper()}: Nincs beállítva, kihagyva")
-                continue
-            
-            log.ocr(f"{resource_name.upper()} kiolvasása → Region: (x:{region['x']}, y:{region['y']}, w:{region['width']}, h:{region['height']})")
-            
-            ocr_text = ImageManager.read_text_from_region(region)
-            log.info(f"OCR nyers szöveg: '{ocr_text}'")
-            
-            value = parse_resource_value(ocr_text)
-            resources[resource_name] = value
-            
-            log.success(f"{resource_name.upper()}: {ocr_text} → {value:,} (parsed)")
-        
-        log.separator('=', 60)
-        return resources
+    log.info("Anti-AFK Manager leállítás...")
+    anti_afk_manager.stop()
     
-    def run(self):
-        """Fő ciklus"""
-        log.separator('#', 60)
-        log.success("🚀 ROK AUTO FARM MANAGER ELINDULT")
-        log.separator('#', 60)
-        
-        log.info(f"Max ciklusok: {self.max_cycles}")
-        log.info(f"Ismétlések/farm: {self.repeat_count}")
-        log.info(f"Emberi várakozás: {self.settings.get('human_wait_min', 3)}-{self.settings.get('human_wait_max', 8)} sec")
-        log.info(f"Gather retry kísérletek: {self.settings.get('gather_retry_attempts', 25)}")
-        
-        # ===== INDÍTÁSI VÁRAKOZÁS 20-25 MP =====
-        log.separator('=', 60)
-        startup_wait = random.uniform(
-            self.settings.get('startup_wait_min', 20),
-            self.settings.get('startup_wait_max', 25)
-        )
-        log.warning(f"⏰ INDÍTÁSI VÁRAKOZÁS: {startup_wait:.1f} másodperc")
-        log.info("Váltás a játékra és felkészülés...")
-        log.separator('=', 60)
-        
-        # Countdown 5 másodpercenként
-        remaining = startup_wait
-        while remaining > 0:
-            if remaining > 5:
-                log.wait(f"Indulás {remaining:.0f} másodperc múlva...")
-                time.sleep(5)
-                remaining -= 5
-            else:
-                log.wait(f"Indulás {remaining:.0f} másodperc múlva...")
-                time.sleep(remaining)
-                remaining = 0
-        
-        log.success("✅ Várakozás vége, farmolás indítása!")
-        log.separator('=', 60)
-        
-        # ===== FŐ CIKLUS =====
-        current_cycle = 0
-        
-        while current_cycle < self.max_cycles:
-            current_cycle += 1
-            
-            log.separator('#', 60)
-            log.info(f"🔁 CIKLUS {current_cycle}/{self.max_cycles}")
-            log.separator('#', 60)
-            
-            # 1. Erőforrás kiolvasás
-            resources = self.read_all_resources()
-            
-            if not resources:
-                log.error("Nincs beállított erőforrás régió!")
-                break
-            
-            # 2. Osztás és minimum keresés
-            log.separator('-', 60)
-            log.info("🧮 ERŐFORRÁS ÉRTÉKELÉS")
-            log.separator('-', 60)
-            
-            values = {}
-            for res, amount in resources.items():
-                if res == 'wheat' or res == 'wood':
-                    divisor = 4
-                elif res == 'stone':
-                    divisor = 3
-                elif res == 'gold':
-                    divisor = 2
-                else:
-                    divisor = 1
-                
-                values[res] = amount / divisor
-                log.info(f"{res.upper()}: {amount:,} ÷ {divisor} = {values[res]:,.1f}")
-            
-            min_resource = min(values, key=values.get)
-            log.success(f"🎯 Legkevesebb: {min_resource.upper()} ({values[min_resource]:,.1f})")
-            
-            # 3. Farm indítás
-            log.separator('-', 60)
-            log.action(f"🌾 {min_resource.upper()} FARMOLÁS INDÍTÁSA")
-            log.separator('-', 60)
-            
-            farm = self.farms.get(min_resource)
-            
-            if not farm:
-                log.error(f"Farm instance nem található: {min_resource}")
-                continue
-            
-            result = farm.run()
-            
-            if result == "RESTART":
-                log.warning("⚠️ Farm restart szükséges, ciklus újraindítása...")
-                current_cycle -= 1  # Nem számít bele
-                continue
-            
-            log.success(f"✅ Ciklus {current_cycle}/{self.max_cycles} befejezve!")
-        
-        log.separator('#', 60)
-        log.success(f"🏁 {self.max_cycles} CIKLUS BEFEJEZVE - PROGRAM LEÁLL")
-        log.separator('#', 60)
+    # Queue & Timer mentés
+    log.info("Queue mentése...")
+    queue_manager.save_to_file()
+    
+    log.info("Timer-ek mentése...")
+    timer_manager.save_to_file()
+    
+    # Logger bezárás
+    log.info("Logger bezárása...")
+    log.close()
+    
+    log.separator('#', 60)
+    log.success("✅ Graceful shutdown befejezve")
+    log.separator('#', 60)
+    
+    sys.exit(0)
 
 
 def main():
-    """Main entry point"""
+    """Main orchestrator"""
     
-    # Játék ablak inicializálása
-    if not initialize_game_window("BlueStacks"):  # Módosítsd a játék ablak nevére!
+    # Signal handler (CTRL+C)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    # ===== 1. LOGGER INICIALIZÁLÁS =====
+    log.separator('#', 60)
+    log.info("🚀 ROK AUTO FARM MANAGER - ORCHESTRATOR")
+    log.separator('#', 60)
+    
+    log.initialize()
+    log.success("Logger inicializálva (file logging enabled)")
+    
+    # ===== 2. JÁTÉK ABLAK INICIALIZÁLÁS =====
+    log.separator('=', 60)
+    log.info("Játék ablak inicializálás...")
+    log.separator('=', 60)
+    
+    if not initialize_game_window("BlueStacks"):
         log.error("❌ Játék ablak nem található!")
         log.info("Módosítsd a 'BlueStacks' szöveget a library.py-ban a játék ablak nevére.")
         return
     
-    # Farm Manager indítása
+    log.success("Játék ablak OK")
+    
+    # ===== 3. QUEUE MANAGER INIT =====
+    log.separator('=', 60)
+    log.info("Queue Manager inicializálás...")
+    log.separator('=', 60)
+    
+    queue_size = queue_manager.get_queue_size()
+    log.info(f"Queue betöltve: {queue_size} task")
+    
+    # ===== 4. TIMER MANAGER START =====
+    log.separator('=', 60)
+    log.info("Timer Manager indítás...")
+    log.separator('=', 60)
+    
+    timer_manager.start()
+    
+    timers = timer_manager.get_all_timers()
+    log.info(f"Aktív timer-ek: {len(timers)} db")
+    
+    # ===== 5. SCHEDULER INIT =====
+    log.separator('=', 60)
+    log.info("Scheduler inicializálás...")
+    log.separator('=', 60)
+    
+    log.success("Scheduler készen áll")
+    
+    # ===== 6. GATHERING MANAGER INIT =====
+    log.separator('=', 60)
+    log.info("Gathering Manager inicializálás...")
+    log.separator('=', 60)
+    
+    # Első commanders start (queue-ba)
+    gathering_manager.initial_start_all_commanders()
+    
+    # ===== 7. TRAINING MANAGER START =====
+    log.separator('=', 60)
+    log.info("Training Manager indítás...")
+    log.separator('=', 60)
+    
+    training_manager.start()
+    
+    # ===== 8. ALLIANCE MANAGER START =====
+    log.separator('=', 60)
+    log.info("Alliance Manager indítás...")
+    log.separator('=', 60)
+    
+    alliance_manager.start()
+    
+    # ===== 9. ANTI-AFK MANAGER START =====
+    log.separator('=', 60)
+    log.info("Anti-AFK Manager indítás...")
+    log.separator('=', 60)
+    
+    anti_afk_manager.start()
+    
+    # ===== 10. MAIN LOOP =====
+    log.separator('#', 60)
+    log.success("✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK")
+    log.separator('#', 60)
+    
+    log.info("Main Loop: Scheduler tick minden 10 másodpercben")
+    log.info("CTRL+C = graceful shutdown")
+    log.separator('#', 60)
+    
+    tick_count = 0
+    
     try:
-        manager = FarmManager()
-        manager.run()
+        while True:
+            tick_count += 1
+            
+            # Scheduler tick
+            task_executed = scheduler.tick()
+            
+            if not task_executed:
+                # Csak minden 10. tick-nél log (100 sec = ~1.5 perc)
+                if tick_count % 10 == 0:
+                    queue_size = queue_manager.get_queue_size()
+                    log.info(f"[Tick {tick_count}] Queue üres, várakozás... (Queue: {queue_size}, Timers: {len(timer_manager.get_all_timers())})")
+            
+            # Várakozás 10 sec
+            time.sleep(10)
+    
     except KeyboardInterrupt:
-        log.separator('#', 60)
-        log.warning("⚠️ FELHASZNÁLÓ ÁLTAL MEGSZAKÍTVA (CTRL+C)")
-        log.separator('#', 60)
+        # CTRL+C - signal handler kezeli
+        pass
+    
     except Exception as e:
         log.separator('#', 60)
-        log.error(f"KRITIKUS HIBA: {str(e)}")
+        log.error(f"KRITIKUS HIBA A MAIN LOOP-BAN: {str(e)}")
         log.separator('#', 60)
         import traceback
         traceback.print_exc()
+        
+        # Graceful shutdown
+        signal_handler(None, None)
 
 
 if __name__ == "__main__":
