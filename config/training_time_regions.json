@@ -1,0 +1,26 @@
+{
+    "barracks_time": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    },
+    "archery_time": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    },
+    "stable_time": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    },
+    "siege_time": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    }
+}

@@ -1,0 +1,58 @@
+{
+    "barracks": {
+        "building_icon": [
+            0,
+            0
+        ],
+        "max_button": [
+            0,
+            0
+        ],
+        "train_button": [
+            0,
+            0
+        ]
+    },
+    "archery": {
+        "building_icon": [
+            0,
+            0
+        ],
+        "max_button": [
+            0,
+            0
+        ],
+        "train_button": [
+            0,
+            0
+        ]
+    },
+    "stable": {
+        "building_icon": [
+            0,
+            0
+        ],
+        "max_button": [
+            0,
+            0
+        ],
+        "train_button": [
+            0,
+            0
+        ]
+    },
+    "siege": {
+        "building_icon": [
+            0,
+            0
+        ],
+        "max_button": [
+            0,
+            0
+        ],
+        "train_button": [
+            0,
+            0
+        ]
+    }
+}

@@ -25,17 +25,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Config fájlok (tartalmazzák a személyes beállításokat)
-config/settings.json
-config/farm_regions.json
-config/farm_coords.json
-config/time_regions.json
-config/training_time_regions.json
-config/training_coords.json
-config/alliance_coords.json
-config/task_queue.json
-config/timers.json
-
 # DE ne ignorálja a template-eket
 !config/*_template.json
 
@@ -63,8 +52,6 @@ desktop.ini
 *.bak
 *.tmp
 *_backup/
-config_backup/
-images_backup/
 
 # Teszt fájlok
 test_*.py
