@@ -1,26 +1,26 @@
 {
-    "barracks_time": {
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    },
-    "archery_time": {
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    },
-    "stable_time": {
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    },
-    "siege_time": {
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    }
+  "barracks_time": {
+    "x": 1177,
+    "y": 351,
+    "width": 89,
+    "height": 24
+  },
+  "archery_time": {
+    "x": 1591,
+    "y": 631,
+    "width": 93,
+    "height": 24
+  },
+  "stable_time": {
+    "x": 1397,
+    "y": 781,
+    "width": 91,
+    "height": 23
+  },
+  "siege_time": {
+    "x": 1381,
+    "y": 486,
+    "width": 92,
+    "height": 26
+  }
 }
