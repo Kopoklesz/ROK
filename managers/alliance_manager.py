@@ -16,6 +16,7 @@ class AllianceManager:
     """Alliance manager 30 perc timer-rel"""
     
     def __init__(self):
+        log.info("[Alliance] Manager inicializálva")
         self.config_dir = Path(__file__).parent.parent / 'config'
         self.images_dir = Path(__file__).parent.parent / 'images'
         
