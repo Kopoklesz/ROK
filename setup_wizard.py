@@ -384,13 +384,30 @@ class SetupWizardMenu:
         input("\nNyomj ENTER-t a folytatáshoz...")
     
     def setup_training_coordinates(self):
-        """Training koordináták"""
+        """Training koordináták - 5 FIX koordináta"""
         print("\n" + "="*60)
         print("📍 TRAINING COORDINATES SETUP")
         print("="*60)
+        print("\n📋 KOORDINÁTA SORREND (5 FIX):")
+        print("  1. Troop Gather (UGYANAZ mint Building)")
+        print("  2. Building (épület ikon)")
+        print("  3. Button (train button)")
+        print("  4. Tier (tier kiválasztás)")
+        print("  5. Confirm (megerősítés)")
+        print("  + 2x SPACE (automatikus)")
+        print("\nFigyelem: Az első két koordináta (troop_gather és building) UGYANAZ!")
+        print("ESC = skip")
         
         buildings = ['barracks', 'archery', 'stable', 'siege']
-        coord_names = ['building_icon', 'max_button', 'train_button']
+        coord_names = ['troop_gather', 'building', 'button', 'tier', 'confirm']
+        
+        coord_labels = {
+            'troop_gather': 'Troop Gather (UGYANAZ mint Building)',
+            'building': 'Building (épület ikon)',
+            'button': 'Button (train button)',
+            'tier': 'Tier (tier kiválasztás)',
+            'confirm': 'Confirm (megerősítés)'
+        }
         
         # Meglévő koordináták betöltése
         coords_file = self.config_dir / 'training_coords.json'
@@ -407,13 +424,29 @@ class SetupWizardMenu:
             
             coords = all_coords.get(building, {})
             
-            for coord_name in coord_names:
-                old_coord = coords.get(coord_name)
+            # Speciális kezelés: troop_gather és building ugyanaz
+            for i, coord_name in enumerate(coord_names):
+                label = coord_labels[coord_name]
                 
+                old_coord = coords.get(coord_name)
                 if old_coord:
-                    print(f"\n📍 {coord_name} - Jelenlegi: {old_coord}")
+                    print(f"\n📍 {label} - Jelenlegi: {old_coord}")
                 else:
-                    print(f"\n📍 {coord_name} - Nincs beállítva")
+                    print(f"\n📍 {label} - Nincs beállítva")
+                
+                # Ha building-et beállítjuk, troop_gather-t is beállítjuk ugyanarra
+                if coord_name == 'building':
+                    print(f"   ⚠️  Ez a koordináta TROOP_GATHER-nek is beállítódik!")
+                
+                if coord_name == 'troop_gather':
+                    # Automatikus: másoljuk a building koordinátát
+                    if 'building' in coords:
+                        coords['troop_gather'] = coords['building']
+                        print(f"   ✅ Automatikusan beállítva (building koordináta másolva)")
+                        continue
+                    else:
+                        print(f"   ⚠️  Először állítsd be a BUILDING koordinátát!")
+                        continue
                 
                 print(f"   Kattints, vagy ESC = skip")
                 coord = self.get_single_coordinate()
@@ -421,6 +454,11 @@ class SetupWizardMenu:
                 if coord and coord != [0, 0]:
                     coords[coord_name] = coord
                     print(f"   ✅ {coord_name} frissítve")
+                    
+                    # Ha building-et állítottuk be, troop_gather is frissül
+                    if coord_name == 'building':
+                        coords['troop_gather'] = coord
+                        print(f"   ✅ troop_gather is frissítve (ugyanaz a koordináta)")
             
             all_coords[building] = coords
         

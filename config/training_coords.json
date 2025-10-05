@@ -1,56 +1,88 @@
 {
     "barracks": {
-        "building_icon": [
+        "troop_gather": [
             0,
             0
         ],
-        "max_button": [
+        "building": [
             0,
             0
         ],
-        "train_button": [
+        "button": [
+            0,
+            0
+        ],
+        "tier": [
+            0,
+            0
+        ],
+        "confirm": [
             0,
             0
         ]
     },
     "archery": {
-        "building_icon": [
+        "troop_gather": [
             0,
             0
         ],
-        "max_button": [
+        "building": [
             0,
             0
         ],
-        "train_button": [
+        "button": [
+            0,
+            0
+        ],
+        "tier": [
+            0,
+            0
+        ],
+        "confirm": [
             0,
             0
         ]
     },
     "stable": {
-        "building_icon": [
+        "troop_gather": [
             0,
             0
         ],
-        "max_button": [
+        "building": [
             0,
             0
         ],
-        "train_button": [
+        "button": [
+            0,
+            0
+        ],
+        "tier": [
+            0,
+            0
+        ],
+        "confirm": [
             0,
             0
         ]
     },
     "siege": {
-        "building_icon": [
+        "troop_gather": [
             0,
             0
         ],
-        "max_button": [
+        "building": [
             0,
             0
         ],
-        "train_button": [
+        "button": [
+            0,
+            0
+        ],
+        "tier": [
+            0,
+            0
+        ],
+        "confirm": [
             0,
             0
         ]
