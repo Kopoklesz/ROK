@@ -1,344 +1,282 @@
 """
-ROK Auto Farm - Setup Wizard
-Teljes setup varázsló - első használat
+ROK Auto Farm - Setup Wizard (Menu-Based v2.0)
+Teljes menürendszer minden beállításhoz
 """
 import json
 import cv2
 import numpy as np
 from pathlib import Path
 from PIL import ImageGrab
+from pynput import mouse, keyboard
 
 from library import initialize_game_window
 from utils.region_selector import RegionSelector
-from utils.coordinate_helper import CoordinateHelper
-from pynput import mouse, keyboard
 
 
-class SetupWizard:
-    """Setup varázsló - minden beállítás"""
+class SetupWizardMenu:
+    """Setup wizard menürendszerrel"""
     
     def __init__(self):
         self.config_dir = Path(__file__).parent / 'config'
         self.images_dir = Path(__file__).parent / 'images'
         
-        # Könyvtárak létrehozása
         self.config_dir.mkdir(exist_ok=True)
         self.images_dir.mkdir(exist_ok=True)
         
         self.selector = RegionSelector()
-        self.current_coords = []
     
     def run(self):
-        """Teljes setup folyamat"""
-        print("="*60)
-        print("🧙 ROK AUTO FARM - SETUP WIZARD")
-        print("="*60)
-        print("\nEz a varázsló végigvezet minden beállításon.")
-        print("Az első használat után már nem kell futtatni!\n")
-        print("="*60)
-        
-        input("\nNyomj ENTER-t a folytatáshoz...")
-        
-        # 1. Erőforrás régiók
+        """Főmenü indítása"""
+        while True:
+            self.show_main_menu()
+            choice = self.get_menu_choice(0, 6)
+            
+            if choice == 0:
+                print("\n✅ Kilépés a Setup Wizard-ból")
+                break
+            elif choice == 1:
+                self.gathering_menu()
+            elif choice == 2:
+                self.training_menu()
+            elif choice == 3:
+                self.alliance_menu()
+            elif choice == 4:
+                self.anti_afk_menu()
+            elif choice == 5:
+                self.settings_menu()
+            elif choice == 6:
+                self.test_menu()
+    
+    def show_main_menu(self):
+        """Főmenü megjelenítése"""
         print("\n" + "="*60)
-        print("1️⃣  ERŐFORRÁS SZÁMLÁLÓK BEÁLLÍTÁSA")
+        print("ROK AUTO FARM - SETUP WIZARD v2.0")
         print("="*60)
-        farm_regions = self.setup_farm_regions()
-        
-        # 2. Idő régiók
-        print("\n" + "="*60)
-        print("2️⃣  IDŐ RÉGIÓK BEÁLLÍTÁSA")
-        print("="*60)
-        time_regions = self.setup_time_regions()
-        
-        # 3. Farm koordináták
-        print("\n" + "="*60)
-        print("3️⃣  FARM KOORDINÁTÁK BEÁLLÍTÁSA")
-        print("="*60)
-        farm_coords = self.setup_farm_coordinates(farm_regions)
-        
-        # 4. Gather.png template
-        print("\n" + "="*60)
-        print("4️⃣  GATHER GOMB TEMPLATE MENTÉSE")
-        print("="*60)
-        self.setup_gather_template()
-        
-        # 5. Settings létrehozása
-        print("\n" + "="*60)
-        print("5️⃣  ALAPÉRTELMEZETT BEÁLLÍTÁSOK")
-        print("="*60)
-        self.create_default_settings()
-        
-        # Befejezés
-        print("\n" + "="*60)
-        print("✅ SETUP BEFEJEZVE!")
-        print("="*60)
-        print("\nMost már futtathatod a farm_manager.py-t:")
-        print("  python farm_manager.py")
+        print("\n1. 🌾 Gathering Setup")
+        print("2. ⚔️  Training Setup")
+        print("3. 🤝 Alliance Setup")
+        print("4. 🔄 Anti-AFK Setup")
+        print("5. ⚙️  Settings")
+        print("6. ✅ Test & Verify (TODO)")
+        print("0. Exit")
         print("\n" + "="*60)
     
-    def wait_for_enter_or_esc(self, prompt="ENTER = folytatás"):
-        """Vár ENTER-re vagy ESC-re"""
-        print(f"  {prompt}, ESC = kihagyás")
-        
-        cancelled = [False]
-        
-        def on_press(key):
-            try:
-                if key == keyboard.Key.enter:
-                    return False  # Stop
-                elif key == keyboard.Key.esc:
-                    cancelled[0] = True
-                    print(f"  ⏹️  ESC - Kihagyva")
-                    return False  # Stop
-            except:
-                pass
-        
-        listener = keyboard.Listener(on_press=on_press)
-        listener.start()
-        listener.join()
-        
-        return not cancelled[0]  # True = ENTER, False = ESC
+    # ===== GATHERING MENU =====
     
-    def setup_farm_regions(self):
-        """Erőforrás OCR régiók beállítása"""
+    def gathering_menu(self):
+        """Gathering setup almenü"""
+        while True:
+            print("\n" + "="*60)
+            print("🌾 GATHERING SETUP")
+            print("="*60)
+            print("\n1. Resource Regions (wheat, wood, stone, gold OCR)")
+            print("2. Time Regions (march_time, gather_time OCR)")
+            print("3. Farm Coordinates")
+            print("4. Gather.png Template")
+            print("0. Vissza")
+            print("\n" + "="*60)
+            
+            choice = self.get_menu_choice(0, 4)
+            
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.setup_resource_regions()
+            elif choice == 2:
+                self.setup_time_regions()
+            elif choice == 3:
+                self.setup_farm_coordinates()
+            elif choice == 4:
+                self.setup_gather_template()
+    
+    def setup_resource_regions(self):
+        """Resource OCR régiók beállítása"""
+        print("\n" + "="*60)
+        print("📍 RESOURCE REGIONS SETUP")
+        print("="*60)
         print("\nJelöld ki az erőforrás számokat a képernyőn!")
-        print("ESC = megtartja a régi értéket (ha van)\n")
+        print("ESC = skip (megtartja a régi értéket)")
         
         resources = ['wheat', 'wood', 'stone', 'gold']
         
-        # Meglévő régiók betöltése (ha vannak)
+        # Meglévő régiók betöltése
         regions_file = self.config_dir / 'farm_regions.json'
         if regions_file.exists():
-            try:
-                with open(regions_file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                    if content:
-                        regions = json.loads(content)
-                    else:
-                        regions = {}
-                print("ℹ️  Meglévő régiók betöltve. ESC = régi érték megtartása\n")
-            except json.JSONDecodeError:
-                print("⚠️ Hibás JSON, új régiók létrehozása...\n")
-                regions = {}
+            with open(regions_file, 'r', encoding='utf-8') as f:
+                regions = json.load(f)
         else:
             regions = {}
         
         for resource in resources:
-            # Régi érték kiírása
             old_value = regions.get(resource)
             if old_value:
                 print(f"\n📍 {resource.upper()} - Jelenlegi: {old_value}")
             else:
                 print(f"\n📍 {resource.upper()} - Nincs beállítva")
             
-            # Vár ENTER-re vagy ESC-re
-            if not self.wait_for_enter_or_esc("ENTER = új érték"):
-                # ESC = régi megtartása
+            if not self.wait_for_enter_or_esc("ENTER = új régió"):
                 if old_value:
-                    print(f"  ℹ️  {resource.upper()} régi érték megtartva")
+                    print(f"  ℹ️  {resource.upper()} megtartva")
                 else:
                     regions[resource] = None
-                    print(f"  ⚠️ {resource.upper()} kihagyva")
                 continue
             
             region = self.selector.select_region(f"{resource.upper()} számláló")
             
             if region:
                 regions[resource] = region
-                print(f"  ✅ {resource.upper()} régió frissítve")
+                print(f"  ✅ {resource.upper()} frissítve")
             else:
                 if old_value:
-                    print(f"  ℹ️  {resource.upper()} régi érték megtartva")
+                    print(f"  ℹ️  {resource.upper()} megtartva")
                 else:
                     regions[resource] = None
-                    print(f"  ⚠️ {resource.upper()} kihagyva")
         
         # Mentés
         with open(regions_file, 'w', encoding='utf-8') as f:
             json.dump(regions, f, indent=2)
         
-        print(f"\n✅ Erőforrás régiók mentve: {regions_file}")
-        return regions
+        print(f"\n✅ Resource régiók mentve: {regions_file}")
+        input("\nNyomj ENTER-t a folytatáshoz...")
     
     def setup_time_regions(self):
-        """Idő OCR régiók beállítása"""
-        print("\nJelöld ki az idő megjelenítő területeket!")
-        print("  - March Time: March idő (első idő)")
-        print("  - Gather Time: Gather idő (második idő)")
-        print("ESC = megtartja a régi értéket (ha van)\n")
+        """Time OCR régiók beállítása"""
+        print("\n" + "="*60)
+        print("📍 TIME REGIONS SETUP")
+        print("="*60)
+        print("\nJelöld ki az idő területeket!")
         
         # Meglévő régiók betöltése
         time_file = self.config_dir / 'time_regions.json'
         if time_file.exists():
-            try:
-                with open(time_file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                    if content:
-                        time_regions = json.loads(content)
-                    else:
-                        time_regions = {}
-                print("ℹ️  Meglévő idő régiók betöltve.\n")
-            except json.JSONDecodeError:
-                print("⚠️ Hibás JSON, új idő régiók létrehozása...\n")
-                time_regions = {}
+            with open(time_file, 'r', encoding='utf-8') as f:
+                time_regions = json.load(f)
         else:
             time_regions = {}
         
-        # March Time (Idő A)
-        old_value_a = time_regions.get('march_time')
-        if old_value_a:
-            print(f"\n📍 MARCH TIME - Jelenlegi: {old_value_a}")
+        # March Time
+        old_value = time_regions.get('march_time')
+        if old_value:
+            print(f"\n📍 MARCH TIME - Jelenlegi: {old_value}")
         else:
             print(f"\n📍 MARCH TIME - Nincs beállítva")
         
-        if not self.wait_for_enter_or_esc("ENTER = új érték"):
-            if old_value_a:
-                print(f"  ℹ️  March Time régi érték megtartva")
-            else:
-                print(f"  ⚠️ March Time kihagyva")
-        else:
-            region_a = self.selector.select_region("MARCH TIME")
-            if region_a:
-                time_regions['march_time'] = region_a
+        if self.wait_for_enter_or_esc("ENTER = új régió"):
+            region = self.selector.select_region("MARCH TIME")
+            if region:
+                time_regions['march_time'] = region
                 print(f"  ✅ March Time frissítve")
-            else:
-                if old_value_a:
-                    print(f"  ℹ️  March Time régi érték megtartva")
-                else:
-                    print(f"  ⚠️ March Time kihagyva")
         
-        # Gather Time (Idő B)
-        old_value_b = time_regions.get('gather_time')
-        if old_value_b:
-            print(f"\n📍 GATHER TIME - Jelenlegi: {old_value_b}")
+        # Gather Time
+        old_value = time_regions.get('gather_time')
+        if old_value:
+            print(f"\n📍 GATHER TIME - Jelenlegi: {old_value}")
         else:
             print(f"\n📍 GATHER TIME - Nincs beállítva")
         
-        if not self.wait_for_enter_or_esc("ENTER = új érték"):
-            if old_value_b:
-                print(f"  ℹ️  Gather Time régi érték megtartva")
-            else:
-                print(f"  ⚠️ Gather Time kihagyva")
-        else:
-            region_b = self.selector.select_region("GATHER TIME")
-            if region_b:
-                time_regions['gather_time'] = region_b
+        if self.wait_for_enter_or_esc("ENTER = új régió"):
+            region = self.selector.select_region("GATHER TIME")
+            if region:
+                time_regions['gather_time'] = region
                 print(f"  ✅ Gather Time frissítve")
-            else:
-                if old_value_b:
-                    print(f"  ℹ️  Gather Time régi érték megtartva")
-                else:
-                    print(f"  ⚠️ Gather Time kihagyva")
         
         # Mentés
         with open(time_file, 'w', encoding='utf-8') as f:
             json.dump(time_regions, f, indent=2)
         
-        print(f"\n✅ Idő régiók mentve: {time_file}")
-        return time_regions
+        print(f"\n✅ Time régiók mentve: {time_file}")
+        input("\nNyomj ENTER-t a folytatáshoz...")
     
-    def setup_farm_coordinates(self, farm_regions):
+    def setup_farm_coordinates(self):
         """Farm koordináták beállítása"""
-        print("\nFarm koordináták beállítása kattintással!")
-        print("\n📋 FARM FOLYAMAT (helyes sorrend):")
-        print("  1. Nyersanyag ikon")
-        print("  2. Szint gomb")
-        print("  3. Keresés gomb")
-        print("  4. ⚫ HOLT KATTINTÁS (gather helyett - NEM mentődik)")
-        print("  5. Új egység gomb")
-        print("  6. March gomb")
-        print("  7. Képernyő közepe")
-        print("\nESC = kihagyás (régi érték megtartása)\n")
+        print("\n" + "="*60)
+        print("📍 FARM COORDINATES SETUP")
+        print("="*60)
+        print("\n📋 KOORDINÁTA SORREND:")
+        print("  1. Resource icon (nyersanyag ikon)")
+        print("  2. Level button (szint)")
+        print("  3. Search button (keresés)")
+        print("  4. ⚫ HOLT KATTINTÁS (gather helyett - NEM mentődik!)")
+        print("  5. New troops (új egység)")
+        print("  6. March button (march)")
+        print("  7. Screen center (képernyő közepe)")
+        print("\nESC = skip")
         
         coord_names = [
-            'resource_icon',      # 1. Nyersanyag ikon
-            'level_button',       # 2. Szint
-            'search_button',      # 3. Keresés
-            'dead_click',         # 4. HOLT KATTINTÁS (NEM mentődik)
-            'new_troops',         # 5. Új egység
-            'march_button',       # 6. March
-            'screen_center'       # 7. Képernyő közepe
+            'resource_icon', 'level_button', 'search_button',
+            'dead_click', 'new_troops', 'march_button', 'screen_center'
         ]
         
         coord_labels = {
-            'resource_icon': 'Nyersanyag ikon',
-            'level_button': 'Szint gomb',
-            'search_button': 'Keresés gomb',
-            'dead_click': '⚫ HOLT KATTINTÁS (gather helyett)',
-            'new_troops': 'Új egység gomb',
-            'march_button': 'March gomb',
-            'screen_center': 'Képernyő közepe'
+            'resource_icon': 'Resource icon',
+            'level_button': 'Level button',
+            'search_button': 'Search button',
+            'dead_click': '⚫ HOLT KATTINTÁS',
+            'new_troops': 'New troops',
+            'march_button': 'March button',
+            'screen_center': 'Screen center'
         }
         
         # Meglévő koordináták betöltése
         coords_file = self.config_dir / 'farm_coords.json'
         if coords_file.exists():
-            try:
-                with open(coords_file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                    if content:
-                        all_coords = json.loads(content)
-                    else:
-                        all_coords = {}
-                print("ℹ️  Meglévő koordináták betöltve.\n")
-            except json.JSONDecodeError:
-                print("⚠️ Hibás JSON, új koordináták létrehozása...\n")
-                all_coords = {}
+            with open(coords_file, 'r', encoding='utf-8') as f:
+                all_coords = json.load(f)
         else:
             all_coords = {}
         
-        # Csak azokhoz a farmokhoz kérjük a koordinátákat, amikhez van régió
+        # Farm regions betöltése (melyik farm enabled)
+        regions_file = self.config_dir / 'farm_regions.json'
+        if regions_file.exists():
+            with open(regions_file, 'r', encoding='utf-8') as f:
+                farm_regions = json.load(f)
+        else:
+            farm_regions = {}
+        
         active_farms = [name for name, region in farm_regions.items() if region is not None]
+        
+        if not active_farms:
+            print("\n⚠️ Nincs enabled farm! Először állítsd be a Resource Regions-t!")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
         
         for farm_type in active_farms:
             print(f"\n{'='*60}")
             print(f"🌾 {farm_type.upper()} FARM KOORDINÁTÁK")
             print(f"{'='*60}")
             
-            # Meglévő koordináták a farm típushoz
-            coords = all_coords.get(farm_type)
-            if coords is None or not isinstance(coords, dict):
-                coords = {}
+            coords = all_coords.get(farm_type, {})
             
             for coord_name in coord_names:
                 label = coord_labels[coord_name]
                 
-                # Holt kattintás jelzése
                 if coord_name == 'dead_click':
                     print(f"\n⚫ {label}")
-                    print(f"   ⚠️  NEM MENTŐDIK - csak a setup folytonosságához")
-                    print(f"   Kattints bárhova a folytatáshoz...")
+                    print(f"   ⚠️  NEM MENTŐDIK - folytonosság miatt")
+                    print(f"   Kattints bárhova...")
+                    coord = self.get_single_coordinate()
+                    if coord:
+                        print(f"   ✅ OK (nem mentve)")
+                    continue
+                
+                old_coord = coords.get(coord_name)
+                if old_coord:
+                    print(f"\n📍 {label} - Jelenlegi: {old_coord}")
                 else:
-                    old_coord = coords.get(coord_name)
-                    
-                    if old_coord:
-                        print(f"\n📍 {label} - Jelenlegi: {old_coord}")
-                    else:
-                        print(f"\n📍 {label} - Nincs beállítva")
-                    
-                    print(f"   Kattints a játékban, vagy ESC = régi megtartása")
+                    print(f"\n📍 {label} - Nincs beállítva")
+                
+                print(f"   Kattints a játékban, vagy ESC = skip")
                 
                 coord = self.get_single_coordinate()
                 
-                # Holt kattintást NEM mentjük
-                if coord_name == 'dead_click':
-                    if coord:
-                        print(f"   ✅ Holt kattintás OK (nem mentve)")
-                    else:
-                        print(f"   ⏹️  ESC - Kihagyva")
-                    continue  # ← NEM menti el!
-                
-                # Többi koordináta normálisan
                 if coord and coord != [0, 0]:
                     coords[coord_name] = coord
-                    print(f"   ✅ {label} frissítve: {coord}")
+                    print(f"   ✅ {label} frissítve")
                 else:
                     if old_coord:
-                        print(f"   ℹ️  {label} régi érték megtartva")
+                        print(f"   ℹ️  {label} megtartva")
                     else:
                         coords[coord_name] = [0, 0]
-                        print(f"   ⚠️ {label} default: [0, 0]")
             
             all_coords[farm_type] = coords
         
@@ -347,7 +285,476 @@ class SetupWizard:
             json.dump(all_coords, f, indent=2)
         
         print(f"\n✅ Farm koordináták mentve: {coords_file}")
-        return all_coords
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    def setup_gather_template(self):
+        """Gather.png template mentése"""
+        print("\n" + "="*60)
+        print("📍 GATHER TEMPLATE SETUP")
+        print("="*60)
+        
+        gather_path = self.images_dir / 'gather.png'
+        
+        if gather_path.exists():
+            print(f"\nℹ️  Meglévő: {gather_path}")
+        
+        if not self.wait_for_enter_or_esc("ENTER = új template"):
+            print("  ℹ️  Template megtartva")
+            return
+        
+        region = self.selector.select_region("GATHER GOMB")
+        
+        if region:
+            screen = ImageGrab.grab()
+            screen_np = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+            
+            x, y, w, h = region['x'], region['y'], region['width'], region['height']
+            cropped = screen_np[y:y+h, x:x+w]
+            
+            cv2.imwrite(str(gather_path), cropped)
+            
+            print(f"\n✅ Gather template mentve: {gather_path}")
+            print(f"   Méret: {w}x{h} pixel")
+        else:
+            print("  ⚠️  Template kihagyva")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== TRAINING MENU =====
+    
+    def training_menu(self):
+        """Training setup almenü"""
+        while True:
+            print("\n" + "="*60)
+            print("⚔️  TRAINING SETUP")
+            print("="*60)
+            print("\n1. Training Time Regions (barracks, archery, stable, siege)")
+            print("2. Training Coordinates (building icons, max, train)")
+            print("0. Vissza")
+            print("\n" + "="*60)
+            
+            choice = self.get_menu_choice(0, 2)
+            
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.setup_training_time_regions()
+            elif choice == 2:
+                self.setup_training_coordinates()
+    
+    def setup_training_time_regions(self):
+        """Training time OCR régiók"""
+        print("\n" + "="*60)
+        print("📍 TRAINING TIME REGIONS SETUP")
+        print("="*60)
+        
+        buildings = ['barracks', 'archery', 'stable', 'siege']
+        
+        # Meglévő régiók betöltése
+        time_file = self.config_dir / 'training_time_regions.json'
+        if time_file.exists():
+            with open(time_file, 'r', encoding='utf-8') as f:
+                time_regions = json.load(f)
+        else:
+            time_regions = {}
+        
+        for building in buildings:
+            region_key = f"{building}_time"
+            old_value = time_regions.get(region_key)
+            
+            if old_value:
+                print(f"\n📍 {building.upper()} TIME - Jelenlegi: {old_value}")
+            else:
+                print(f"\n📍 {building.upper()} TIME - Nincs beállítva")
+            
+            if not self.wait_for_enter_or_esc("ENTER = új régió"):
+                continue
+            
+            region = self.selector.select_region(f"{building.upper()} TIME")
+            
+            if region:
+                time_regions[region_key] = region
+                print(f"  ✅ {building.upper()} time frissítve")
+        
+        # Mentés
+        with open(time_file, 'w', encoding='utf-8') as f:
+            json.dump(time_regions, f, indent=2)
+        
+        print(f"\n✅ Training time régiók mentve: {time_file}")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    def setup_training_coordinates(self):
+        """Training koordináták"""
+        print("\n" + "="*60)
+        print("📍 TRAINING COORDINATES SETUP")
+        print("="*60)
+        
+        buildings = ['barracks', 'archery', 'stable', 'siege']
+        coord_names = ['building_icon', 'max_button', 'train_button']
+        
+        # Meglévő koordináták betöltése
+        coords_file = self.config_dir / 'training_coords.json'
+        if coords_file.exists():
+            with open(coords_file, 'r', encoding='utf-8') as f:
+                all_coords = json.load(f)
+        else:
+            all_coords = {}
+        
+        for building in buildings:
+            print(f"\n{'='*60}")
+            print(f"⚔️  {building.upper()} KOORDINÁTÁK")
+            print(f"{'='*60}")
+            
+            coords = all_coords.get(building, {})
+            
+            for coord_name in coord_names:
+                old_coord = coords.get(coord_name)
+                
+                if old_coord:
+                    print(f"\n📍 {coord_name} - Jelenlegi: {old_coord}")
+                else:
+                    print(f"\n📍 {coord_name} - Nincs beállítva")
+                
+                print(f"   Kattints, vagy ESC = skip")
+                coord = self.get_single_coordinate()
+                
+                if coord and coord != [0, 0]:
+                    coords[coord_name] = coord
+                    print(f"   ✅ {coord_name} frissítve")
+            
+            all_coords[building] = coords
+        
+        # Mentés
+        with open(coords_file, 'w', encoding='utf-8') as f:
+            json.dump(all_coords, f, indent=2)
+        
+        print(f"\n✅ Training koordináták mentve: {coords_file}")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== ALLIANCE MENU =====
+    
+    def alliance_menu(self):
+        """Alliance setup almenü"""
+        while True:
+            print("\n" + "="*60)
+            print("🤝 ALLIANCE SETUP")
+            print("="*60)
+            print("\n1. hand.png Template")
+            print("2. hand.png Locations (2 koordináta)")
+            print("0. Vissza")
+            print("\n" + "="*60)
+            
+            choice = self.get_menu_choice(0, 2)
+            
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.setup_hand_template()
+            elif choice == 2:
+                self.setup_hand_locations()
+    
+    def setup_hand_template(self):
+        """hand.png template"""
+        print("\n" + "="*60)
+        print("📍 HAND TEMPLATE SETUP")
+        print("="*60)
+        
+        hand_path = self.images_dir / 'hand.png'
+        
+        if hand_path.exists():
+            print(f"\nℹ️  Meglévő: {hand_path}")
+        
+        if not self.wait_for_enter_or_esc("ENTER = új template"):
+            return
+        
+        region = self.selector.select_region("HAND ICON")
+        
+        if region:
+            screen = ImageGrab.grab()
+            screen_np = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+            
+            x, y, w, h = region['x'], region['y'], region['width'], region['height']
+            cropped = screen_np[y:y+h, x:x+w]
+            
+            cv2.imwrite(str(hand_path), cropped)
+            print(f"\n✅ Hand template mentve: {hand_path}")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    def setup_hand_locations(self):
+        """hand.png locations (2 koordináta)"""
+        print("\n" + "="*60)
+        print("📍 HAND LOCATIONS SETUP")
+        print("="*60)
+        print("\nKattints 2 helyre ahol a hand ikon megjelenhet!")
+        
+        # Meglévő betöltése
+        coords_file = self.config_dir / 'alliance_coords.json'
+        if coords_file.exists():
+            with open(coords_file, 'r', encoding='utf-8') as f:
+                alliance_coords = json.load(f)
+        else:
+            alliance_coords = {'hand_locations': [{'x': 0, 'y': 0}, {'x': 0, 'y': 0}]}
+        
+        locations = alliance_coords.get('hand_locations', [])
+        
+        for i in range(2):
+            old_loc = locations[i] if i < len(locations) else {'x': 0, 'y': 0}
+            print(f"\n📍 Location #{i+1} - Jelenlegi: {old_loc}")
+            print("   Kattints, vagy ESC = skip")
+            
+            coord = self.get_single_coordinate()
+            
+            if coord:
+                if i < len(locations):
+                    locations[i] = {'x': coord[0], 'y': coord[1]}
+                else:
+                    locations.append({'x': coord[0], 'y': coord[1]})
+                print(f"   ✅ Location #{i+1} frissítve")
+        
+        alliance_coords['hand_locations'] = locations
+        
+        # Mentés
+        with open(coords_file, 'w', encoding='utf-8') as f:
+            json.dump(alliance_coords, f, indent=2)
+        
+        print(f"\n✅ Hand locations mentve: {coords_file}")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== ANTI-AFK MENU =====
+    
+    def anti_afk_menu(self):
+        """Anti-AFK setup almenü"""
+        while True:
+            print("\n" + "="*60)
+            print("🔄 ANTI-AFK SETUP")
+            print("="*60)
+            print("\n1. resource1.png Template")
+            print("2. resource2.png Template")
+            print("3. resource3.png Template")
+            print("4. resource4.png Template")
+            print("0. Vissza")
+            print("\n" + "="*60)
+            
+            choice = self.get_menu_choice(0, 4)
+            
+            if choice == 0:
+                break
+            elif 1 <= choice <= 4:
+                self.setup_resource_template(choice)
+    
+    def setup_resource_template(self, resource_num):
+        """Resource template (1-4)"""
+        print(f"\n📍 resource{resource_num}.png TEMPLATE SETUP")
+        
+        resource_path = self.images_dir / f'resource{resource_num}.png'
+        
+        if resource_path.exists():
+            print(f"ℹ️  Meglévő: {resource_path}")
+        
+        if not self.wait_for_enter_or_esc("ENTER = új template"):
+            return
+        
+        region = self.selector.select_region(f"RESOURCE {resource_num}")
+        
+        if region:
+            screen = ImageGrab.grab()
+            screen_np = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+            
+            x, y, w, h = region['x'], region['y'], region['width'], region['height']
+            cropped = screen_np[y:y+h, x:x+w]
+            
+            cv2.imwrite(str(resource_path), cropped)
+            print(f"\n✅ resource{resource_num}.png mentve: {resource_path}")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== SETTINGS MENU =====
+    
+    def settings_menu(self):
+        """Settings almenü"""
+        while True:
+            print("\n" + "="*60)
+            print("⚙️  SETTINGS")
+            print("="*60)
+            print("\n1. Commander Count")
+            print("2. Timer Intervals")
+            print("3. Human Wait Times")
+            print("0. Vissza")
+            print("\n" + "="*60)
+            
+            choice = self.get_menu_choice(0, 3)
+            
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.setup_commander_count()
+            elif choice == 2:
+                self.setup_timer_intervals()
+            elif choice == 3:
+                self.setup_human_wait()
+    
+    def setup_commander_count(self):
+        """Commander count beállítás"""
+        print("\n📍 COMMANDER COUNT SETUP")
+        
+        try:
+            count = int(input("Hány commander-t használsz? (1-5): "))
+            
+            if not (1 <= count <= 5):
+                print("⚠️  Hibás érték (1-5)")
+                return
+            
+            # Settings frissítés
+            settings_file = self.config_dir / 'settings.json'
+            
+            if settings_file.exists():
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+            else:
+                settings = self.create_default_settings()
+            
+            if 'gathering' not in settings:
+                settings['gathering'] = {}
+            
+            settings['gathering']['max_commanders'] = count
+            settings['gathering']['commanders'] = [
+                {"id": i+1, "enabled": True} for i in range(count)
+            ]
+            
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=2)
+            
+            print(f"✅ Commander count: {count}")
+        
+        except ValueError:
+            print("⚠️  Számot adj meg!")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    def setup_timer_intervals(self):
+        """Timer intervals"""
+        print("\n📍 TIMER INTERVALS SETUP")
+        
+        settings_file = self.config_dir / 'settings.json'
+        if settings_file.exists():
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+        else:
+            settings = self.create_default_settings()
+        
+        try:
+            print("\nAlliance check interval (sec):")
+            print(f"  Jelenlegi: {settings.get('alliance', {}).get('check_interval_seconds', 1800)}")
+            alliance_int = int(input("  Új érték (1800 = 30 perc): "))
+            
+            print("\nAnti-AFK idle threshold (sec):")
+            print(f"  Jelenlegi: {settings.get('anti_afk', {}).get('idle_threshold_seconds', 900)}")
+            afk_threshold = int(input("  Új érték (900 = 15 perc): "))
+            
+            if 'alliance' not in settings:
+                settings['alliance'] = {}
+            settings['alliance']['check_interval_seconds'] = alliance_int
+            
+            if 'anti_afk' not in settings:
+                settings['anti_afk'] = {}
+            settings['anti_afk']['idle_threshold_seconds'] = afk_threshold
+            
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=2)
+            
+            print("\n✅ Timer intervals frissítve")
+        
+        except ValueError:
+            print("⚠️  Számot adj meg!")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    def setup_human_wait(self):
+        """Human wait times"""
+        print("\n📍 HUMAN WAIT TIMES SETUP")
+        
+        settings_file = self.config_dir / 'settings.json'
+        if settings_file.exists():
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+        else:
+            settings = self.create_default_settings()
+        
+        try:
+            print("\nHuman wait minimum (sec):")
+            print(f"  Jelenlegi: {settings.get('human_wait', {}).get('min_seconds', 5)}")
+            min_sec = int(input("  Új érték: "))
+            
+            print("\nHuman wait maximum (sec):")
+            print(f"  Jelenlegi: {settings.get('human_wait', {}).get('max_seconds', 10)}")
+            max_sec = int(input("  Új érték: "))
+            
+            if 'human_wait' not in settings:
+                settings['human_wait'] = {}
+            settings['human_wait']['min_seconds'] = min_sec
+            settings['human_wait']['max_seconds'] = max_sec
+            
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=2)
+            
+            print("\n✅ Human wait times frissítve")
+        
+        except ValueError:
+            print("⚠️  Számot adj meg!")
+        
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== TEST MENU =====
+    
+    def test_menu(self):
+        """Test & Verify almenü"""
+        print("\n" + "="*60)
+        print("✅ TEST & VERIFY")
+        print("="*60)
+        print("\n⚠️  TODO: OCR Test, Image Matching Test, Coordinate Test")
+        print("Később implementáljuk!")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+    
+    # ===== HELPER METHODS =====
+    
+    def get_menu_choice(self, min_val, max_val):
+        """Menü választás bekérése"""
+        while True:
+            try:
+                choice = int(input(f"\nVálasztás ({min_val}-{max_val}): "))
+                if min_val <= choice <= max_val:
+                    return choice
+                else:
+                    print(f"⚠️  Hibás választás! ({min_val}-{max_val})")
+            except ValueError:
+                print("⚠️  Számot adj meg!")
+            except KeyboardInterrupt:
+                print("\n\n⚠️  Setup megszakítva")
+                return 0
+    
+    def wait_for_enter_or_esc(self, prompt="ENTER = folytatás"):
+        """Vár ENTER-re vagy ESC-re"""
+        print(f"  {prompt}, ESC = skip")
+        
+        cancelled = [False]
+        
+        def on_press(key):
+            try:
+                if key == keyboard.Key.enter:
+                    return False
+                elif key == keyboard.Key.esc:
+                    cancelled[0] = True
+                    print(f"  ⏹️  ESC - Skip")
+                    return False
+            except:
+                pass
+        
+        listener = keyboard.Listener(on_press=on_press)
+        listener.start()
+        listener.join()
+        
+        return not cancelled[0]
     
     def get_single_coordinate(self):
         """Egyetlen koordináta bekérése kattintással"""
@@ -365,103 +772,57 @@ class SetupWizard:
         def on_press(key):
             try:
                 if key == keyboard.Key.esc:
-                    print(f"   ⏹️  ESC - Kihagyva")
+                    print(f"   ⏹️  ESC - Skip")
                     cancelled[0] = True
                     done[0] = True
                     return False
             except:
                 pass
         
-        # Listeners indítása
         mouse_listener = mouse.Listener(on_click=on_click)
         keyboard_listener = keyboard.Listener(on_press=on_press)
         
         mouse_listener.start()
         keyboard_listener.start()
         
-        # Várakozás bármelyik befejezésére
         import time
         while not done[0]:
             time.sleep(0.1)
         
-        # Listeners leállítása
         mouse_listener.stop()
         keyboard_listener.stop()
         
-        # Ha ESC volt, None-t ad vissza
         if cancelled[0]:
             return None
         
         return coord[0] if coord[0] else [0, 0]
     
-    def setup_gather_template(self):
-        """Gather.png template mentése"""
-        print("\nGather gomb template mentése!")
-        print("⚠️  FONTOS: A gather gomb RANDOM helyen lehet!")
-        print("Ezért NEM koordinátát, hanem KÉPET mentünk róla.\n")
-        
-        gather_path = self.images_dir / 'gather.png'
-        
-        if gather_path.exists():
-            print(f"ℹ️  Meglévő gather.png: {gather_path}")
-        else:
-            print("Nincs meglévő gather.png\n")
-        
-        # Vár ENTER-re vagy ESC-re
-        if not self.wait_for_enter_or_esc("ENTER = új képernyőkép"):
-            if gather_path.exists():
-                print(f"  ℹ️  Gather template megtartva")
-            else:
-                print("  ⚠️ Gather template kihagyva")
-            return
-        
-        region = self.selector.select_region("GATHER GOMB")
-        
-        if region:
-            # Screenshot és kivágás
-            screen = ImageGrab.grab()
-            screen_np = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
-            
-            x, y, w, h = region['x'], region['y'], region['width'], region['height']
-            cropped = screen_np[y:y+h, x:x+w]
-            
-            # Mentés
-            cv2.imwrite(str(gather_path), cropped)
-            
-            print(f"\n✅ Gather template mentve: {gather_path}")
-            print(f"   Méret: {w}x{h} pixel")
-            print(f"   ⚠️  Template matching fogja használni (0.7 threshold)")
-        else:
-            if gather_path.exists():
-                print(f"  ℹ️  Gather template megtartva")
-            else:
-                print("  ⚠️ Gather template kihagyva")
-    
     def create_default_settings(self):
-        """Alapértelmezett settings.json létrehozása"""
-        settings = {
-            "repeat_count": 4,
-            "max_cycles": 100,
-            "human_wait_min": 3,
-            "human_wait_max": 8,
-            "startup_wait_min": 20,
-            "startup_wait_max": 25,
-            "gather_retry_attempts": 25,
-            "default_march_time": 60,
-            "default_gather_time": 5400
+        """Alapértelmezett settings létrehozása"""
+        return {
+            "gathering": {
+                "max_commanders": 4,
+                "commanders": [
+                    {"id": 1, "enabled": True},
+                    {"id": 2, "enabled": True},
+                    {"id": 3, "enabled": True},
+                    {"id": 4, "enabled": True}
+                ]
+            },
+            "training": {
+                "buildings": {
+                    "barracks": {"enabled": True, "troop_type": "tier1_infantry", "prep_time_seconds": 300},
+                    "archery": {"enabled": False},
+                    "stable": {"enabled": True, "troop_type": "tier1_cavalry", "prep_time_seconds": 300},
+                    "siege": {"enabled": False}
+                }
+            },
+            "alliance": {"enabled": True, "check_interval_seconds": 1800},
+            "anti_afk": {"enabled": True, "idle_threshold_seconds": 900, "resource_offset_y": 50},
+            "human_wait": {"min_seconds": 5, "max_seconds": 10},
+            "startup_wait": {"min_seconds": 20, "max_seconds": 25},
+            "defaults": {"march_time_seconds": 300, "gather_time_seconds": 5400}
         }
-        
-        settings_file = self.config_dir / 'settings.json'
-        with open(settings_file, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=2)
-        
-        print("\n✅ Alapértelmezett beállítások:")
-        print(f"   Repeat count: {settings['repeat_count']}")
-        print(f"   Max cycles: {settings['max_cycles']}")
-        print(f"   Human wait: {settings['human_wait_min']}-{settings['human_wait_max']} sec")
-        print(f"   Gather retry: {settings['gather_retry_attempts']}x")
-        
-        print(f"\n💾 Mentve: {settings_file}")
 
 
 def main():
@@ -473,7 +834,7 @@ def main():
         print("Indítsd el a játékot, majd futtasd újra a setup-ot.\n")
         return
     
-    wizard = SetupWizard()
+    wizard = SetupWizardMenu()
     wizard.run()
 
 
