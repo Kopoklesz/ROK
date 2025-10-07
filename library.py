@@ -1,6 +1,7 @@
 """
 ROK Auto Farm - Library
 Alapvető függvények a meglévő library alapján
+FIXED: WindowManager.find_window() exception handling
 """
 import time
 import random
@@ -41,23 +42,42 @@ class WindowManager:
     
     @staticmethod
     def find_window(partial_title=None):
-        """Játék ablak keresése"""
+        """
+        Játék ablak keresése
+        
+        FIXED: Exception handling win32gui.EnumWindows() callback-nél
+        """
         global game_window_handle, game_window_title
         
         if partial_title is None:
             partial_title = game_window_title
         
-        def callback(hwnd, extra):
-            if win32gui.IsWindowVisible(hwnd):
-                title = win32gui.GetWindowText(hwnd)
-                if partial_title.lower() in title.lower():
-                    global game_window_handle
-                    game_window_handle = hwnd
-                    return False
-            return True
+        # Flag lista (mutable, így a callback módosíthatja)
+        found = [False]
         
-        win32gui.EnumWindows(callback, None)
-        return game_window_handle is not None
+        def callback(hwnd, extra):
+            # Ha már találtunk ablakot, skip further checks
+            if found[0]:
+                return True
+            
+            try:
+                if win32gui.IsWindowVisible(hwnd):
+                    title = win32gui.GetWindowText(hwnd)
+                    if partial_title.lower() in title.lower():
+                        global game_window_handle
+                        game_window_handle = hwnd
+                        found[0] = True
+            except:
+                pass
+            
+            return True  # FONTOS: Mindig True-t adunk vissza, így nem lesz exception
+        
+        try:
+            win32gui.EnumWindows(callback, None)
+            return found[0]
+        except Exception as e:
+            print(f"Ablak keresési hiba: {e}")
+            return False
     
     @staticmethod
     def focus_window():
@@ -187,6 +207,7 @@ def press_key(key):
             'enter': Key.enter,
             'esc': Key.esc,
             'f': 'f',
+            'b': 'b',
             'tab': Key.tab
         }
         

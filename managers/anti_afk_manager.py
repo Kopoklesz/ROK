@@ -1,6 +1,7 @@
 """
 Auto Farm - Anti-AFK Manager
 15 perc idle után resource collection
+MÓDOSÍTVA: Mozgás alapú idle detection (click/action/search) log helyett
 """
 import json
 import time
@@ -14,7 +15,7 @@ from utils.queue_manager import queue_manager
 
 
 class AntiAFKManager:
-    """Anti-AFK manager idle detection-nel"""
+    """Anti-AFK manager mozgás-alapú idle detection-nel"""
     
     def __init__(self):
         self.config_dir = Path(__file__).parent.parent / 'config'
@@ -78,26 +79,31 @@ class AntiAFKManager:
     def _idle_check_loop(self):
         """
         Háttérszál: 60 sec-enként idle check
+        ✅ MÓDOSÍTVA: Mozgás alapú (click/action/search) log helyett
         """
         while self.running:
-            # Idle check
-            last_log_time = log.get_last_log_time()
+            # ✅ Utolsó MOZGÁS idő lekérése (nem log!)
+            last_movement_time = log.get_last_movement_time()
             
-            if last_log_time is None:
-                # Még nincs log (indulás után)
-                log.info("[Anti-AFK] Nincs még log entry, skip")
+            if last_movement_time is None:
+                # Még nincs mozgás (indulás után)
+                log.info("[Anti-AFK] Nincs még mozgás entry, skip")
             else:
                 # Idle idő számítás
                 now = datetime.now()
-                idle_seconds = (now - last_log_time).total_seconds()
+                idle_seconds = (now - last_movement_time).total_seconds()
                 
                 # Ha idle >= threshold
                 if idle_seconds >= self.idle_threshold:
-                    log.warning(f"[Anti-AFK] {idle_seconds:.0f} sec idle detected! (threshold: {self.idle_threshold})")
+                    log.warning(f"[Anti-AFK] {idle_seconds:.0f} sec idle (mozgás nélkül)! (threshold: {self.idle_threshold})")
                     
                     # PRIORITÁSOS task queue-ba
                     queue_manager.add_priority_task("anti_afk_collect", "anti_afk")
                     log.info("[Anti-AFK] Resource collection task hozzáadva (PRIORITÁS)")
+                else:
+                    # Debug info (csak minden 5. check-nél)
+                    # log.info(f"[Anti-AFK] Idle: {idle_seconds:.0f} sec / {self.idle_threshold} sec")
+                    pass
             
             # Várakozás (60 sec, de 1 sec-enként ellenőrzi a running flag-et)
             for _ in range(self.check_interval):

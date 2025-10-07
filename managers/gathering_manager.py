@@ -1,290 +1,258 @@
 """
-Auto Farm - Gathering Manager
-Commander-based farmolás timer rendszerrel
+ROK Auto Farm - Gathering Manager
+JAVÍTOTT VERZIÓ:
+- March.png detekció (régióban) → bezárás + 5 perc retry
+- Gather button fail → 1x SPACE + 5 perc retry
+- Gather Time validáció (max 2h) + 60 fail után 5 perc retry
 """
-import json
 import time
-import random
+import json
+import threading
 from pathlib import Path
 
-from library import ImageManager, safe_click, press_key, wait_random, get_screen_center
+from library import (
+    safe_click, press_key, wait_random, get_screen_center,
+    ImageManager
+)
 from utils.logger import FarmLogger as log
-from utils.ocr_parser import parse_resource_value
-from utils.time_utils import parse_time, format_time
-from utils.timer_manager import timer_manager
 from utils.queue_manager import queue_manager
+from utils.timer_manager import timer_manager
+from utils.time_utils import format_time, parse_time
 
-from farms.base_farm import BaseFarm
+# Farm típusok importálása
+import sys
+sys.path.append(str(Path(__file__).parent.parent))
+
+from farms.wheat_farm import WheatFarm
+from farms.wood_farm import WoodFarm
+from farms.stone_farm import StoneFarm
+from farms.gold_farm import GoldFarm
 
 
 class GatheringManager:
-    """Commander-based gathering manager"""
+    """Gathering Manager - Commander koordináció"""
     
     def __init__(self):
         self.config_dir = Path(__file__).parent.parent / 'config'
+        self.images_dir = Path(__file__).parent.parent / 'images'
         
-        log.info("[Gathering] Manager inicializálása...")
+        # Settings betöltése
+        settings_file = self.config_dir / 'settings.json'
+        with open(settings_file, 'r', encoding='utf-8') as f:
+            settings = json.load(f)
         
-        # Config betöltés
-        self.settings = self._load_settings()
-        self.farm_regions = self._load_farm_regions()
-        
-        # Commander config
-        self.max_commanders = self.settings.get('gathering', {}).get('max_commanders', 4)
-        self.commanders = self.settings.get('gathering', {}).get('commanders', [])
-        
-        log.info(f"[Gathering] Max commanders: {self.max_commanders}")
-        log.info(f"[Gathering] Configured commanders: {len(self.commanders)}")
+        # Gathering config
+        gathering_config = settings.get('gathering', {})
+        self.max_commanders = gathering_config.get('max_commanders', 5)
+        self.commanders = gathering_config.get('commanders', [])
         
         # Human wait
-        human_wait = self.settings.get('human_wait', {})
+        human_wait = settings.get('human_wait', {})
         self.human_wait_min = human_wait.get('min_seconds', 5)
         self.human_wait_max = human_wait.get('max_seconds', 10)
         
-        log.info(f"[Gathering] Human wait: {self.human_wait_min}-{self.human_wait_max} sec")
-        
         # Defaults
-        defaults = self.settings.get('defaults', {})
+        defaults = settings.get('defaults', {})
         self.default_march_time = defaults.get('march_time_seconds', 300)
         self.default_gather_time = defaults.get('gather_time_seconds', 5400)
         
-        log.info(f"[Gathering] Default march time: {self.default_march_time} sec")
-        log.info(f"[Gathering] Default gather time: {self.default_gather_time} sec")
-        
-        # Base farm instance-ok (resource típusonként)
+        # Farm típusok
         self.farms = {
-            'wheat': BaseFarm('wheat', self.config_dir),
-            'wood': BaseFarm('wood', self.config_dir),
-            'stone': BaseFarm('stone', self.config_dir),
-            'gold': BaseFarm('gold', self.config_dir)
+            'wheat': WheatFarm(),
+            'wood': WoodFarm(),
+            'stone': StoneFarm(),
+            'gold': GoldFarm()
         }
         
-        log.success("[Gathering] Manager inicializálva")
+        self.selected_resource = None
+        
+        # March detection region betöltése
+        gathering_coords_file = self.config_dir / 'gathering_coords.json'
+        if gathering_coords_file.exists():
+            with open(gathering_coords_file, 'r', encoding='utf-8') as f:
+                gathering_coords_config = json.load(f)
+                self.march_detection_region = gathering_coords_config.get('march_detection_region')
+        else:
+            self.march_detection_region = None
+        
+        self.running = False
     
-    def _load_settings(self):
-        """Settings.json betöltése"""
-        settings_file = self.config_dir / 'settings.json'
-        log.info(f"[Gathering] Settings betöltése: {settings_file}")
-        
-        if settings_file.exists():
-            with open(settings_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                log.success(f"[Gathering] Settings betöltve")
-                return settings
-        
-        log.warning(f"[Gathering] Settings nem található, üres dict")
-        return {}
-    
-    def _load_farm_regions(self):
-        """Farm regions betöltése"""
-        regions_file = self.config_dir / 'farm_regions.json'
-        log.info(f"[Gathering] Farm regions betöltése: {regions_file}")
-        
-        if regions_file.exists():
-            with open(regions_file, 'r', encoding='utf-8') as f:
-                regions = json.load(f)
-                log.success(f"[Gathering] Farm regions betöltve: {len(regions)} resource")
-                return regions
-        
-        log.warning(f"[Gathering] Farm regions nem található, üres dict")
-        return {}
-    
-    def initial_start_all_commanders(self):
+    def start(self):
         """
-        Első indulás: összes enabled commander queue-ba
+        Gathering Manager indítás
+        
+        1. Erőforrások kiolvasása + legkevesebb választása
+        2. Összes enabled commander queue-ba helyezése (start task)
         """
+        if self.running:
+            log.warning("[Gathering] Manager már fut!")
+            return
+        
         log.separator('=', 60)
         log.info("[Gathering] 🌾 COMMANDERS ELSŐ INDÍTÁSA")
         log.separator('=', 60)
         
-        enabled_count = 0
-        disabled_count = 0
+        # Erőforrások beolvasása
+        self._select_lowest_resource()
         
-        for commander in self.commanders:
-            commander_id = commander.get('id')
-            enabled = commander.get('enabled', True)
+        # Minden enabled commander queue-ba
+        for commander_config in self.commanders:
+            commander_id = commander_config.get('id', 0)
+            enabled = commander_config.get('enabled', False)
             
-            if enabled:
-                task_id = f"commander_{commander_id}_start"
-                log.info(f"[Gathering] Commander #{commander_id} queue-ba helyezése...")
-                queue_manager.add_task(task_id, "gathering", {"commander_id": commander_id})
-                log.success(f"[Gathering] Commander #{commander_id} queue-ba téve (start)")
-                enabled_count += 1
-            else:
+            if not enabled:
                 log.info(f"[Gathering] Commander #{commander_id} disabled, skip")
-                disabled_count += 1
+                continue
+            
+            log.info(f"[Gathering] Commander #{commander_id} queue-ba helyezése...")
+            
+            task_id = f"commander_{commander_id}_start"
+            queue_manager.add_task(task_id, "gathering", data={'commander_id': commander_id})
+            
+            log.success(f"[Gathering] Commander #{commander_id} queue-ba téve (start)")
+        
+        enabled_count = sum(1 for c in self.commanders if c.get('enabled', False))
+        disabled_count = len(self.commanders) - enabled_count
         
         log.separator('-', 60)
         log.success(f"[Gathering] {enabled_count} commander queue-ba téve, {disabled_count} disabled")
         log.separator('=', 60)
+        
+        self.running = True
     
-    def run_commander(self, commander_id, task_data=None):
+    def stop(self):
+        """Gathering Manager leállítás"""
+        if not self.running:
+            return
+        
+        self.running = False
+        log.info("[Gathering] Manager leállítva")
+    
+    def _select_lowest_resource(self):
         """
-        Egyetlen commander futtatása
+        Erőforrások kiolvasása + legkevesebb választása
+        
+        Osztás:
+        - wheat: ÷4
+        - wood: ÷4
+        - stone: ÷3
+        - gold: ÷2
+        """
+        log.info("[Gathering] Erőforrások kiolvasása...")
+        
+        resources = {}
+        
+        for resource_type, farm in self.farms.items():
+            value = farm.read_resource_value()
+            
+            if value is None:
+                log.warning(f"[Gathering] {resource_type.upper()} OCR hiba, skip")
+                continue
+            
+            resources[resource_type] = value
+            log.info(f"[Gathering] {resource_type.upper()}: {value:,}")
+        
+        if not resources:
+            log.error("[Gathering] Egyik erőforrás sem olvasható!")
+            self.selected_resource = 'wheat'  # default
+            return
+        
+        # Osztás + legkisebb kiválasztása
+        divisors = {
+            'wheat': 4,
+            'wood': 4,
+            'stone': 3,
+            'gold': 2
+        }
+        
+        adjusted = {}
+        for resource_type, value in resources.items():
+            divisor = divisors.get(resource_type, 1)
+            adjusted[resource_type] = value / divisor
+            log.info(f"[Gathering] {resource_type.upper()} adjusted: {value:,} ÷ {divisor} = {adjusted[resource_type]:.0f}")
+        
+        # Legkisebb
+        self.selected_resource = min(adjusted, key=adjusted.get)
+        log.success(f"[Gathering] Kiválasztva: {self.selected_resource.upper()}")
+    
+    def run_commander(self, task_data):
+        """
+        Commander gathering futtatás
         
         Args:
-            commander_id: Commander azonosító (1-4)
-            task_data: Task extra adat
-            
-        Returns:
-            str: "SUCCESS" vagy "RESTART"
+            task_data: {'commander_id': 1}
         """
+        commander_id = task_data.get('commander_id', 1)
+        
         log.separator('=', 60)
         log.info(f"[Gathering] 🌾 COMMANDER #{commander_id} - GATHERING START")
         log.separator('=', 60)
         
         log.info(f"[Gathering] Commander #{commander_id} indítása...")
         
-        # 1. Resource OCR
-        log.info(f"[Gathering] Step 1/5: Resource OCR")
-        resources = self._read_all_resources()
+        # Farm ciklus futtatása
+        result = self._run_single_farm(commander_id, task_data)
         
-        if not resources:
-            log.error("[Gathering] Nincs beállított erőforrás régió!")
-            log.error(f"[Gathering] Commander #{commander_id} RESTART szükséges")
-            return "RESTART"
-        
-        log.success(f"[Gathering] {len(resources)} resource OCR OK")
-        
-        # 2. Minimum resource kiválasztás
-        log.info(f"[Gathering] Step 2/5: Minimum resource kiválasztás")
-        selected_resource = self._select_minimum_resource(resources)
-        
-        log.success(f"[Gathering] Commander #{commander_id} → {selected_resource.upper()} farmolás")
-        
-        # 3. Farm instance
-        log.info(f"[Gathering] Step 3/5: Farm instance betöltése")
-        farm = self.farms.get(selected_resource)
-        
-        if not farm:
-            log.error(f"[Gathering] Farm instance nem található: {selected_resource}")
-            log.error(f"[Gathering] Commander #{commander_id} RESTART szükséges")
-            return "RESTART"
-        
-        log.success(f"[Gathering] Farm instance OK: {selected_resource}")
-        
-        # 4. Farm process futtatása
-        log.info(f"[Gathering] Step 4/5: Farm process futtatása")
-        result = self._run_single_farm_cycle(farm, commander_id)
+        if result == "RETRY_LATER":
+            log.info(f"[Gathering] Commander #{commander_id} retry később")
+            log.separator('=', 60)
+            return
         
         if result == "RESTART":
-            log.error(f"[Gathering] Farm process sikertelen")
-            log.warning(f"[Gathering] Commander #{commander_id} RESTART szükséges!")
-            return "RESTART"
+            log.error(f"[Gathering] Commander #{commander_id} HIBA")
+            log.separator('=', 60)
+            return
         
-        log.success(f"[Gathering] Farm process OK")
+        # Sikeres: march_time + gather_time
+        march_time = result.get('march_time', 0)
+        gather_time = result.get('gather_time', 0)
         
-        # 5. Timer beállítása
-        log.info(f"[Gathering] Step 5/5: Timer beállítása")
-        march_time = result.get('march_time', self.default_march_time)
-        gather_time = result.get('gather_time', self.default_gather_time)
         total_time = march_time + gather_time
-        
-        log.info(f"[Gathering] Commander #{commander_id} - March time: {format_time(march_time)} ({march_time} sec)")
-        log.info(f"[Gathering] Commander #{commander_id} - Gather time: {format_time(gather_time)} ({gather_time} sec)")
-        log.info(f"[Gathering] Commander #{commander_id} - Össz idő: {format_time(total_time)} ({total_time} sec)")
-        
-        # Timer hozzáadás
-        timer_id = f"commander_{commander_id}"
-        task_id = f"commander_{commander_id}_restart"
-        
-        log.info(f"[Gathering] Timer beállítása: {timer_id}")
-        log.info(f"[Gathering]   Deadline: {total_time} sec múlva")
-        log.info(f"[Gathering]   Callback task: {task_id}")
-        
-        timer_manager.add_timer(
-            timer_id=timer_id,
-            deadline_seconds=total_time,
-            task_id=task_id,
-            task_type="gathering",
-            data={"commander_id": commander_id}
-        )
-        
-        log.success(f"[Gathering] Commander #{commander_id} timer beállítva: {format_time(total_time)} múlva restart")
         
         log.separator('=', 60)
         log.success(f"[Gathering] Commander #{commander_id} SIKERES BEFEJEZÉS")
         log.separator('=', 60)
-        
-        return "SUCCESS"
     
-    def _read_all_resources(self):
-        """Összes erőforrás OCR kiolvasása"""
-        log.separator('-', 60)
-        log.info("[Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA")
-        log.separator('-', 60)
-        
-        resources = {}
-        success_count = 0
-        skip_count = 0
-        
-        for resource_name, region in self.farm_regions.items():
-            if region is None:
-                log.info(f"[Gathering] {resource_name.upper()}: Region nincs beállítva, skip")
-                skip_count += 1
-                continue
-            
-            log.ocr(f"[Gathering] {resource_name.upper()} OCR → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
-            
-            ocr_text = ImageManager.read_text_from_region(region)
-            log.info(f"[Gathering] {resource_name.upper()} OCR nyers: '{ocr_text}'")
-            
-            value = parse_resource_value(ocr_text)
-            resources[resource_name] = value
-            
-            log.success(f"[Gathering] {resource_name.upper()}: {ocr_text} → {value:,}")
-            success_count += 1
-        
-        log.separator('-', 60)
-        log.success(f"[Gathering] OCR befejezve: {success_count} resource OK, {skip_count} skip")
-        log.separator('-', 60)
-        
-        return resources
-    
-    def _select_minimum_resource(self, resources):
-        """Legkisebb erőforrás kiválasztása (osztással)"""
-        log.separator('-', 60)
-        log.info("[Gathering] 🧮 ERŐFORRÁS ÉRTÉKELÉS")
-        log.separator('-', 60)
-        
-        values = {}
-        for res, amount in resources.items():
-            if res == 'wheat' or res == 'wood':
-                divisor = 4
-            elif res == 'stone':
-                divisor = 3
-            elif res == 'gold':
-                divisor = 2
-            else:
-                divisor = 1
-            
-            values[res] = amount / divisor
-            log.info(f"[Gathering]   {res.upper()}: {amount:,} ÷ {divisor} = {values[res]:,.1f}")
-        
-        min_resource = min(values, key=values.get)
-        
-        log.separator('-', 60)
-        log.success(f"[Gathering]   MINIMUM: {min_resource.upper()} ({values[min_resource]:,.1f})")
-        log.separator('-', 60)
-        
-        return min_resource
-    
-    def _run_single_farm_cycle(self, farm, commander_id):
+    def _run_single_farm(self, commander_id, task_data):
         """
-        Egyetlen farm ciklus futtatása (base_farm logika használata)
+        Egyetlen farm ciklus futtatása
         
-        Args:
-            farm: BaseFarm instance
-            commander_id: Commander ID
-            
+        13 lépés:
+        1. SPACE
+        2. B (térkép)
+        3. Resource icon
+        4. Level button
+        5. Search button
+        5a. March.png detekció (ÚJ)
+        6. Gather button (template match) + RETRY LOGIC
+        7. New troops
+        8. March Time OCR
+        9. March button
+        10. Várakozás (march + 1 sec)
+        11. Képernyő közép
+        12. Gather Time OCR + VALIDÁCIÓ (max 2h)
+        13. SPACE
+        
         Returns:
-            dict: {'march_time': X, 'gather_time': Y} vagy "RESTART"
+            dict: {'march_time': X, 'gather_time': Y} vagy "RETRY_LATER" vagy "RESTART"
         """
-        log.separator('-', 60)
-        log.info(f"[Gathering] 🚜 FARM FOLYAMAT: {farm.farm_type.upper()}")
-        log.separator('-', 60)
-        
         try:
+            farm = self.farms.get(self.selected_resource)
+            
+            log.info(f"[Gathering] Step 1/5: Resource OCR")
+            log.separator('-', 60)
+            log.info(f"[Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA")
+            log.separator('-', 60)
+            
+            # Erőforrások újraolvasása
+            self._select_lowest_resource()
+            farm = self.farms.get(self.selected_resource)
+            
+            log.info(f"[Gathering] Step 2/5: Térkép navigáció")
+            log.separator('-', 60)
+            log.info(f"[Gathering] 🗺️ TÉRKÉP MEGNYITÁSA")
+            log.separator('-', 60)
+            
             # 1. SPACE
             log.info(f"[Gathering] [1/13] SPACE billentyű")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
@@ -302,6 +270,11 @@ class GatheringManager:
             log.action("[Gathering] B billentyű lenyomása")
             press_key('b')
             log.success(f"[Gathering] B OK")
+            
+            log.info(f"[Gathering] Step 3/5: Farm keresés")
+            log.separator('-', 60)
+            log.info(f"[Gathering] 🔍 {self.selected_resource.upper()} FARM KERESÉS")
+            log.separator('-', 60)
             
             # 3. Resource icon
             log.info(f"[Gathering] [3/13] Resource icon kattintás")
@@ -333,7 +306,87 @@ class GatheringManager:
             safe_click(coords)
             log.success(f"[Gathering] Search button OK")
             
-            # 6. Gather button (template match)
+            # ===== ÚJ: 5a. March.png detekció =====
+            log.info(f"[Gathering] [5a/13] March.png detekció")
+            delay = wait_random(self.human_wait_min, self.human_wait_max)
+            time.sleep(delay)
+            
+            march_template = self.images_dir / 'march.png'
+            
+            if not march_template.exists():
+                log.warning(f"[Gathering] march.png template nem található: {march_template}")
+                log.info("[Gathering] Setup Wizard-dal készítsd el (Gathering > March.png Template)")
+            else:
+                log.search(f"[Gathering] march.png keresés...")
+                
+                # Ha van megadott régió, csak ott keresünk
+                if self.march_detection_region:
+                    region = self.march_detection_region
+                    log.info(f"[Gathering] Keresés régióban: (x:{region['x']}, y:{region['y']}, w:{region['width']}, h:{region['height']})")
+                    
+                    # Screenshot a régióból
+                    from PIL import ImageGrab
+                    import cv2
+                    import numpy as np
+                    
+                    x, y, w, h = region['x'], region['y'], region['width'], region['height']
+                    region_img = ImageGrab.grab(bbox=(x, y, x + w, y + h))
+                    
+                    # Template matching a régióban
+                    region_np = cv2.cvtColor(np.array(region_img), cv2.COLOR_RGB2BGR)
+                    template = cv2.imread(str(march_template))
+                    
+                    if template is not None:
+                        result = cv2.matchTemplate(region_np, template, cv2.TM_CCOEFF_NORMED)
+                        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+                        
+                        if max_val >= 0.7:
+                            # Relatív koordináta → abszolút
+                            match_x = x + max_loc[0] + template.shape[1] // 2
+                            match_y = y + max_loc[1] + template.shape[0] // 2
+                            
+                            log.warning(f"[Gathering] march.png megtalálva régióban → ({match_x}, {match_y})")
+                            log.warning("[Gathering] Commander már úton van!")
+                            log.info("[Gathering] Visszalépés és 5 perc retry")
+                            
+                            # Képernyő közép kattintás (bezárás)
+                            screen_center = get_screen_center()
+                            log.click(f"[Gathering] Képernyő közép → {screen_center}")
+                            safe_click(screen_center)
+                            time.sleep(1)
+                            
+                            # SPACE
+                            log.action("[Gathering] SPACE lenyomása")
+                            press_key('space')
+                            
+                            # 5 perc múlva újra
+                            task_id = f"commander_{commander_id}_restart"
+                            
+                            timer_manager.add_timer(
+                                timer_id=f"commander_{commander_id}_march_retry",
+                                deadline_seconds=300,
+                                task_id=task_id,
+                                task_type="gathering",
+                                data=task_data
+                            )
+                            
+                            log.success(f"[Gathering] Commander #{commander_id} retry: 5 perc múlva")
+                            return "RETRY_LATER"
+                        else:
+                            log.success("[Gathering] march.png nem található régióban - commander elérhető")
+                    else:
+                        log.warning("[Gathering] march.png template betöltési hiba!")
+                else:
+                    log.warning("[Gathering] march_detection_region nincs beállítva!")
+                    log.info("[Gathering] Setup Wizard-dal állítsd be (Gathering > March Detection Region)")
+                    log.info("[Gathering] March detekció kihagyva...")
+            
+            log.info(f"[Gathering] Step 4/5: Farm process")
+            log.separator('-', 60)
+            log.info(f"[Gathering] 🎯 GATHERING INDÍTÁS")
+            log.separator('-', 60)
+            
+            # ===== 6. Gather button (JAVÍTOTT RETRY LOGIC) =====
             log.info(f"[Gathering] [6/13] Gather button keresés")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
@@ -344,9 +397,26 @@ class GatheringManager:
             
             if not gather_coords:
                 log.error("[Gathering] Gather gomb nem található!")
+                log.warning("[Gathering] Commander valószínűleg még úton van")
+                log.info("[Gathering] Task visszatéve queue-ba 5 perc múlvára")
+                
+                # Bezárás (1x SPACE)
                 log.action("[Gathering] SPACE lenyomása (bezárás)")
                 press_key('space')
-                return "RESTART"
+                
+                # 5 perc múlva újra
+                task_id = f"commander_{commander_id}_restart"
+                
+                timer_manager.add_timer(
+                    timer_id=f"commander_{commander_id}_gather_retry",
+                    deadline_seconds=300,
+                    task_id=task_id,
+                    task_type="gathering",
+                    data=task_data
+                )
+                
+                log.success(f"[Gathering] Commander #{commander_id} retry: 5 perc múlva")
+                return "RETRY_LATER"
             
             log.success(f"[Gathering] Gather gomb megtalálva → {gather_coords}")
             log.click(f"[Gathering] Gather gomb kattintás")
@@ -406,7 +476,7 @@ class GatheringManager:
             safe_click(coords)
             log.success(f"[Gathering] Screen center OK")
             
-            # 12. Gather Time OCR (retry 60x, 1.0 sec)
+            # ===== 12. Gather Time OCR (JAVÍTOTT - VALIDÁCIÓ + RETRY) =====
             log.info(f"[Gathering] [12/13] Gather Time OCR (max 60 retry)")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
@@ -415,11 +485,15 @@ class GatheringManager:
             gather_time = None
             for attempt in range(60):
                 log.ocr(f"[Gathering] Gather Time kiolvasás (kísérlet {attempt+1}/60)...")
-                gather_time = farm.read_time('gather_time')
+                temp_time = farm.read_time('gather_time')
                 
-                if gather_time is not None:
+                # VALIDÁCIÓ: max 2 óra (7200 sec)
+                if temp_time and temp_time <= 7200:
+                    gather_time = temp_time
                     log.success(f"[Gathering] Gather Time: {format_time(gather_time)} ({gather_time} sec) - {attempt+1}. próba")
                     break
+                elif temp_time and temp_time > 7200:
+                    log.warning(f"[Gathering] Gather Time túl nagy: {format_time(temp_time)} > 2h, retry...")
                 
                 if (attempt + 1) % 10 == 0:
                     log.warning(f"[Gathering] Gather Time OCR hiba ({attempt+1}/60), retry...")
@@ -427,9 +501,25 @@ class GatheringManager:
                 time.sleep(1.0)
             
             if gather_time is None:
-                gather_time = self.default_gather_time
-                log.error(f"[Gathering] Gather Time OCR véglegesen sikertelen!")
-                log.warning(f"[Gathering] Default érték használata: {gather_time} sec")
+                log.error(f"[Gathering] Gather Time OCR 60 próba után sikertelen!")
+                log.info("[Gathering] Task visszatéve queue-ba 5 perc múlvára")
+                
+                # Bezárás
+                press_key('space')
+                
+                # 5 perc retry
+                task_id = f"commander_{commander_id}_restart"
+                
+                timer_manager.add_timer(
+                    timer_id=f"commander_{commander_id}_gather_time_retry",
+                    deadline_seconds=300,
+                    task_id=task_id,
+                    task_type="gathering",
+                    data=task_data
+                )
+                
+                log.success(f"[Gathering] Commander #{commander_id} retry: 5 perc múlva")
+                return "RETRY_LATER"
             
             # 13. SPACE (bezárás)
             log.info(f"[Gathering] [13/13] SPACE (bezárás)")
@@ -443,6 +533,31 @@ class GatheringManager:
             log.separator('-', 60)
             log.success(f"[Gathering] Farm ciklus befejezve: March={format_time(march_time)}, Gather={format_time(gather_time)}")
             log.separator('-', 60)
+            
+            log.success(f"[Gathering] Farm process OK")
+            
+            log.info(f"[Gathering] Step 5/5: Timer beállítása")
+            
+            # Timer beállítás
+            total_time = march_time + gather_time
+            
+            log.info(f"[Gathering] Commander #{commander_id} - March time: {format_time(march_time)} ({march_time} sec)")
+            log.info(f"[Gathering] Commander #{commander_id} - Gather time: {format_time(gather_time)} ({gather_time} sec)")
+            log.info(f"[Gathering] Commander #{commander_id} - Össz idő: {format_time(total_time)} ({total_time} sec)")
+            
+            log.info(f"[Gathering] Timer beállítása: commander_{commander_id}")
+            log.info(f"[Gathering]   Deadline: {total_time} sec múlva")
+            log.info(f"[Gathering]   Callback task: commander_{commander_id}_restart")
+            
+            timer_manager.add_timer(
+                timer_id=f"commander_{commander_id}",
+                deadline_seconds=total_time,
+                task_id=f"commander_{commander_id}_restart",
+                task_type="gathering",
+                data=task_data
+            )
+            
+            log.success(f"[Gathering] Commander #{commander_id} timer beállítva: {format_time(total_time)} múlva restart")
             
             return {
                 'march_time': march_time,

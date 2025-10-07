@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "timer_id": "training_siege",
+    "deadline": "2025-10-09 10:47:46",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "siege_restart",
+      "task_type": "training",
+      "data": {
+        "building": "siege"
+      }
+    }
+  }
+]

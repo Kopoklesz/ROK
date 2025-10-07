@@ -1,10 +1,12 @@
 {
   "gathering": {
-    "max_commanders": 3,
+    "max_commanders": 5,
     "commanders": [
       {"id": 1, "enabled": true},
       {"id": 2, "enabled": true},
-      {"id": 3, "enabled": true}
+      {"id": 3, "enabled": true},
+      {"id": 4, "enabled": true},
+      {"id": 5, "enabled": false}
     ]
   },
   
@@ -16,7 +18,7 @@
         "prep_time_seconds": 300
       },
       "archery": {
-        "enabled": false,
+        "enabled": true,
         "troop_type": "tier1_archer",
         "prep_time_seconds": 300
       },
@@ -26,7 +28,7 @@
         "prep_time_seconds": 300
       },
       "siege": {
-        "enabled": false,
+        "enabled": true,
         "troop_type": "tier1_siege",
         "prep_time_seconds": 300
       }
@@ -35,7 +37,7 @@
   
   "alliance": {
     "enabled": true,
-    "check_interval_seconds": 1800
+    "check_interval_seconds": 300
   },
   
   "anti_afk": {

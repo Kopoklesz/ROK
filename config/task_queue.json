@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "task_id": "barracks_restart",
+    "type": "training",
+    "timestamp": "2025-10-07 23:14:24",
+    "data": {
+      "building": "barracks"
+    }
+  }
+]

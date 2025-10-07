@@ -1,6 +1,7 @@
 """
 Auto Farm - Logger
 Színes, részletes logging minden művelethez + File logging + Log rotáció
+MÓDOSÍTVA: Mozgás tracking (click, action, search) Anti-AFK számára
 """
 from datetime import datetime
 from pathlib import Path
@@ -8,7 +9,7 @@ import threading
 
 
 class FarmLogger:
-    """Részletes logging rendszer file logging-gal"""
+    """Részletes logging rendszer file logging-gal + movement tracking"""
     
     COLORS = {
         'RESET': '\033[0m',
@@ -25,6 +26,7 @@ class FarmLogger:
     _log_file = None
     _log_lock = threading.Lock()
     _last_log_time = None
+    _last_movement_time = None  # ✅ ÚJ: Utolsó mozgás ideje (click/action/search)
     _logs_dir = None
     
     @classmethod
@@ -104,6 +106,24 @@ class FarmLogger:
                 except:
                     pass
     
+    @classmethod
+    def register_movement(cls):
+        """
+        ✅ ÚJ: Mozgás regisztrálása (click, action, search)
+        Anti-AFK idle detection használja
+        """
+        cls._last_movement_time = datetime.now()
+    
+    @classmethod
+    def get_last_movement_time(cls):
+        """
+        ✅ ÚJ: Utolsó mozgás időpontja
+        
+        Returns:
+            datetime: Utolsó mozgás vagy None
+        """
+        return cls._last_movement_time
+    
     @staticmethod
     def _timestamp():
         """Időbélyeg generálás"""
@@ -160,7 +180,9 @@ class FarmLogger:
     
     @staticmethod
     def action(message):
-        """Akció végrehajtás (cián)"""
+        """Akció végrehajtás (cián) - ✅ MOZGÁS"""
+        FarmLogger.register_movement()  # ✅ Mozgás regisztrálása
+        
         timestamp = FarmLogger._timestamp()
         colored_msg = f"[{timestamp}] 🎬 {FarmLogger._color(message, 'CYAN')}"
         plain_msg = f"[{timestamp}] 🎬 {message}"
@@ -189,7 +211,9 @@ class FarmLogger:
     
     @staticmethod
     def click(message):
-        """Kattintás"""
+        """Kattintás - ✅ MOZGÁS"""
+        FarmLogger.register_movement()  # ✅ Mozgás regisztrálása
+        
         timestamp = FarmLogger._timestamp()
         msg = f"[{timestamp}] 🖱️  {message}"
         
@@ -198,7 +222,9 @@ class FarmLogger:
     
     @staticmethod
     def search(message):
-        """Keresés"""
+        """Keresés - ✅ MOZGÁS"""
+        FarmLogger.register_movement()  # ✅ Mozgás regisztrálása
+        
         timestamp = FarmLogger._timestamp()
         msg = f"[{timestamp}] 🔍 {message}"
         
@@ -215,7 +241,7 @@ class FarmLogger:
     @staticmethod
     def get_last_log_time():
         """
-        Utolsó log timestamp lekérése (Anti-AFK használja)
+        Utolsó log timestamp lekérése (backward compatibility)
         
         Returns:
             datetime: Utolsó log időpontja vagy None

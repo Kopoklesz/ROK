@@ -1,90 +1,90 @@
 {
-    "barracks": {
-        "troop_gather": [
-            0,
-            0
-        ],
-        "building": [
-            0,
-            0
-        ],
-        "button": [
-            0,
-            0
-        ],
-        "tier": [
-            0,
-            0
-        ],
-        "confirm": [
-            0,
-            0
-        ]
-    },
-    "archery": {
-        "troop_gather": [
-            0,
-            0
-        ],
-        "building": [
-            0,
-            0
-        ],
-        "button": [
-            0,
-            0
-        ],
-        "tier": [
-            0,
-            0
-        ],
-        "confirm": [
-            0,
-            0
-        ]
-    },
-    "stable": {
-        "troop_gather": [
-            0,
-            0
-        ],
-        "building": [
-            0,
-            0
-        ],
-        "button": [
-            0,
-            0
-        ],
-        "tier": [
-            0,
-            0
-        ],
-        "confirm": [
-            0,
-            0
-        ]
-    },
-    "siege": {
-        "troop_gather": [
-            0,
-            0
-        ],
-        "building": [
-            0,
-            0
-        ],
-        "button": [
-            0,
-            0
-        ],
-        "tier": [
-            0,
-            0
-        ],
-        "confirm": [
-            0,
-            0
-        ]
-    }
+  "barracks": {
+    "troop_gather": [
+      1181,
+      277
+    ],
+    "building": [
+      1181,
+      277
+    ],
+    "button": [
+      1388,
+      483
+    ],
+    "tier": [
+      1243,
+      262
+    ],
+    "confirm": [
+      1479,
+      885
+    ]
+  },
+  "archery": {
+    "troop_gather": [
+      1602,
+      559
+    ],
+    "building": [
+      1602,
+      559
+    ],
+    "button": [
+      1811,
+      767
+    ],
+    "tier": [
+      1248,
+      262
+    ],
+    "confirm": [
+      1477,
+      892
+    ]
+  },
+  "stable": {
+    "troop_gather": [
+      1412,
+      701
+    ],
+    "building": [
+      1412,
+      701
+    ],
+    "button": [
+      1609,
+      862
+    ],
+    "tier": [
+      1263,
+      292
+    ],
+    "confirm": [
+      1479,
+      880
+    ]
+  },
+  "siege": {
+    "troop_gather": [
+      1396,
+      403
+    ],
+    "building": [
+      1396,
+      403
+    ],
+    "button": [
+      1571,
+      612
+    ],
+    "tier": [
+      942,
+      265
+    ],
+    "confirm": [
+      1474,
+      886
+    ]
+  }
 }
