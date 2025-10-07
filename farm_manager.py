@@ -112,7 +112,7 @@ def main():
     log.separator('=', 60)
     
     # Első commanders start (queue-ba)
-    gathering_manager.initial_start_all_commanders()
+    gathering_manager.start()
     
     # ===== 7. TRAINING MANAGER START =====
     log.separator('=', 60)

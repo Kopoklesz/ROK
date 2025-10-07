@@ -138,19 +138,47 @@ class GatheringManager:
         - stone: ÷3
         - gold: ÷2
         """
+        from utils.ocr_parser import parse_resource_value
+        
         log.info("[Gathering] Erőforrások kiolvasása...")
+        
+        # Resource regions betöltése
+        resource_regions_file = self.config_dir / 'resource_regions.json'
+        if not resource_regions_file.exists():
+            log.error("[Gathering] resource_regions.json nem található!")
+            self.selected_resource = 'wheat'  # default
+            return
+        
+        with open(resource_regions_file, 'r', encoding='utf-8') as f:
+            resource_regions = json.load(f)
         
         resources = {}
         
-        for resource_type, farm in self.farms.items():
-            value = farm.read_resource_value()
+        # OCR minden erőforrásra
+        for resource_type in ['wheat', 'wood', 'stone', 'gold']:
+            region = resource_regions.get(resource_type)
             
-            if value is None:
-                log.warning(f"[Gathering] {resource_type.upper()} OCR hiba, skip")
+            if not region:
+                log.warning(f"[Gathering] {resource_type.upper()} régió nincs beállítva, skip")
                 continue
             
-            resources[resource_type] = value
-            log.info(f"[Gathering] {resource_type.upper()}: {value:,}")
+            log.ocr(f"[Gathering] {resource_type.upper()} OCR → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
+            
+            ocr_text = ImageManager.read_text_from_region(region)
+            
+            if not ocr_text:
+                log.warning(f"[Gathering] {resource_type.upper()} OCR üres, skip")
+                continue
+            
+            log.info(f"[Gathering] {resource_type.upper()} OCR nyers: '{ocr_text}'")
+            
+            value = parse_resource_value(ocr_text)
+            
+            if value > 0:
+                resources[resource_type] = value
+                log.success(f"[Gathering] {resource_type.upper()}: {ocr_text} → {value:,}")
+            else:
+                log.warning(f"[Gathering] {resource_type.upper()} parse hiba: '{ocr_text}', skip")
         
         if not resources:
             log.error("[Gathering] Egyik erőforrás sem olvasható!")
