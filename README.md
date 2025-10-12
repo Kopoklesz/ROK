@@ -140,3 +140,18 @@ python farm_manager.py
 ---
 
 **Ha minden kész, jó farmolást!** 🌾🚜
+
+
+
+**Jövő**
+
+-Szövetségi rally csatlakozás
+-Szövetségi rally indítás
+-Fő épület fejlesztés
+
+**Javítás**
+
+-Szövetségi segítségnyújtás
+-Fagyás elleni védelem
+-Város nézet elleni védelem
+-Szövetségi 
