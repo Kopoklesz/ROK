@@ -173,7 +173,7 @@ class GatheringManager:
             return
         
         # Osztás + legkisebb kiválasztása
-        divisors = {'wheat': 4, 'wood': 4, 'stone': 3, 'gold': 2}
+        divisors = {'wheat': 2, 'wood': 2, 'stone': 3, 'gold': 4}
         
         adjusted = {}
         for resource_type, value in resources.items():

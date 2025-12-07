@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "timer_id": "commander_1_gather_retry",
+    "deadline": "2025-12-07 08:13:44",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "commander_1_restart",
+      "task_type": "gathering",
+      "data": {
+        "commander_id": 1
+      }
+    }
+  }
+]

@@ -98,7 +98,7 @@ class TrainingManager:
         log.info("[Training] Kezdeti OCR check minden enabled building-re")
         
         for building_name, building_config in self.buildings.items():
-            enabled = building_config.get('enabled', False)
+            enabled = building_config.get('disabled', False)
             
             if not enabled:
                 log.info(f"[Training] {building_name.upper()}: Disabled, skip")
