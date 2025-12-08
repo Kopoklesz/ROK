@@ -16,6 +16,7 @@ from managers.gathering_manager import gathering_manager
 from managers.training_manager import training_manager
 from managers.alliance_manager import alliance_manager
 from managers.anti_afk_manager import anti_afk_manager
+from managers.connection_monitor import connection_monitor
 
 
 def signal_handler(sig, frame):
@@ -25,15 +26,18 @@ def signal_handler(sig, frame):
     log.separator('#', 60)
     
     # Managers leállítás
+    log.info("Connection Monitor leállítás...")
+    connection_monitor.stop()
+
     log.info("Timer Manager leállítás...")
     timer_manager.stop()
-    
+
     log.info("Training Manager leállítás...")
     training_manager.stop()
-    
+
     log.info("Alliance Manager leállítás...")
     alliance_manager.stop()
-    
+
     log.info("Anti-AFK Manager leállítás...")
     anti_afk_manager.stop()
     
@@ -85,17 +89,23 @@ def main():
     log.separator('=', 60)
     log.info("Queue Manager inicializálás...")
     log.separator('=', 60)
-    
+
+    # STARTUP CLEANUP: Régi taskok törlése
+    queue_manager.cleanup_on_startup()
+
     queue_size = queue_manager.get_queue_size()
     log.info(f"Queue betöltve: {queue_size} task")
-    
+
     # ===== 4. TIMER MANAGER START =====
     log.separator('=', 60)
     log.info("Timer Manager indítás...")
     log.separator('=', 60)
-    
+
+    # STARTUP CLEANUP: Régi timerek törlése
+    timer_manager.cleanup_on_startup()
+
     timer_manager.start()
-    
+
     timers = timer_manager.get_all_timers()
     log.info(f"Aktív timer-ek: {len(timers)} db")
     
@@ -132,10 +142,17 @@ def main():
     log.separator('=', 60)
     log.info("Anti-AFK Manager indítás...")
     log.separator('=', 60)
-    
+
     anti_afk_manager.start()
-    
-    # ===== 10. MAIN LOOP =====
+
+    # ===== 10. CONNECTION MONITOR START =====
+    log.separator('=', 60)
+    log.info("Connection Monitor indítás...")
+    log.separator('=', 60)
+
+    connection_monitor.start()
+
+    # ===== 11. MAIN LOOP =====
     log.separator('#', 60)
     log.success("✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK")
     log.separator('#', 60)

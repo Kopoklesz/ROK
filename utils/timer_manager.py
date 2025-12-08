@@ -93,13 +93,29 @@ class TimerManager:
     def get_all_timers(self):
         """
         Összes timer lista
-        
+
         Returns:
             list: Timer lista (másolat)
         """
         with self.lock:
             return [t.copy() for t in self.timers]
-    
+
+    def cleanup_on_startup(self):
+        """
+        Induláskor régi/lejárt timerek törlése
+
+        Törli:
+        - Összes timert (clean slate)
+        """
+        with self.lock:
+            count = len(self.timers)
+            if count > 0:
+                self.timers = []
+                self._log_action(f"[STARTUP CLEANUP] Timerek törölve ({count} régi timer eltávolítva)")
+                self.save_to_file()
+            else:
+                self._log_action("[STARTUP CLEANUP] Nincs régi timer, tiszta slate")
+
     def start(self):
         """Háttérszál indítása"""
         if self.running:

@@ -27,47 +27,51 @@ class QueueManager:
         # Automatikus betöltés
         self.load_from_file()
     
-    def add_task(self, task_id, task_type, data=None):
+    def add_task(self, task_id, task_type, data=None, status="pending"):
         """
         Task hozzáadása queue végére
-        
+
         Args:
             task_id: Egyedi azonosító (pl. "commander_1_restart")
             task_type: Task típus ("gathering", "training", "alliance", "anti_afk")
             data: Opcionális extra adat (dict)
+            status: Task állapot ("pending", "sending", "marching", "gathering", "returning")
         """
         with self.lock:
             task = {
                 "task_id": task_id,
                 "type": task_type,
+                "status": status,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "data": data or {}
             }
-            
+
             self.queue.append(task)
-            self._log_action(f"Task hozzáadva: {task_id} ({task_type})")
+            self._log_action(f"Task hozzáadva: {task_id} ({task_type}, status={status})")
             self.save_to_file()
     
-    def add_priority_task(self, task_id, task_type, data=None):
+    def add_priority_task(self, task_id, task_type, data=None, status="pending"):
         """
         PRIORITÁSOS task hozzáadása (queue elejére)
         Anti-AFK használja
-        
+
         Args:
             task_id: Egyedi azonosító
             task_type: Task típus
             data: Opcionális extra adat
+            status: Task állapot
         """
         with self.lock:
             task = {
                 "task_id": task_id,
                 "type": task_type,
+                "status": status,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "data": data or {}
             }
-            
+
             self.queue.insert(0, task)  # Elejére!
-            self._log_action(f"PRIORITÁS task hozzáadva: {task_id} ({task_type})")
+            self._log_action(f"PRIORITÁS task hozzáadva: {task_id} ({task_type}, status={status})")
             self.save_to_file()
     
     def get_next_task(self):
@@ -136,12 +140,77 @@ class QueueManager:
             self.queue = []
             self._log_action(f"Queue törölve ({count} task)")
             self.save_to_file()
+
+    def cleanup_on_startup(self):
+        """
+        Induláskor régi/érvénytelen taskok törlése
+
+        Törli:
+        - Összes taskot (clean slate)
+        """
+        with self.lock:
+            count = len(self.queue)
+            if count > 0:
+                self.queue = []
+                self._log_action(f"[STARTUP CLEANUP] Queue törölve ({count} régi task eltávolítva)")
+                self.save_to_file()
+            else:
+                self._log_action("[STARTUP CLEANUP] Queue üres, nincs teendő")
     
     def get_queue_size(self):
         """Queue méret"""
         with self.lock:
             return len(self.queue)
-    
+
+    def update_task_status(self, task_id, status):
+        """
+        Task állapot frissítése
+
+        Args:
+            task_id: Task azonosító
+            status: Új állapot ("pending", "sending", "marching", "gathering", "returning")
+
+        Returns:
+            bool: Sikeres frissítés
+        """
+        with self.lock:
+            for task in self.queue:
+                if task['task_id'] == task_id:
+                    old_status = task.get('status', 'unknown')
+                    task['status'] = status
+                    self._log_action(f"Task status frissítve: {task_id} ({old_status} → {status})")
+                    self.save_to_file()
+                    return True
+
+            return False
+
+    def get_current_task(self):
+        """
+        Aktuális (első) task lekérése törlés NÉLKÜL
+        (Alias peek_next_task-hez, szemantikailag beszédesebb connection monitor számára)
+
+        Returns:
+            dict: Task vagy None ha üres
+        """
+        return self.peek_next_task()
+
+    def requeue_task(self, task):
+        """
+        Task visszahelyezése a queue elejére (pl. connection lost után újraindítás)
+
+        Args:
+            task: Task dict
+        """
+        with self.lock:
+            # Reset status
+            task['status'] = 'pending'
+            task['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Queue elejére
+            self.queue.insert(0, task)
+            self._log_action(f"Task újra queue-ba: {task['task_id']} ({task['type']})")
+            self.save_to_file()
+
     def save_to_file(self):
         """Queue mentése JSON fájlba"""
         try:

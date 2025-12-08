@@ -89,11 +89,8 @@ class GatheringManager:
         log.separator('=', 60)
         log.info("[Gathering] 🌾 COMMANDERS ELSŐ INDÍTÁSA")
         log.separator('=', 60)
-        
-        # Erőforrások beolvasása
-        self._select_lowest_resource()
-        
-        # Minden enabled commander queue-ba
+
+        # Minden enabled commander queue-ba (erőforrás OCR csak a farm ciklusban lesz)
         for commander_config in self.commanders:
             commander_id = commander_config.get('id', 0)
             enabled = commander_config.get('enabled', False)
@@ -129,11 +126,11 @@ class GatheringManager:
     def _select_lowest_resource(self):
         """Erőforrások kiolvasása + legkevesebb választása"""
         log.info("[Gathering] Erőforrások kiolvasása...")
-        
-        # Resource regions betöltése
-        resource_regions_file = self.config_dir / 'resource_regions.json'
+
+        # Resource regions betöltése (FIX: resource_regions.json → farm_regions.json)
+        resource_regions_file = self.config_dir / 'farm_regions.json'
         if not resource_regions_file.exists():
-            log.warning("[Gathering] resource_regions.json nem található, default: wheat")
+            log.warning("[Gathering] farm_regions.json nem található, default: wheat")
             self.selected_resource = 'wheat'
             return
         
@@ -173,7 +170,7 @@ class GatheringManager:
             return
         
         # Osztás + legkisebb kiválasztása
-        divisors = {'wheat': 2, 'wood': 2, 'stone': 3, 'gold': 4}
+        divisors = {'wheat': 4, 'wood': 4, 'stone': 3, 'gold': 2}
         
         adjusted = {}
         for resource_type, value in resources.items():
@@ -361,8 +358,12 @@ class GatheringManager:
                         log.warning(f"[Gathering] march.png megtalálva régióban → ({match_x}, {match_y})")
                         log.warning("[Gathering] Commander már úton van!")
                         log.info("[Gathering] Visszalépés és 5 perc retry")
-                        
+
                         # Képernyő közép kattintás (bezárás)
+                        delay = wait_random(self.human_wait_min, self.human_wait_max)
+                        log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
+                        time.sleep(delay)
+
                         screen_center = get_screen_center()
                         log.click(f"[Gathering] Képernyő közép → {screen_center}")
                         safe_click(screen_center)
@@ -404,8 +405,12 @@ class GatheringManager:
                 log.error("[Gathering] Gather gomb nem található!")
                 log.warning("[Gathering] Commander valószínűleg még úton van")
                 log.info("[Gathering] Task visszatéve queue-ba 5 perc múlvára")
-                
+
                 # Bezárás (1x SPACE)
+                delay = wait_random(self.human_wait_min, self.human_wait_max)
+                log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
+                time.sleep(delay)
+
                 log.action("[Gathering] SPACE lenyomása (bezárás)")
                 press_key('space')
                 
@@ -422,6 +427,11 @@ class GatheringManager:
                 return "RETRY_LATER"
             
             log.success(f"[Gathering] Gather gomb megtalálva → {gather_coords}")
+
+            delay = wait_random(self.human_wait_min, self.human_wait_max)
+            log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
+            time.sleep(delay)
+
             log.click(f"[Gathering] Gather gomb kattintás")
             safe_click(gather_coords)
             log.success(f"[Gathering] Gather button OK")
@@ -461,11 +471,14 @@ class GatheringManager:
             safe_click(coords)
             log.success(f"[Gathering] March button OK")
             
-            # 10. Várakozás (march + 1 sec)
-            log.info(f"[Gathering] [10/13] Várakozás march time + 1 sec")
+            # 10. Várakozás (march + 1 sec) + Alliance help közben
+            log.info(f"[Gathering] [10/13] Várakozás march time + 1 sec (alliance help check közben)")
             wait_duration = march_time + 1
-            log.wait(f"[Gathering] Várakozás {wait_duration} sec (march time + 1)")
-            time.sleep(wait_duration)
+            log.wait(f"[Gathering] Várakozás {wait_duration} sec (march time + 1, alliance help check minden 5 sec)")
+
+            # Marching wait alliance help check-kel
+            self._wait_with_alliance_help_check(wait_duration)
+
             log.success(f"[Gathering] Várakozás OK")
             
             # 11. Képernyő közepe
@@ -506,8 +519,12 @@ class GatheringManager:
             if gather_time is None:
                 log.error(f"[Gathering] Gather Time OCR 60 próba után sikertelen!")
                 log.info("[Gathering] Task visszatéve queue-ba 5 perc múlvára")
-                
+
                 # Bezárás
+                delay = wait_random(self.human_wait_min, self.human_wait_max)
+                log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
+                time.sleep(delay)
+
                 press_key('space')
                 
                 # 5 perc retry
@@ -549,6 +566,79 @@ class GatheringManager:
             import traceback
             traceback.print_exc()
             return "RESTART"
+
+    def _wait_with_alliance_help_check(self, wait_duration):
+        """
+        Várakozás alliance help check-kel
+
+        Marching közben 5 másodpercenként ellenőrzi az alliance hand png-t
+        az 1-es pozícióban. Ha megtalálja → kattintás.
+
+        Args:
+            wait_duration: Várakozási idő (másodperc)
+        """
+        from managers.alliance_manager import alliance_manager
+
+        elapsed = 0
+        check_interval = 5  # 5 másodpercenként ellenőrzés
+
+        hand_template = self.images_dir / 'hand.png'
+        hand_locations = self._load_alliance_coords().get('hand_locations', [])
+
+        while elapsed < wait_duration:
+            # Várakozás 5 másodpercig (vagy ami még hátravan)
+            wait_time = min(check_interval, wait_duration - elapsed)
+            time.sleep(wait_time)
+            elapsed += wait_time
+
+            # Alliance help check (csak az 1-es pozíció)
+            if hand_locations and len(hand_locations) > 0:
+                location_1 = hand_locations[0]
+                x, y = location_1.get('x', 0), location_1.get('y', 0)
+
+                log.info(f"[Gathering] Alliance help check (marching közben, {elapsed}s / {wait_duration}s)")
+
+                # Template matching az 1-es pozícióban
+                if hand_template.exists():
+                    # Kicsi régió az 1-es pozíció körül (pl. 100x100 px)
+                    # ImageManager.find_image használata (nincs find_image_in_region!)
+                    # Teljes képernyőn keres, de az eredményt ellenőrizzük hogy a régióban van-e
+                    coords = ImageManager.find_image(str(hand_template), threshold=0.6)
+
+                    # Ellenőrzés: a koordináta a fix pont körüli régióban van-e?
+                    if coords:
+                        region_x_min = max(0, x - 50)
+                        region_y_min = max(0, y - 50)
+                        region_x_max = x + 50
+                        region_y_max = y + 50
+
+                        found_x, found_y = coords
+                        if not (region_x_min <= found_x <= region_x_max and region_y_min <= found_y <= region_y_max):
+                            # Kívül esik a régión
+                            coords = None
+
+                    if coords:
+                        log.success(f"[Gathering] Alliance hand MEGTALÁLVA marching közben → {coords}")
+
+                        delay = wait_random(self.human_wait_min, self.human_wait_max)
+                        log.wait(f"[Gathering] Várakozás {delay:.1f} mp (alliance help)")
+                        time.sleep(delay)
+
+                        log.click(f"[Gathering] Alliance help kattintás (marching közben) → {coords}")
+                        safe_click(coords)
+                        log.success("[Gathering] Alliance help OK (marching közben)")
+                    else:
+                        log.info("[Gathering] Alliance hand nem található (marching közben)")
+
+        log.info(f"[Gathering] Marching wait befejezve ({wait_duration}s)")
+
+    def _load_alliance_coords(self):
+        """Alliance coords betöltése"""
+        coords_file = self.config_dir / 'alliance_coords.json'
+        if coords_file.exists():
+            with open(coords_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
 
 
 # Globális singleton instance

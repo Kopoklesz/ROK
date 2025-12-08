@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "check_interval_seconds": 5,
+  "detection_region": {
+    "x": 591,
+    "y": 262,
+    "width": 742,
+    "height": 64
+  },
+  "detection_text": "NETWORK DISCONNECTED",
+  "confirm_button": [
+    968,
+    712
+  ],
+  "recovery_wait_seconds": 120,
+  "default_recovery_time_seconds": 5400
+}

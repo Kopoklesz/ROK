@@ -18,7 +18,7 @@
         "prep_time_seconds": 300
       },
       "archery": {
-        "enabled": true,
+        "enabled": false,
         "troop_type": "tier1_archer",
         "prep_time_seconds": 300
       },
