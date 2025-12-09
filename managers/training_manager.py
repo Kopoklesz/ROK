@@ -265,7 +265,8 @@ class TrainingManager:
 
             # Parse time
             time_sec = parse_time(ocr_text)
-            if time_sec:
+            # Upgrade time mindig >0 kell legyen (nem lehet idle vagy completed)
+            if time_sec is not None and time_sec > 0:
                 log.success(f"[Training] {building_name.upper()} → UPGRADE TIME: {format_time(time_sec)} ({time_sec} sec)")
                 return time_sec
 
@@ -308,15 +309,25 @@ class TrainingManager:
                 log.success(f"[Training] {building_name.upper()} → COMPLETED")
                 return {'type': 'completed', 'value': None}
 
-            # Ellenőrzés: idle? (rugalmas: "idle", "ldle", "ee", "ie", stb.)
-            # OCR gyakran rosszul olvassa: "idle" → "ee" vagy "le" vagy "dle"
-            if re.search(r'(idle|^ee$|^le$|^dle$|^ie$)', ocr_text.lower()):
+            # Próbáljuk parse-olni időként
+            # parse_time() visszatérési értékei:
+            # - None: idle állapot
+            # - 0: completed állapot
+            # - >0: idő másodpercben
+            time_sec = parse_time(ocr_text)
+
+            # None = idle
+            if time_sec is None:
                 log.success(f"[Training] {building_name.upper()} → IDLE (OCR: '{ocr_text}')")
                 return {'type': 'idle', 'value': None}
 
-            # Próbáljuk parse-olni időként
-            time_sec = parse_time(ocr_text)
-            if time_sec:
+            # 0 = completed
+            if time_sec == 0:
+                log.success(f"[Training] {building_name.upper()} → COMPLETED (OCR: '{ocr_text}')")
+                return {'type': 'completed', 'value': 0}
+
+            # >0 = time
+            if time_sec > 0:
                 log.success(f"[Training] {building_name.upper()} → TIME: {format_time(time_sec)} ({time_sec} sec)")
                 return {'type': 'time', 'value': time_sec}
 

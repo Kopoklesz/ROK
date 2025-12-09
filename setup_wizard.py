@@ -1193,6 +1193,51 @@ class SetupWizardMenu:
 
         return False
 
+    def get_single_coordinate(self):
+        """Egyetlen koordináta bekérése kattintással"""
+        coord = [None]
+        cancelled = [False]
+        done = [False]
+
+        def on_click(x, y, button, pressed):
+            if pressed and button == mouse.Button.left:
+                coord[0] = [x, y]
+                done[0] = True
+                print(f"   🖱️ Koordináta: ({x}, {y})")
+                return False
+
+        def on_press(key):
+            try:
+                if key == keyboard.Key.esc:
+                    print(f"   ⏹️  ESC - Kihagyva")
+                    cancelled[0] = True
+                    done[0] = True
+                    return False
+            except:
+                pass
+
+        # Listeners indítása
+        mouse_listener = mouse.Listener(on_click=on_click)
+        keyboard_listener = keyboard.Listener(on_press=on_press)
+
+        mouse_listener.start()
+        keyboard_listener.start()
+
+        # Várakozás bármelyik befejezésére
+        import time
+        while not done[0]:
+            time.sleep(0.1)
+
+        # Listeners leállítása
+        mouse_listener.stop()
+        keyboard_listener.stop()
+
+        # Ha ESC volt, None-t ad vissza
+        if cancelled[0]:
+            return None
+
+        return coord[0]
+
 
 def main():
     """Main entry point"""
