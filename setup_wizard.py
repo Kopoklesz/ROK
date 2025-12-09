@@ -1003,14 +1003,15 @@ class SetupWizardMenu:
         print("  1. Que menü megnyitása")
         print("  2. Que fül bezárása")
         print("  3. Scout fül megnyitása")
-        print("  4-5. Felfedezés % régiók (2 db)")
-        print("  6. Scout bezárása")
-        print("  7. Que fül megnyitása")
-        print("  8. Que menü bezárása")
+        print("  4-6. Felfedezés % régiók (3 db)")
+        print("  7. Scout bezárása")
+        print("  8. Que fül megnyitása")
+        print("  9. Que menü bezárása")
         print("\n📋 EXPLORATION INDÍTÁS:")
-        print("  9. Scout épület")
-        print("  10. Explore gomb")
-        print("\nESC = kihagyás (régi érték megtartása)\n")
+        print("  10. Scout épület")
+        print("  11. Pre-explore gomb (új!)")
+        print("  12. Explore gomb")
+        print("\n⚠️  ENTER = új koordináta beállítása, ESC = régi megtartása\n")
 
         coord_names = [
             'open_queue_menu',      # 1. Que menü megnyitása
@@ -1018,11 +1019,13 @@ class SetupWizardMenu:
             'open_scout_tab',       # 3. Scout fül megnyitása
             'exploration_region_1', # 4. Felfedezés % régió 1 (RÉGIÓ!)
             'exploration_region_2', # 5. Felfedezés % régió 2 (RÉGIÓ!)
-            'close_scout',          # 6. Scout bezárása
-            'open_queue_tab',       # 7. Que fül megnyitása
-            'close_queue_menu',     # 8. Que menü bezárása
-            'scout_building',       # 9. Scout épület
-            'explore_button'        # 10. Explore gomb
+            'exploration_region_3', # 6. Felfedezés % régió 3 (RÉGIÓ!) - ÚJ!
+            'close_scout',          # 7. Scout bezárása
+            'open_queue_tab',       # 8. Que fül megnyitása
+            'close_queue_menu',     # 9. Que menü bezárása
+            'scout_building',       # 10. Scout épület
+            'pre_explore_button',   # 11. Pre-explore gomb - ÚJ!
+            'explore_button'        # 12. Explore gomb
         ]
 
         coord_labels = {
@@ -1031,11 +1034,13 @@ class SetupWizardMenu:
             'open_scout_tab': 'Scout fül megnyitása',
             'exploration_region_1': '📦 Felfedezés % régió 1 (TERÜLET!)',
             'exploration_region_2': '📦 Felfedezés % régió 2 (TERÜLET!)',
+            'exploration_region_3': '📦 Felfedezés % régió 3 (TERÜLET!)',
             'close_scout': 'Scout bezárása',
             'open_queue_tab': 'Que fül megnyitása',
             'close_queue_menu': 'Que menü bezárása',
             'scout_building': 'Scout épület',
-            'explore_button': 'Explore gomb'
+            'pre_explore_button': 'Pre-explore gomb (explore előtt)',
+            'explore_button': 'Explore gomb (végleges)'
         }
 
         # Meglévő koordináták betöltése
@@ -1089,24 +1094,33 @@ class SetupWizardMenu:
                         print(f"   ⚠️ {label} kihagyva")
             else:
                 # Koordináták esetén
+                print("\n" + "-"*60)
+                print(f"📍 {label}")
+                print("-"*60)
+
                 if old_coord:
-                    print(f"\n📍 {label} - Jelenlegi: {old_coord}")
+                    print(f"ℹ️  Jelenlegi: {old_coord}")
                 else:
-                    print(f"\n📍 {label} - Nincs beállítva")
+                    print(f"ℹ️  Nincs beállítva")
 
-                print(f"   Kattints a játékban, vagy ESC = régi megtartása")
+                # ENTER/ESC kérdés (mint a training/gathering-nál)
+                if not self.wait_for_enter_or_esc(f"ENTER = {coord_name} beállítása, ESC = skip"):
+                    if old_coord:
+                        print(f"ℹ️  Régi érték megtartva")
+                    continue
 
+                print(f"\n   🖱️  Kattints a gomb közepére a játékban...")
                 coord = self.get_single_coordinate()
 
                 if coord and coord != [0, 0]:
                     coords[coord_name] = coord
-                    print(f"   ✅ {label} frissítve: {coord}")
+                    print(f"✅ {coord_name} mentve: {coord}")
                 else:
                     if old_coord:
-                        print(f"   ℹ️  {label} régi érték megtartva")
+                        print(f"ℹ️  Régi érték megtartva")
                     else:
                         coords[coord_name] = [0, 0]
-                        print(f"   ⚠️ {label} default: [0, 0]")
+                        print(f"⚠️  Kihagyva, default: [0, 0]")
 
         # Mentés
         with open(coords_file, 'w', encoding='utf-8') as f:

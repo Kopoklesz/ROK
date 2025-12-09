@@ -76,15 +76,16 @@ class Explorer:
         log.click(f"Scout fül megnyitása → ({coords[0]}, {coords[1]})")
         safe_click(coords)
 
-        # 4. Felfedezés % kiolvasása (2 régió)
+        # 4. Felfedezés % kiolvasása (3 régió - frissítve!)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)
 
         region1 = self.coords.get('exploration_region_1', {})
         region2 = self.coords.get('exploration_region_2', {})
+        region3 = self.coords.get('exploration_region_3', {})
 
-        log.ocr("Felfedezés % kiolvasása (2 régió)...")
+        log.ocr("Felfedezés % kiolvasása (3 régió)...")
 
         # Régió 1 kiolvasás
         if region1:
@@ -104,8 +105,17 @@ class Explorer:
             text2 = ""
             log.warning("Régió 2 nincs beállítva")
 
-        # % jelenlétének ellenőrzése
-        has_percent = '%' in text1 or '%' in text2
+        # Régió 3 kiolvasás (ÚJ!)
+        if region3:
+            log.ocr(f"Régió 3 kiolvasása → (x:{region3.get('x',0)}, y:{region3.get('y',0)}, w:{region3.get('width',0)}, h:{region3.get('height',0)})")
+            text3 = ImageManager.read_text_from_region(region3)
+            log.info(f"Régió 3 OCR: '{text3}'")
+        else:
+            text3 = ""
+            log.warning("Régió 3 nincs beállítva")
+
+        # % jelenlétének ellenőrzése (mind a 3 régióban)
+        has_percent = '%' in text1 or '%' in text2 or '%' in text3
 
         if has_percent:
             log.success("✅ Van felfedezés folyamatban (% jel megtalálva)")
@@ -158,7 +168,15 @@ class Explorer:
         log.click(f"Scout épület kattintás → ({coords[0]}, {coords[1]})")
         safe_click(coords)
 
-        # 2. Explore gomb (1. kattintás)
+        # 2. Pre-explore gomb (ÚJ!)
+        delay = wait_random(self.human_wait_min, self.human_wait_max)
+        log.wait(f"Várakozás {delay:.1f} mp")
+        time.sleep(delay)
+        coords = self.coords.get('pre_explore_button', [0, 0])
+        log.click(f"Pre-explore gomb → ({coords[0]}, {coords[1]})")
+        safe_click(coords)
+
+        # 3. Explore gomb (1. kattintás)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)
@@ -166,26 +184,26 @@ class Explorer:
         log.click(f"Explore gomb (1. kattintás) → ({coords[0]}, {coords[1]})")
         safe_click(coords)
 
-        # 3. Fix 1.5 mp várakozás
+        # 4. Fix 1.5 mp várakozás
         log.wait("Fix várakozás 1.5 mp")
         time.sleep(1.5)
 
-        # 4. Explore gomb (2. kattintás)
+        # 5. Explore gomb (2. kattintás)
         log.click(f"Explore gomb (2. kattintás) → ({coords[0]}, {coords[1]})")
         safe_click(coords)
 
-        # 5. Space
+        # 6. Space (1.)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)
-        log.action("SPACE billentyű lenyomása")
+        log.action("SPACE billentyű lenyomása (1.)")
         press_key('space')
 
-        # 6. Space
+        # 7. Space (2.)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)
-        log.action("SPACE billentyű lenyomása")
+        log.action("SPACE billentyű lenyomása (2.)")
         press_key('space')
 
         log.success("✅ Felfedezés elindítva!")
