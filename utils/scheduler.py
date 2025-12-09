@@ -13,12 +13,13 @@ class Scheduler:
         # Jelenleg futó task
         self.current_task = None
         self.task_start_time = None
-        
+
         # Manager importok (később, lazy import)
         self._gathering_manager = None
         self._training_manager = None
         self._alliance_manager = None
         self._anti_afk_manager = None
+        self._explorer = None
     
     def tick(self):
         """
@@ -68,16 +69,19 @@ class Scheduler:
             # Típus alapján manager hívás
             if task_type == 'gathering':
                 self._execute_gathering(task, task_data)
-            
+
             elif task_type == 'training':
                 self._execute_training(task, task_data)
-            
+
             elif task_type == 'alliance':
                 self._execute_alliance(task, task_data)
-            
+
             elif task_type == 'anti_afk':
                 self._execute_anti_afk(task, task_data)
-            
+
+            elif task_type == 'explorer':
+                self._execute_explorer(task, task_data)
+
             else:
                 log.warning(f"Ismeretlen task típus: {task_type}")
             
@@ -129,11 +133,21 @@ class Scheduler:
         if self._anti_afk_manager is None:
             from managers.anti_afk_manager import anti_afk_manager
             self._anti_afk_manager = anti_afk_manager
-        
+
         log.info("Anti-AFK Manager hívás: Resource collection")
-        
+
         self._anti_afk_manager.collect_resources(task_data)
-    
+
+    def _execute_explorer(self, task, task_data):
+        """Explorer task futtatás"""
+        if self._explorer is None:
+            from explorer import Explorer
+            self._explorer = Explorer()
+
+        log.info("Explorer hívás: Felfedezés ellenőrzése")
+
+        self._explorer.run()
+
     def mark_task_started(self, task):
         """
         Task indítás jelzés

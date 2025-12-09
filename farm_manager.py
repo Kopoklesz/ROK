@@ -17,7 +17,7 @@ from managers.training_manager import training_manager
 from managers.alliance_manager import alliance_manager
 from managers.anti_afk_manager import anti_afk_manager
 from managers.connection_monitor import connection_monitor
-from explorer import Explorer
+# Explorer importot nem kell, a scheduler lazy-load-olja
 
 
 def signal_handler(sig, frame):
@@ -117,15 +117,7 @@ def main():
     
     log.success("Scheduler készen áll")
     
-    # ===== 6. EXPLORER INIT =====
-    log.separator('=', 60)
-    log.info("Explorer inicializálás...")
-    log.separator('=', 60)
-
-    explorer = Explorer()
-    log.success("Explorer készen áll")
-
-    # ===== 7. GATHERING MANAGER INIT =====
+    # ===== 6. GATHERING MANAGER INIT =====
     log.separator('=', 60)
     log.info("Gathering Manager inicializálás...")
     log.separator('=', 60)
@@ -133,35 +125,35 @@ def main():
     # Első commanders start (queue-ba)
     gathering_manager.start()
 
-    # ===== 8. TRAINING MANAGER START =====
+    # ===== 7. TRAINING MANAGER START =====
     log.separator('=', 60)
     log.info("Training Manager indítás...")
     log.separator('=', 60)
 
     training_manager.start()
 
-    # ===== 9. ALLIANCE MANAGER START =====
+    # ===== 8. ALLIANCE MANAGER START =====
     log.separator('=', 60)
     log.info("Alliance Manager indítás...")
     log.separator('=', 60)
 
     alliance_manager.start()
 
-    # ===== 10. ANTI-AFK MANAGER START =====
+    # ===== 9. ANTI-AFK MANAGER START =====
     log.separator('=', 60)
     log.info("Anti-AFK Manager indítás...")
     log.separator('=', 60)
 
     anti_afk_manager.start()
 
-    # ===== 11. CONNECTION MONITOR START =====
+    # ===== 10. CONNECTION MONITOR START =====
     log.separator('=', 60)
     log.info("Connection Monitor indítás...")
     log.separator('=', 60)
 
     connection_monitor.start()
 
-    # ===== 12. MAIN LOOP =====
+    # ===== 11. MAIN LOOP =====
     log.separator('#', 60)
     log.success("✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK")
     log.separator('#', 60)
@@ -176,13 +168,10 @@ def main():
         while True:
             tick_count += 1
 
-            # Explorer check (minden 60. tick = 10 perc)
-            if tick_count % 60 == 0:
-                try:
-                    log.info("🔍 Explorer ellenőrzés...")
-                    explorer.run()
-                except Exception as e:
-                    log.warning(f"⚠️ Explorer hiba: {str(e)}")
+            # Explorer task queue-ba (minden 12. tick = 2 perc)
+            if tick_count % 12 == 0:
+                queue_manager.add_task("explorer_check", "explorer")
+                log.info("🔍 Explorer task queue-ba rakva (2 perc)")
 
             # Scheduler tick
             task_executed = scheduler.tick()

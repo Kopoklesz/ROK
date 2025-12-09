@@ -33,7 +33,7 @@ class QueueManager:
 
         Args:
             task_id: Egyedi azonosító (pl. "commander_1_restart")
-            task_type: Task típus ("gathering", "training", "alliance", "anti_afk")
+            task_type: Task típus ("gathering", "training", "alliance", "anti_afk", "explorer")
             data: Opcionális extra adat (dict)
             status: Task állapot ("pending", "sending", "marching", "gathering", "returning")
         """
