@@ -15,6 +15,7 @@ from farms.wheat_farm import WheatFarm
 from farms.wood_farm import WoodFarm
 from farms.stone_farm import StoneFarm
 from farms.gold_farm import GoldFarm
+from explorer import Explorer
 
 
 class FarmManager:
@@ -38,6 +39,9 @@ class FarmManager:
             'stone': StoneFarm(),
             'gold': GoldFarm()
         }
+
+        # Explorer instance
+        self.explorer = Explorer()
     
     def _load_settings(self):
         """Settings.json betöltése"""
@@ -122,11 +126,19 @@ class FarmManager:
         
         while current_cycle < self.max_cycles:
             current_cycle += 1
-            
+
             log.separator('#', 60)
             log.info(f"🔁 CIKLUS {current_cycle}/{self.max_cycles}")
             log.separator('#', 60)
-            
+
+            # 0. Explorer ellenőrzés (minden ciklus elején)
+            try:
+                log.info("🔍 Explorer ellenőrzés...")
+                self.explorer.run()
+            except Exception as e:
+                log.warning(f"⚠️ Explorer hiba: {str(e)}")
+                log.info("Folytatás farmolással...")
+
             # 1. Erőforrás kiolvasás
             resources = self.read_all_resources()
             
