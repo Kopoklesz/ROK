@@ -239,7 +239,7 @@ class TrainingManager:
         log.info(f"[Training] {building_name.upper()} NEM upgrading")
         return (False, None)
 
-    def _read_upgrade_time_from_region(self, region, building_name, region_name, max_attempts=5):
+    def _read_upgrade_time_from_region(self, region, building_name, region_name, max_attempts=15):
         """
         Upgrade time beolvasása egy adott régióból
 
@@ -258,10 +258,10 @@ class TrainingManager:
             ocr_text = ImageManager.read_text_from_region(region)
 
             if not ocr_text:
-                time.sleep(0.5)
+                time.sleep(0.7)
                 continue
 
-            log.info(f"[Training] {building_name.upper()} UPGRADE TIME ({region_name}, kísérlet {attempt}): '{ocr_text}'")
+            log.info(f"[Training] {building_name.upper()} UPGRADE TIME ({region_name}, kísérlet {attempt}/{max_attempts}): '{ocr_text}'")
 
             # Parse time
             time_sec = parse_time(ocr_text)
@@ -270,12 +270,12 @@ class TrainingManager:
                 log.success(f"[Training] {building_name.upper()} → UPGRADE TIME: {format_time(time_sec)} ({time_sec} sec)")
                 return time_sec
 
-            time.sleep(0.5)
+            time.sleep(0.7)
 
         log.warning(f"[Training] {building_name.upper()} UPGRADE TIME OCR sikertelen → fallback 2 óra")
         return 7200
 
-    def _read_training_status(self, building_name, max_attempts=5):
+    def _read_training_status(self, building_name, max_attempts=15):
         """
         Egy building státuszának beolvasása (idő / completed / idle)
 
@@ -299,10 +299,10 @@ class TrainingManager:
             ocr_text = ImageManager.read_text_from_region(region)
 
             if not ocr_text:
-                time.sleep(0.5)
+                time.sleep(0.7)
                 continue
 
-            log.info(f"[Training] {building_name.upper()} OCR nyers szöveg (kísérlet {attempt}): '{ocr_text}'")
+            log.info(f"[Training] {building_name.upper()} OCR nyers szöveg (kísérlet {attempt}/{max_attempts}): '{ocr_text}'")
 
             # Ellenőrzés: completed?
             if re.search(r'completed', ocr_text.lower()):
@@ -331,7 +331,7 @@ class TrainingManager:
                 log.success(f"[Training] {building_name.upper()} → TIME: {format_time(time_sec)} ({time_sec} sec)")
                 return {'type': 'time', 'value': time_sec}
 
-            time.sleep(0.5)
+            time.sleep(0.7)
 
         log.warning(f"[Training] {building_name.upper()} OCR sikertelen {max_attempts} próba után!")
         return {'type': 'unknown', 'value': None}
