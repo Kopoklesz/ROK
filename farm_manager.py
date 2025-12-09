@@ -17,6 +17,7 @@ from managers.training_manager import training_manager
 from managers.alliance_manager import alliance_manager
 from managers.anti_afk_manager import anti_afk_manager
 from managers.connection_monitor import connection_monitor
+from explorer import Explorer
 
 
 def signal_handler(sig, frame):
@@ -51,11 +52,11 @@ def signal_handler(sig, frame):
     # Logger bezárás
     log.info("Logger bezárása...")
     log.close()
-    
+
     log.separator('#', 60)
     log.success("✅ Graceful shutdown befejezve")
     log.separator('#', 60)
-    
+
     sys.exit(0)
 
 
@@ -116,43 +117,51 @@ def main():
     
     log.success("Scheduler készen áll")
     
-    # ===== 6. GATHERING MANAGER INIT =====
+    # ===== 6. EXPLORER INIT =====
+    log.separator('=', 60)
+    log.info("Explorer inicializálás...")
+    log.separator('=', 60)
+
+    explorer = Explorer()
+    log.success("Explorer készen áll")
+
+    # ===== 7. GATHERING MANAGER INIT =====
     log.separator('=', 60)
     log.info("Gathering Manager inicializálás...")
     log.separator('=', 60)
-    
+
     # Első commanders start (queue-ba)
     gathering_manager.start()
-    
-    # ===== 7. TRAINING MANAGER START =====
+
+    # ===== 8. TRAINING MANAGER START =====
     log.separator('=', 60)
     log.info("Training Manager indítás...")
     log.separator('=', 60)
-    
+
     training_manager.start()
-    
-    # ===== 8. ALLIANCE MANAGER START =====
+
+    # ===== 9. ALLIANCE MANAGER START =====
     log.separator('=', 60)
     log.info("Alliance Manager indítás...")
     log.separator('=', 60)
-    
+
     alliance_manager.start()
-    
-    # ===== 9. ANTI-AFK MANAGER START =====
+
+    # ===== 10. ANTI-AFK MANAGER START =====
     log.separator('=', 60)
     log.info("Anti-AFK Manager indítás...")
     log.separator('=', 60)
 
     anti_afk_manager.start()
 
-    # ===== 10. CONNECTION MONITOR START =====
+    # ===== 11. CONNECTION MONITOR START =====
     log.separator('=', 60)
     log.info("Connection Monitor indítás...")
     log.separator('=', 60)
 
     connection_monitor.start()
 
-    # ===== 11. MAIN LOOP =====
+    # ===== 12. MAIN LOOP =====
     log.separator('#', 60)
     log.success("✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK")
     log.separator('#', 60)
@@ -166,16 +175,24 @@ def main():
     try:
         while True:
             tick_count += 1
-            
+
+            # Explorer check (minden 60. tick = 10 perc)
+            if tick_count % 60 == 0:
+                try:
+                    log.info("🔍 Explorer ellenőrzés...")
+                    explorer.run()
+                except Exception as e:
+                    log.warning(f"⚠️ Explorer hiba: {str(e)}")
+
             # Scheduler tick
             task_executed = scheduler.tick()
-            
+
             if not task_executed:
                 # Csak minden 10. tick-nél log (100 sec = ~1.5 perc)
                 if tick_count % 10 == 0:
                     queue_size = queue_manager.get_queue_size()
                     log.info(f"[Tick {tick_count}] Queue üres, várakozás... (Queue: {queue_size}, Timers: {len(timer_manager.get_all_timers())})")
-            
+
             # Várakozás 10 sec
             time.sleep(10)
     

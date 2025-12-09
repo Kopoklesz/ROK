@@ -29,7 +29,7 @@ class SetupWizardMenu:
         """Főmenü indítása"""
         while True:
             self.show_main_menu()
-            choice = self.get_menu_choice(0, 7)
+            choice = self.get_menu_choice(0, 8)
 
             if choice == 0:
                 print("\n✅ Kilépés a Setup Wizard-ból")
@@ -45,8 +45,10 @@ class SetupWizardMenu:
             elif choice == 5:
                 self.connection_lost_menu()
             elif choice == 6:
-                self.settings_menu()
+                self.explorer_menu()
             elif choice == 7:
+                self.settings_menu()
+            elif choice == 8:
                 self.test_menu()
 
     def show_main_menu(self):
@@ -59,8 +61,9 @@ class SetupWizardMenu:
         print("3. 🤝 Alliance Setup")
         print("4. 🔄 Anti-AFK Setup")
         print("5. 🔌 Connection Lost Setup")
-        print("6. ⚙️  Settings")
-        print("7. ✅ Test & Verify (TODO)")
+        print("6. 🔍 Explorer Setup")
+        print("7. ⚙️  Settings")
+        print("8. ✅ Test & Verify (TODO)")
         print("0. Exit")
         print("\n" + "="*60)
 
@@ -972,6 +975,146 @@ class SetupWizardMenu:
         print("  - detection_text: Keresett szöveg (default: 'NETWORK DISCONNECTED')")
         print("  - recovery_wait_seconds: Várakozás confirm után (default: 30)")
         print("  - default_recovery_time_seconds: Default recovery idő (default: 5400 = 1.5 óra)")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    # ===== EXPLORER MENU =====
+
+    def explorer_menu(self):
+        """Explorer menü"""
+        print("\n" + "="*60)
+        print("🔍 EXPLORER SETUP")
+        print("="*60)
+        print("\n1. Setup Explorer Coordinates")
+        print("0. Back")
+        print("\n" + "="*60)
+
+        choice = self.get_menu_choice(0, 1)
+
+        if choice == 1:
+            self.setup_explorer_coordinates()
+
+    def setup_explorer_coordinates(self):
+        """Explorer koordináták és régiók beállítása"""
+        print("\n" + "="*60)
+        print("📍 EXPLORER COORDINATES SETUP")
+        print("="*60)
+        print("\nExplorer koordináták beállítása kattintással!")
+        print("\n📋 EXPLORER FOLYAMAT:")
+        print("  1. Que menü megnyitása")
+        print("  2. Que fül bezárása")
+        print("  3. Scout fül megnyitása")
+        print("  4-5. Felfedezés % régiók (2 db)")
+        print("  6. Scout bezárása")
+        print("  7. Que fül megnyitása")
+        print("  8. Que menü bezárása")
+        print("\n📋 EXPLORATION INDÍTÁS:")
+        print("  9. Scout épület")
+        print("  10. Explore gomb")
+        print("\nESC = kihagyás (régi érték megtartása)\n")
+
+        coord_names = [
+            'open_queue_menu',      # 1. Que menü megnyitása
+            'close_queue_tab',      # 2. Que fül bezárása
+            'open_scout_tab',       # 3. Scout fül megnyitása
+            'exploration_region_1', # 4. Felfedezés % régió 1 (RÉGIÓ!)
+            'exploration_region_2', # 5. Felfedezés % régió 2 (RÉGIÓ!)
+            'close_scout',          # 6. Scout bezárása
+            'open_queue_tab',       # 7. Que fül megnyitása
+            'close_queue_menu',     # 8. Que menü bezárása
+            'scout_building',       # 9. Scout épület
+            'explore_button'        # 10. Explore gomb
+        ]
+
+        coord_labels = {
+            'open_queue_menu': 'Que menü megnyitása',
+            'close_queue_tab': 'Que fül bezárása',
+            'open_scout_tab': 'Scout fül megnyitása',
+            'exploration_region_1': '📦 Felfedezés % régió 1 (TERÜLET!)',
+            'exploration_region_2': '📦 Felfedezés % régió 2 (TERÜLET!)',
+            'close_scout': 'Scout bezárása',
+            'open_queue_tab': 'Que fül megnyitása',
+            'close_queue_menu': 'Que menü bezárása',
+            'scout_building': 'Scout épület',
+            'explore_button': 'Explore gomb'
+        }
+
+        # Meglévő koordináták betöltése
+        coords_file = self.config_dir / 'explorer_coords.json'
+        if coords_file.exists():
+            try:
+                with open(coords_file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    if content:
+                        coords = json.loads(content)
+                    else:
+                        coords = {}
+                print("ℹ️  Meglévő explorer koordináták betöltve.\n")
+            except json.JSONDecodeError:
+                print("⚠️ Hibás JSON, új koordináták létrehozása...\n")
+                coords = {}
+        else:
+            coords = {}
+
+        for coord_name in coord_names:
+            label = coord_labels[coord_name]
+            old_coord = coords.get(coord_name)
+
+            # Régiók esetén más kezelés
+            if 'region' in coord_name:
+                if old_coord:
+                    print(f"\n📦 {label} - Jelenlegi: (x:{old_coord['x']}, y:{old_coord['y']}, w:{old_coord['width']}, h:{old_coord['height']})")
+                else:
+                    print(f"\n📦 {label} - Nincs beállítva")
+
+                print(f"   Jelöld ki a területet, vagy ESC = régi megtartása")
+
+                if not self.wait_for_enter_or_esc("ENTER = új terület"):
+                    if old_coord:
+                        print(f"   ℹ️  {label} régi érték megtartva")
+                    else:
+                        coords[coord_name] = None
+                        print(f"   ⚠️ {label} kihagyva")
+                    continue
+
+                region = self.selector.select_region(label)
+
+                if region:
+                    coords[coord_name] = region
+                    print(f"   ✅ {label} frissítve: (x:{region['x']}, y:{region['y']}, w:{region['width']}, h:{region['height']})")
+                else:
+                    if old_coord:
+                        print(f"   ℹ️  {label} régi érték megtartva")
+                    else:
+                        coords[coord_name] = None
+                        print(f"   ⚠️ {label} kihagyva")
+            else:
+                # Koordináták esetén
+                if old_coord:
+                    print(f"\n📍 {label} - Jelenlegi: {old_coord}")
+                else:
+                    print(f"\n📍 {label} - Nincs beállítva")
+
+                print(f"   Kattints a játékban, vagy ESC = régi megtartása")
+
+                coord = self.get_single_coordinate()
+
+                if coord and coord != [0, 0]:
+                    coords[coord_name] = coord
+                    print(f"   ✅ {label} frissítve: {coord}")
+                else:
+                    if old_coord:
+                        print(f"   ℹ️  {label} régi érték megtartva")
+                    else:
+                        coords[coord_name] = [0, 0]
+                        print(f"   ⚠️ {label} default: [0, 0]")
+
+        # Mentés
+        with open(coords_file, 'w', encoding='utf-8') as f:
+            json.dump(coords, f, indent=2)
+
+        print(f"\n" + "="*60)
+        print(f"✅ Explorer koordináták mentve: {coords_file}")
+        print("="*60)
         input("\nNyomj ENTER-t a folytatáshoz...")
 
     # ===== SETTINGS MENU =====
