@@ -84,6 +84,56 @@ class RegionSelector:
                 cv2.destroyWindow(window_name)
                 return None
 
+    def select_point(self, title="Kattints egy pontra"):
+        """
+        Interaktív pont kijelölés (egyetlen kattintás)
+
+        Returns:
+            list: [x, y] vagy None
+        """
+        # Screenshot
+        screen = ImageGrab.grab()
+        self.screenshot = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+        clone = self.screenshot.copy()
+
+        window_name = f"{title} (KATTINTS egyszer, ENTER=mentés, ESC=mégsem)"
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        cv2.imshow(window_name, clone)
+
+        selected_point = None
+
+        # Mouse callback
+        def mouse_callback(event, x, y, flags, param):
+            nonlocal clone, selected_point
+
+            if event == cv2.EVENT_LBUTTONDOWN:
+                selected_point = [x, y]
+
+                # Rajzolás
+                clone = self.screenshot.copy()
+                cv2.circle(clone, (x, y), 10, (0, 255, 0), 2)
+                cv2.drawMarker(clone, (x, y), (0, 255, 0), cv2.MARKER_CROSS, 20, 2)
+
+                # Koordináta kiírás
+                cv2.putText(clone, f"({x}, {y})", (x + 15, y - 15),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+                cv2.imshow(window_name, clone)
+
+        cv2.setMouseCallback(window_name, mouse_callback)
+
+        # Várakozás ENTER vagy ESC-re
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+
+            if key == 13:  # ENTER
+                cv2.destroyWindow(window_name)
+                return selected_point
+
+            elif key == 27:  # ESC
+                cv2.destroyWindow(window_name)
+                return None
+
 
 def main():
     """Test"""

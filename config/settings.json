@@ -1,11 +1,63 @@
 {
-  "repeat_count": 3,
-  "max_cycles": 100,
-  "human_wait_min": 5,
-  "human_wait_max": 10,
-  "startup_wait_min": 20,
-  "startup_wait_max": 25,
-  "gather_retry_attempts": 25,
-  "default_march_time": 300,
-  "default_gather_time": 5400
+  "gathering": {
+    "max_commanders": 5,
+    "commanders": [
+      {"id": 1, "enabled": true},
+      {"id": 2, "enabled": false},
+      {"id": 3, "enabled": false},
+      {"id": 4, "enabled": false},
+      {"id": 5, "enabled": false}
+    ]
+  },
+  
+  "training": {
+    "buildings": {
+      "barracks": {
+        "enabled": true,
+        "troop_type": "tier1_infantry",
+        "prep_time_seconds": 300
+      },
+      "archery": {
+        "enabled": false,
+        "troop_type": "tier1_archer",
+        "prep_time_seconds": 300
+      },
+      "stable": {
+        "enabled": true,
+        "troop_type": "tier1_cavalry",
+        "prep_time_seconds": 300
+      },
+      "siege": {
+        "enabled": true,
+        "troop_type": "tier1_siege",
+        "prep_time_seconds": 300
+      }
+    }
+  },
+  
+  "alliance": {
+    "enabled": true,
+    "check_interval_seconds": 300
+  },
+  
+  "anti_afk": {
+    "enabled": true,
+    "idle_threshold_seconds": 900,
+    "resource_offset_y": 50
+  },
+  
+  "human_wait": {
+    "min_seconds": 5,
+    "max_seconds": 10
+  },
+  
+  "startup_wait": {
+    "min_seconds": 20,
+    "max_seconds": 25
+  },
+  
+  "defaults": {
+    "march_time_seconds": 300,
+    "gather_time_seconds": 5400
+  }
 }

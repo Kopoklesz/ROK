@@ -1,0 +1,50 @@
+{
+  "upgrade_name_region_1": {
+    "x": 115,
+    "y": 246,
+    "width": 329,
+    "height": 44
+  },
+  "upgrade_name_region_2": {
+    "x": 111,
+    "y": 343,
+    "width": 337,
+    "height": 43
+  },
+  "upgrade_time_region_1": {
+    "x": 329,
+    "y": 291,
+    "width": 117,
+    "height": 33
+  },
+  "upgrade_time_region_2": {
+    "x": 329,
+    "y": 389,
+    "width": 116,
+    "height": 32
+  },
+  "barracks_time": {
+    "x": 119,
+    "y": 424,
+    "width": 330,
+    "height": 47
+  },
+  "archery_time": {
+    "x": 112,
+    "y": 532,
+    "width": 336,
+    "height": 34
+  },
+  "stable_time": {
+    "x": 115,
+    "y": 619,
+    "width": 339,
+    "height": 48
+  },
+  "siege_time": {
+    "x": 116,
+    "y": 725,
+    "width": 335,
+    "height": 38
+  }
+}

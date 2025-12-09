@@ -1,0 +1,102 @@
+{
+  "open_panel": [
+    45,
+    215
+  ],
+  "close_panel": [
+    497,
+    562
+  ],
+  "upgrade_check_button": [
+    203,
+    211
+  ],
+  "barracks": {
+    "troop_gather": [
+      755,
+      478
+    ],
+    "building": [
+      757,
+      483
+    ],
+    "button": [
+      963,
+      700
+    ],
+    "tier": [
+      1068,
+      254
+    ],
+    "confirm": [
+      1478,
+      884
+    ]
+  },
+  "archery": {
+    "troop_gather": [
+      991,
+      278
+    ],
+    "building": [
+      1001,
+      281
+    ],
+    "button": [
+      1195,
+      517
+    ],
+    "tier": [
+      1097,
+      262
+    ],
+    "confirm": [
+      1489,
+      879
+    ]
+  },
+  "stable": {
+    "troop_gather": [
+      1054,
+      687
+    ],
+    "building": [
+      1056,
+      696
+    ],
+    "button": [
+      1249,
+      906
+    ],
+    "tier": [
+      1090,
+      266
+    ],
+    "confirm": [
+      1480,
+      881
+    ]
+  },
+  "siege": {
+    "troop_gather": [
+      1265,
+      446
+    ],
+    "building": [
+      1264,
+      474
+    ],
+    "button": [
+      1449,
+      677
+    ],
+    "tier": [
+      941,
+      268
+    ],
+    "confirm": [
+      1478,
+      884
+    ]
+  }
+}

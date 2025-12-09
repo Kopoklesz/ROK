@@ -1,0 +1,29 @@
+[
+  {
+    "task_id": "siege_restart",
+    "type": "training",
+    "status": "pending",
+    "timestamp": "2025-12-09 06:59:59",
+    "data": {
+      "building": "siege"
+    }
+  },
+  {
+    "task_id": "stable_restart",
+    "type": "training",
+    "status": "pending",
+    "timestamp": "2025-12-09 07:00:29",
+    "data": {
+      "building": "stable"
+    }
+  },
+  {
+    "task_id": "barracks_restart",
+    "type": "training",
+    "status": "pending",
+    "timestamp": "2025-12-09 07:00:49",
+    "data": {
+      "building": "barracks"
+    }
+  }
+]
