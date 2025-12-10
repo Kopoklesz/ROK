@@ -439,9 +439,7 @@ class GatheringManager:
                 press_key('space')
                 time.sleep(1.0)
                 press_key('space')
-                time.sleep(0.5)
-                press_key('space')
-                log.info("[Gathering] 3x SPACE → home screen reset")
+                log.info("[Gathering] 2x SPACE → home screen (városba vissza)")
 
                 # Progressive retry
                 timer_manager.add_timer(
@@ -586,9 +584,7 @@ class GatheringManager:
                 press_key('space')
                 time.sleep(1.0)
                 press_key('space')
-                time.sleep(0.5)
-                press_key('space')
-                log.info("[Gathering] 3x SPACE → home screen reset")
+                log.info("[Gathering] 2x SPACE → home screen (városba vissza)")
 
                 # Progressive retry
                 timer_manager.add_timer(

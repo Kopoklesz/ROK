@@ -182,6 +182,18 @@ class TrainingManager:
                 safe_click(close_panel_coords)
                 log.success("[Training] Panel bezárva")
 
+                # 2x SPACE reset → home screen biztosan
+                delay = wait_random(self.human_wait_min, self.human_wait_max)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp")
+                time.sleep(delay)
+
+                log.action("[Training] SPACE #1 lenyomása (kigugrás)")
+                press_key('space')
+                time.sleep(1.0)
+                log.action("[Training] SPACE #2 lenyomása (városba vissza)")
+                press_key('space')
+                log.info("[Training] Scan befejezve → 2x SPACE → home screen")
+
     def _is_building_upgrading(self, building_name):
         """
         Ellenőrzi hogy EZ AZ EGY épület upgrade alatt van-e
@@ -585,6 +597,7 @@ class TrainingManager:
             # 9. Épület OCR + timer beállítása (csak ez az 1 épület)
             log.info(f"[Training] {building_name.upper()} OCR frissítése...")
             result = self._read_training_status(building_name)
+            ocr_failed = False
 
             if result.get('type') == 'time':
                 time_sec = result.get('value')
@@ -604,6 +617,7 @@ class TrainingManager:
                 )
             else:
                 # OCR sikertelen, progressive retry
+                ocr_failed = True
                 self.ocr_failure_count[building_name] += 1
                 failure_count = self.ocr_failure_count[building_name]
 
@@ -637,6 +651,19 @@ class TrainingManager:
             log.click(f"[Training] PANEL BEZÁRÁS → {close_panel_coords}")
             safe_click(close_panel_coords)
             log.success("[Training] Panel bezárva")
+
+            # Ha OCR sikertelen volt → 2x SPACE reset (home screen-re)
+            if ocr_failed:
+                delay = wait_random(self.human_wait_min, self.human_wait_max)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp")
+                time.sleep(delay)
+
+                log.action("[Training] SPACE #1 lenyomása (kigugrás)")
+                press_key('space')
+                time.sleep(1.0)
+                log.action("[Training] SPACE #2 lenyomása (városba vissza)")
+                press_key('space')
+                log.info("[Training] 2x SPACE → home screen (városba vissza)")
 
             log.separator('=', 60)
             log.success(f"[Training] {building_name.upper()} training befejezve!")
