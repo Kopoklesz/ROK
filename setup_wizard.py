@@ -1151,16 +1151,162 @@ class SetupWizardMenu:
     # ===== TEST MENU =====
 
     def test_menu(self):
-        """Test & Verify menü"""
+        """Test & Verify menü - IMPLEMENTÁLVA"""
+        while True:
+            print("\n" + "="*60)
+            print("✅ TEST & VERIFY")
+            print("="*60)
+            print("\n1. Validate All Configs")
+            print("2. Visualize Coordinates (Screenshot)")
+            print("3. Visualize OCR Regions (Screenshot)")
+            print("4. Test OCR Regions (Live)")
+            print("5. Run Full Test Suite")
+            print("0. Vissza")
+            print("\n" + "="*60)
+
+            choice = self.get_menu_choice(0, 5)
+
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.validate_configs()
+            elif choice == 2:
+                self.visualize_coordinates()
+            elif choice == 3:
+                self.visualize_ocr_regions()
+            elif choice == 4:
+                self.test_ocr_live()
+            elif choice == 5:
+                self.run_full_test()
+
+    def validate_configs(self):
+        """Config validálás futtatása"""
         print("\n" + "="*60)
-        print("✅ TEST & VERIFY")
+        print("CONFIG VALIDÁLÁS")
         print("="*60)
-        print("\nℹ️  TODO: Test & Verify implementálása")
-        print("\nTervezett tesztek:")
-        print("  - OCR tesztek (erőforrások, idők)")
-        print("  - Template matching tesztek (gather, march, hand)")
-        print("  - Koordináta tesztek (kattintások ellenőrzése)")
-        print("  - Config validálás")
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/config_validator.py',
+            '--mode', 'check'
+        ], cwd=Path(__file__).parent)
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def visualize_coordinates(self):
+        """Koordináták vizualizálása"""
+        print("\n" + "="*60)
+        print("KOORDINÁTA VIZUALIZÁCIÓ")
+        print("="*60)
+        print("\nVálaszd ki a típust:")
+        print("1. Training koordináták")
+        print("2. Gathering koordináták")
+        print("3. Alliance koordináták")
+        print("4. Összes koordináta")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 4)
+
+        if choice == 0:
+            return
+
+        type_map = {
+            1: 'training',
+            2: 'gathering',
+            3: 'alliance',
+            4: 'all'
+        }
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/config_validator.py',
+            '--mode', 'visual-coords',
+            '--type', type_map[choice]
+        ], cwd=Path(__file__).parent)
+
+        print("\n✅ Vizualizáció kész! Nézd meg: logs/config_visualization.png")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def visualize_ocr_regions(self):
+        """OCR régiók vizualizálása"""
+        print("\n" + "="*60)
+        print("OCR RÉGIÓ VIZUALIZÁCIÓ")
+        print("="*60)
+        print("\nVálaszd ki a típust:")
+        print("1. Training régiók")
+        print("2. Resource régiók")
+        print("3. Gathering régiók")
+        print("4. Összes régió")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 4)
+
+        if choice == 0:
+            return
+
+        type_map = {
+            1: 'training',
+            2: 'resource',
+            3: 'gathering',
+            4: 'all'
+        }
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/config_validator.py',
+            '--mode', 'visual-ocr',
+            '--type', type_map[choice]
+        ], cwd=Path(__file__).parent)
+
+        print("\n✅ Vizualizáció kész! Nézd meg: logs/ocr_regions_visualization.png")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def test_ocr_live(self):
+        """OCR régiók élő tesztelése"""
+        print("\n" + "="*60)
+        print("OCR RÉGIÓ ÉLŐBEN TESZT")
+        print("="*60)
+        print("\nMost az összes OCR régiót tesztelni fogom élőben.")
+        print("Győződj meg róla hogy a játék látszik!")
+
+        input("\nNyomj ENTER-t ha készen állsz...")
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/config_validator.py',
+            '--mode', 'test-ocr'
+        ], cwd=Path(__file__).parent)
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def run_full_test(self):
+        """Teljes teszt suite futtatása"""
+        print("\n" + "="*60)
+        print("TELJES TESZT SUITE")
+        print("="*60)
+        print("\nMinden teszt fut:")
+        print("  1. Config validálás")
+        print("  2. Koordináta vizualizáció")
+        print("  3. OCR régió vizualizáció")
+        print("  4. OCR élő teszt")
+
+        input("\nNyomj ENTER-t az indításhoz...")
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/config_validator.py',
+            '--mode', 'all'
+        ], cwd=Path(__file__).parent)
+
+        print("\n✅ Teljes teszt kész!")
+        print("Nézd meg az eredményeket:")
+        print("  - logs/config_visualization.png")
+        print("  - logs/ocr_regions_visualization.png")
         input("\nNyomj ENTER-t a folytatáshoz...")
 
     # ===== UTILITY METHODS =====
