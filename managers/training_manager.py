@@ -57,6 +57,14 @@ class TrainingManager:
         else:
             self.training_coords = {}
 
+        # OCR failure counter (védekezés az éjszakai OCR hibák ellen)
+        self.ocr_failure_count = {
+            'barracks': 0,
+            'archery': 0,
+            'stable': 0,
+            'siege': 0
+        }
+
         self.running = False
     
     def start(self):
@@ -296,7 +304,9 @@ class TrainingManager:
         log.ocr(f"[Training] {building_name.upper()} OCR → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
 
         for attempt in range(1, max_attempts + 1):
-            ocr_text = ImageManager.read_text_from_region(region)
+            # Debug screenshot minden 5. próbálkozásnál (ha OCR sikertelen)
+            debug_save = (attempt % 5 == 0)
+            ocr_text = ImageManager.read_text_from_region(region, debug_save=debug_save)
 
             if not ocr_text:
                 time.sleep(0.7)
@@ -359,9 +369,12 @@ class TrainingManager:
         result_type = result.get('type')
         result_value = result.get('value')
 
-        # 2. Ha IDŐ → timer beállítás
+        # 2. Ha IDŐ → timer beállítás (sikeres OCR)
         if result_type == 'time':
             log.info(f"[Training] {building_name.upper()}: Training fut → timer {format_time(result_value)}")
+
+            # OCR sikeres volt, failure counter reset
+            self.ocr_failure_count[building_name] = 0
 
             # Timer beállítása (duplikáció elkerülése: remove előbb)
             timer_id = f"training_{building_name}"
@@ -428,15 +441,33 @@ class TrainingManager:
             log.success(f"[Training] {building_name.upper()}: COMPLETED → restart (gather troops)")
             return {'action': 'restart_needed', 'skip_gather': False, 'upgraded_checked': False}
 
-        # 5. Unknown → 5 perc retry
+        # 5. Unknown → progressive retry (OCR failure protection)
         else:
-            log.warning(f"[Training] {building_name.upper()}: Ismeretlen státusz → 5 perc retry")
+            # OCR sikertelen, növeljük a failure counter-t
+            self.ocr_failure_count[building_name] += 1
+            failure_count = self.ocr_failure_count[building_name]
+
+            # Progressive retry időzítés:
+            # 1-2. hiba: 5 perc
+            # 3-4. hiba: 15 perc
+            # 5-6. hiba: 30 perc
+            # 7+. hiba: 60 perc (éjszakai OCR valószínűleg nem fog működni)
+            if failure_count <= 2:
+                retry_seconds = 300  # 5 perc
+            elif failure_count <= 4:
+                retry_seconds = 900  # 15 perc
+            elif failure_count <= 6:
+                retry_seconds = 1800  # 30 perc
+            else:
+                retry_seconds = 3600  # 60 perc
+
+            log.warning(f"[Training] {building_name.upper()}: OCR sikertelen ({failure_count}x) → {retry_seconds//60} perc retry")
 
             timer_id = f"training_{building_name}_retry"
             timer_manager.remove_timer(timer_id)
             timer_manager.add_timer(
                 timer_id=timer_id,
-                deadline_seconds=300,
+                deadline_seconds=retry_seconds,
                 task_id=f"{building_name}_restart",
                 task_type="training",
                 data={"building": building_name}
@@ -559,6 +590,9 @@ class TrainingManager:
                 time_sec = result.get('value')
                 log.info(f"[Training] {building_name.upper()} új idő: {format_time(time_sec)}")
 
+                # OCR sikeres, failure counter reset
+                self.ocr_failure_count[building_name] = 0
+
                 timer_id = f"training_{building_name}"
                 timer_manager.remove_timer(timer_id)
                 timer_manager.add_timer(
@@ -569,12 +603,26 @@ class TrainingManager:
                     data={"building": building_name}
                 )
             else:
-                log.warning(f"[Training] {building_name.upper()} OCR nem sikerült → 5 perc retry")
+                # OCR sikertelen, progressive retry
+                self.ocr_failure_count[building_name] += 1
+                failure_count = self.ocr_failure_count[building_name]
+
+                if failure_count <= 2:
+                    retry_seconds = 300  # 5 perc
+                elif failure_count <= 4:
+                    retry_seconds = 900  # 15 perc
+                elif failure_count <= 6:
+                    retry_seconds = 1800  # 30 perc
+                else:
+                    retry_seconds = 3600  # 60 perc
+
+                log.warning(f"[Training] {building_name.upper()} OCR nem sikerült ({failure_count}x) → {retry_seconds//60} perc retry")
+
                 timer_id = f"training_{building_name}_retry"
                 timer_manager.remove_timer(timer_id)
                 timer_manager.add_timer(
                     timer_id=timer_id,
-                    deadline_seconds=300,
+                    deadline_seconds=retry_seconds,
                     task_id=f"{building_name}_restart",
                     task_type="training",
                     data={"building": building_name}

@@ -162,27 +162,79 @@ class ImageManager:
             return None
     
     @staticmethod
-    def read_text_from_region(region):
-        """OCR szöveg kiolvasás"""
+    def read_text_from_region(region, debug_save=False):
+        """
+        OCR szöveg kiolvasás - JAVÍTOTT VERZIÓ
+
+        Többféle preprocessing módszert próbál:
+        1. OTSU threshold (eredeti)
+        2. Adaptive threshold (jobb éjszaka)
+        3. Kontrasztfokozás + OTSU
+
+        Args:
+            region: dict - OCR régió
+            debug_save: bool - Ha True, menti a feldolgozott képet hibakereséshez
+
+        Returns:
+            str: OCR szöveg
+        """
         try:
             # Screenshot a régióból
             x, y, w, h = region['x'], region['y'], region['width'], region['height']
-            
+
             # Teljes képernyő screenshot
             img = ImageGrab.grab()
-            
+
             # Kivágás
             cropped = img.crop((x, y, x + w, y + h))
-            
+
             # Grayscale
             gray = cv2.cvtColor(np.array(cropped), cv2.COLOR_RGB2GRAY)
-            
-            # Threshold
-            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            
-            # OCR
-            text = pytesseract.image_to_string(thresh, config='--psm 7')
-            return text.strip()
+
+            # ===== MÓDSZER 1: OTSU Threshold (eredeti) =====
+            _, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            text1 = pytesseract.image_to_string(thresh1, config='--psm 7').strip()
+
+            # ===== MÓDSZER 2: Adaptive Threshold (jobb sötétben) =====
+            thresh2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                           cv2.THRESH_BINARY, 11, 2)
+            text2 = pytesseract.image_to_string(thresh2, config='--psm 7').strip()
+
+            # ===== MÓDSZER 3: Kontrasztfokozás + OTSU =====
+            # CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            enhanced = clahe.apply(gray)
+            _, thresh3 = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            text3 = pytesseract.image_to_string(thresh3, config='--psm 7').strip()
+
+            # Debug save (ha kell)
+            if debug_save:
+                import datetime
+                from pathlib import Path
+                debug_dir = Path(__file__).parent / 'logs' / 'ocr_debug'
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_1_otsu.png"), thresh1)
+                cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_2_adaptive.png"), thresh2)
+                cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_3_clahe.png"), thresh3)
+
+            # Válasszuk ki a leghosszabb valid szöveget (általában az a jó)
+            results = [
+                (text1, len(text1)),
+                (text2, len(text2)),
+                (text3, len(text3))
+            ]
+
+            # Szűrjük az üreseket
+            valid_results = [(t, l) for t, l in results if l > 0]
+
+            if valid_results:
+                # Leghosszabb
+                best_text = max(valid_results, key=lambda x: x[1])[0]
+                return best_text
+            else:
+                return ""
+
         except Exception as e:
             print(f"OCR hiba: {e}")
             return ""
