@@ -182,17 +182,20 @@ class TrainingManager:
                 safe_click(close_panel_coords)
                 log.success("[Training] Panel bezárva")
 
-                # 2x SPACE reset → home screen biztosan
+                # ESC + 2x SPACE reset → clean state biztosan
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Training] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
+                log.action("[Training] ESC lenyomása (minden menü bezárása)")
+                press_key('esc')
+                time.sleep(0.5)
                 log.action("[Training] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] Scan befejezve → 2x SPACE → home screen")
+                log.info("[Training] Scan befejezve → ESC + 2x SPACE → clean state")
 
     def _is_building_upgrading(self, building_name):
         """
@@ -652,18 +655,21 @@ class TrainingManager:
             safe_click(close_panel_coords)
             log.success("[Training] Panel bezárva")
 
-            # Ha OCR sikertelen volt → 2x SPACE reset (home screen-re)
+            # Ha OCR sikertelen volt → ESC + 2x SPACE reset (clean state)
             if ocr_failed:
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Training] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
+                log.action("[Training] ESC lenyomása (minden menü bezárása)")
+                press_key('esc')
+                time.sleep(0.5)
                 log.action("[Training] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] 2x SPACE → home screen (városba vissza)")
+                log.info("[Training] ESC + 2x SPACE → clean state (városban, minden bezárva)")
 
             log.separator('=', 60)
             log.success(f"[Training] {building_name.upper()} training befejezve!")
