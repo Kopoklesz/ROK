@@ -1,15 +1,17 @@
 """
 ROK Auto Farm - Training Manager
-ÚJ VERZIÓ (1.1.0):
+ÚJ VERZIÓ (1.2.0):
 - Panel-alapú OCR rendszer
 - Mind a 4 egység időt beolvassa egyszerre
 - "completed" és "idle" státusz kezelés
 - Gather troops opcionális (idle esetén kihagyva)
+- Konszenzus alapú OCR (3 olvasás, többségi szavazás)
 """
 import time
 import json
 import re
 from pathlib import Path
+from collections import Counter
 
 from library import safe_click, press_key, wait_random
 from utils.logger import FarmLogger as log
@@ -182,20 +184,17 @@ class TrainingManager:
                 safe_click(close_panel_coords)
                 log.success("[Training] Panel bezárva")
 
-                # ESC + 2x SPACE reset → clean state biztosan
+                # 2x SPACE reset → clean state biztosan
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Training] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
-                log.action("[Training] ESC lenyomása (minden menü bezárása)")
-                press_key('esc')
-                time.sleep(0.5)
                 log.action("[Training] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] Scan befejezve → ESC + 2x SPACE → clean state")
+                log.info("[Training] Scan befejezve → 2x SPACE → clean state")
 
     def _is_building_upgrading(self, building_name):
         """
@@ -298,13 +297,15 @@ class TrainingManager:
         log.warning(f"[Training] {building_name.upper()} UPGRADE TIME OCR sikertelen → fallback 2 óra")
         return 7200
 
-    def _read_training_status(self, building_name, max_attempts=15):
+    def _read_training_status(self, building_name, max_attempts=15, consensus_count=3):
         """
         Egy building státuszának beolvasása (idő / completed / idle)
+        KONSZENZUS ALAPÚ OCR: 3 olvasás, többségi szavazás
 
         Args:
             building_name: Building név (barracks, archery, stable, siege)
-            max_attempts: Max próbálkozások
+            max_attempts: Max főciklus iterációk
+            consensus_count: Hány OCR olvasást csináljon egy ciklusban (default: 3)
 
         Returns:
             dict: {'type': 'time'/'completed'/'idle', 'value': seconds/None}
@@ -318,45 +319,68 @@ class TrainingManager:
 
         log.ocr(f"[Training] {building_name.upper()} OCR → Region: (x:{region.get('x',0)}, y:{region.get('y',0)}, w:{region.get('width',0)}, h:{region.get('height',0)})")
 
-        for attempt in range(1, max_attempts + 1):
-            # Debug screenshot minden 5. próbálkozásnál (ha OCR sikertelen)
-            debug_save = (attempt % 5 == 0)
-            ocr_text = ImageManager.read_text_from_region(region, debug_save=debug_save)
+        for main_attempt in range(1, max_attempts + 1):
+            # ===== KONSZENZUS ALAPÚ OCR =====
+            # 3 OCR olvasás gyors egymásutánban (0.2s késleltetéssel)
+            ocr_results = []
 
-            if not ocr_text:
+            for sub_attempt in range(consensus_count):
+                if sub_attempt > 0:
+                    time.sleep(0.2)  # Rövid delay OCR-ek között
+
+                debug_save = (main_attempt % 5 == 0 and sub_attempt == 0)
+                ocr_text = ImageManager.read_text_from_region(region, debug_save=debug_save)
+
+                if ocr_text:  # Csak nem-üres eredményeket számolunk
+                    ocr_results.append(ocr_text)
+
+            # Ha nincs egyetlen valid OCR sem → retry
+            if not ocr_results:
+                log.warning(f"[Training] {building_name.upper()} OCR üres ({consensus_count} próba), retry {main_attempt}/{max_attempts}")
                 time.sleep(0.7)
                 continue
 
-            log.info(f"[Training] {building_name.upper()} OCR nyers szöveg (kísérlet {attempt}/{max_attempts}): '{ocr_text}'")
+            # Leggyakoribb eredmény kiválasztása (többségi szavazás)
+            ocr_counter = Counter(ocr_results)
+            consensus_text, consensus_votes = ocr_counter.most_common(1)[0]
 
-            # Ellenőrzés: completed?
-            if re.search(r'completed', ocr_text.lower()):
+            log.info(f"[Training] {building_name.upper()} OCR konszenzus ({consensus_votes}/{len(ocr_results)}): '{consensus_text}'")
+            if len(ocr_results) > 1:
+                log.info(f"[Training]   └─ Összes: {ocr_results}")
+            # ======================================
+
+            # ===== 1. COMPLETED EXPLICIT CHECK =====
+            if re.search(r'completed', consensus_text.lower()):
                 log.success(f"[Training] {building_name.upper()} → COMPLETED")
                 return {'type': 'completed', 'value': None}
 
-            # Próbáljuk parse-olni időként
-            # parse_time() visszatérési értékei:
-            # - None: idle állapot
-            # - 0: completed állapot
-            # - >0: idő másodpercben
-            time_sec = parse_time(ocr_text)
+            # ===== 2. IDLE EXPLICIT CHECK =====
+            # CSAK akkor IDLE, ha tényleg "idle" pattern van benne!
+            text_lower = consensus_text.lower().replace(' ', '').replace('-', '').replace('_', '')
+            idle_patterns = ['idle', 'idl', 'ldle', 'idie', 'id1e', '1dle', 'idel']
 
-            # None = idle
-            if time_sec is None:
-                log.success(f"[Training] {building_name.upper()} → IDLE (OCR: '{ocr_text}')")
+            if any(pattern in text_lower for pattern in idle_patterns):
+                log.success(f"[Training] {building_name.upper()} → IDLE (OCR: '{consensus_text}')")
                 return {'type': 'idle', 'value': None}
 
-            # 0 = completed
-            if time_sec == 0:
-                log.success(f"[Training] {building_name.upper()} → COMPLETED (OCR: '{ocr_text}')")
-                return {'type': 'completed', 'value': 0}
+            # ===== 3. IDŐ PARSE KÍSÉRLET =====
+            time_sec = parse_time(consensus_text)
 
-            # >0 = time
-            if time_sec > 0:
+            if time_sec is not None and time_sec > 0:
                 log.success(f"[Training] {building_name.upper()} → TIME: {format_time(time_sec)} ({time_sec} sec)")
                 return {'type': 'time', 'value': time_sec}
 
-            time.sleep(0.7)
+            if time_sec == 0:
+                log.success(f"[Training] {building_name.upper()} → COMPLETED (OCR: '{consensus_text}')")
+                return {'type': 'completed', 'value': 0}
+
+            # ===== 4. SIKERTELEN OCR → RETRY =====
+            # Ha parse_time None-t adott (sikertelen OCR)
+            # NE detektáljuk IDLE-ként, hanem próbálkozzunk újra!
+            if time_sec is None:
+                log.warning(f"[Training] {building_name.upper()} OCR nem értelmezhető ('{consensus_text}'), retry {main_attempt}/{max_attempts}")
+                time.sleep(0.7)
+                continue
 
         log.warning(f"[Training] {building_name.upper()} OCR sikertelen {max_attempts} próba után!")
         return {'type': 'unknown', 'value': None}
@@ -655,21 +679,18 @@ class TrainingManager:
             safe_click(close_panel_coords)
             log.success("[Training] Panel bezárva")
 
-            # Ha OCR sikertelen volt → ESC + 2x SPACE reset (clean state)
+            # Ha OCR sikertelen volt → 2x SPACE reset (clean state)
             if ocr_failed:
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Training] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
-                log.action("[Training] ESC lenyomása (minden menü bezárása)")
-                press_key('esc')
-                time.sleep(0.5)
                 log.action("[Training] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] ESC + 2x SPACE → clean state (városban, minden bezárva)")
+                log.info("[Training] 2x SPACE → clean state (városban, minden bezárva)")
 
             log.separator('=', 60)
             log.success(f"[Training] {building_name.upper()} training befejezve!")
