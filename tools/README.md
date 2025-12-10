@@ -441,13 +441,143 @@ python farm_manager.py
 
 ---
 
-## 📝 Fejlesztési Roadmap (Ötletek)
+## 🤖 ML-Enhanced Features (ÚJ!)
 
+### **EasyOCR - Machine Learning OCR**
+
+**Mi ez?**
+- ML-alapú OCR engine (vs. Tesseract pattern-matching)
+- Jobb éjszakai felismerés
+- Automatikus fallback Tesseract-ra ha EasyOCR nem elérhető
+
+**Telepítés:**
+```bash
+pip install easyocr
+```
+
+**Használat:**
+- Automatikus: `library.py` automatikusan EasyOCR-t használ ha elérhető
+- Manuális teszt: Wizard → 9. Advanced Tools → 3. Test EasyOCR vs Tesseract
+
+**Előnyök:**
+- ✅ Jobb OCR pontosság éjjel
+- ✅ Kevesebb preprocessing szükséges
+- ✅ Neural network alapú felismerés
+
+**Hátrányok:**
+- ⚠️  Lassabb mint Tesseract (1-2 sec vs 0.1 sec)
+- ⚠️  Több memória (~500MB model)
+
+---
+
+### **Template Matching - Dinamikus Gomb Keresés**
+
+**Mi ez?**
+- OpenCV-alapú képfelismerés
+- Gombok keresése template alapján (nem fix koordináták)
+- Multi-scale matching (több méret próbálása)
+
+**Használat:**
+
+#### 1. **Template Capture (gomb mentése)**
+```bash
+python setup_wizard.py
+# Válaszd: 9. Advanced Tools
+# Válaszd: 1. Capture Button Template
+```
+
+Vagy batch capture:
+```bash
+# Wizard → 9. Advanced Tools → 4. Batch Template Capture
+# Mentse mind a 4 training building gombot egyszerre
+```
+
+#### 2. **Template Matching Test**
+```bash
+# Wizard → 9. Advanced Tools → 2. Test Template Matching
+# Válassz egy template-et → teszt
+```
+
+#### 3. **Kódban használat**
+```python
+from library import ImageManager
+
+# Template keresése
+coords = ImageManager.find_image('images/barracks_button.png', threshold=0.7)
+
+# Multi-scale matching (robusztusabb, de lassabb)
+coords = ImageManager.find_image('images/barracks_button.png', threshold=0.7, multi_scale=True)
+
+if coords:
+    safe_click(coords)
+```
+
+**Előnyök:**
+- ✅ Ablak méret változás nem probléma
+- ✅ Robusztusabb mint fix koordináták
+- ✅ Multi-scale támogatás
+
+**Hátrányok:**
+- ⚠️  Lassabb mint koordináta-alapú (0.5-2 sec)
+- ⚠️  Template-ek frissítése szükséges ha UI változik
+
+---
+
+### **Advanced Tools Menu**
+
+**Elérés:** `setup_wizard.py` → 9. Advanced Tools
+
+#### **1. Capture Button Template**
+- Koordinátából készít template-et
+- Kattintással vagy manuális input
+- Egyedi méret megadása (default: 80x80)
+
+#### **2. Test Template Matching**
+- Template keresése a képernyőn
+- Threshold beállítás (0.0-1.0)
+- Multi-scale opció
+
+#### **3. Test EasyOCR vs Tesseract**
+- OCR engine összehasonlítás
+- Training/Resource régió választás
+- Élő teszt + debug save
+
+#### **4. Batch Template Capture**
+- Több gomb egyszerre
+- Training: 4 building gomb
+- Gathering: map, search gomb
+- Alliance: alliance, help gomb
+
+---
+
+## 📝 Fejlesztési Roadmap
+
+- [x] ~~Machine learning OCR (Tesseract helyett)~~ - **KÉSZ (EasyOCR)**
+- [x] ~~Template matching alapú gomb keresés~~ - **KÉSZ**
 - [ ] Relatív koordináták támogatás (%-os értékek)
 - [ ] Auto-calibration (template matching alapján)
-- [ ] Machine learning OCR (Tesseract helyett)
+- [ ] Hybrid mode (koordináta + template fallback)
 - [ ] Web UI config editor
 - [ ] Real-time monitoring dashboard
+
+---
+
+## 🆕 Változások Log
+
+### v2.1 ML-Enhanced (2025-12-10)
+- ✅ EasyOCR támogatás (ML-alapú OCR)
+- ✅ Enhanced template matching (multi-scale)
+- ✅ Button template capture tool
+- ✅ Advanced Tools menu wizard-ban
+- ✅ OCR comparison tool (EasyOCR vs Tesseract)
+- ✅ Batch template capture
+
+### v2.0 Complete (előző)
+- ✅ Module-specific testing (training/gathering/explorer)
+- ✅ Config validator + visualizer
+- ✅ OCR preprocessing (OTSU, Adaptive, CLAHE)
+- ✅ Progressive retry logic
+- ✅ ESC + 2x SPACE clean state
 
 ---
 

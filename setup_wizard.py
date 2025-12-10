@@ -29,7 +29,7 @@ class SetupWizardMenu:
         """Főmenü indítása"""
         while True:
             self.show_main_menu()
-            choice = self.get_menu_choice(0, 8)
+            choice = self.get_menu_choice(0, 9)
 
             if choice == 0:
                 print("\n✅ Kilépés a Setup Wizard-ból")
@@ -50,11 +50,13 @@ class SetupWizardMenu:
                 self.settings_menu()
             elif choice == 8:
                 self.test_menu()
+            elif choice == 9:
+                self.advanced_tools_menu()
 
     def show_main_menu(self):
         """Főmenü megjelenítése"""
         print("\n" + "="*60)
-        print("ROK AUTO FARM - SETUP WIZARD v2.0 COMPLETE")
+        print("ROK AUTO FARM - SETUP WIZARD v2.1 ML-ENHANCED")
         print("="*60)
         print("\n1. 🌾 Gathering Setup")
         print("2. ⚔️  Training Setup")
@@ -63,7 +65,8 @@ class SetupWizardMenu:
         print("5. 🔌 Connection Lost Setup")
         print("6. 🔍 Explorer Setup")
         print("7. ⚙️  Settings")
-        print("8. ✅ Test & Verify (TODO)")
+        print("8. ✅ Test & Verify")
+        print("9. 🔧 Advanced Tools (ML/Template)")
         print("0. Exit")
         print("\n" + "="*60)
 
@@ -1357,6 +1360,305 @@ class SetupWizardMenu:
         print(f"\nNézd meg a riportot:")
         print(f"  - logs/module_tests/{module_name}/*_report.html")
         print(f"  - logs/module_tests/{module_name}/*.png (screenshot-ok)")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    # ===== ADVANCED TOOLS MENU =====
+
+    def advanced_tools_menu(self):
+        """Advanced tools - ML/Template matching"""
+        while True:
+            print("\n" + "="*60)
+            print("🔧 ADVANCED TOOLS")
+            print("="*60)
+            print("\n1. Capture Button Template (koordinátából)")
+            print("2. Test Template Matching")
+            print("3. Test EasyOCR vs Tesseract")
+            print("4. Batch Template Capture (több gomb)")
+            print("0. Vissza")
+            print("\n" + "="*60)
+
+            choice = self.get_menu_choice(0, 4)
+
+            if choice == 0:
+                break
+            elif choice == 1:
+                self.capture_button_template()
+            elif choice == 2:
+                self.test_template_matching()
+            elif choice == 3:
+                self.test_ocr_comparison()
+            elif choice == 4:
+                self.batch_template_capture()
+
+    def capture_button_template(self):
+        """Button template capture koordinátából"""
+        from library import ImageManager
+
+        print("\n" + "="*60)
+        print("📸 BUTTON TEMPLATE CAPTURE")
+        print("="*60)
+        print("\nEz a funkció egy gomb koordinátájából készít template-et.")
+        print("Használat: Ha van egy koordinátád, de template-et szeretnél belőle.\n")
+
+        # Template neve
+        template_name = input("Template neve (pl: training_button): ").strip()
+        if not template_name:
+            print("❌ Név megadása kötelező!")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
+
+        # Koordináta bekérése
+        print("\nVálaszd ki a módot:")
+        print("1. Kattintással megadás")
+        print("2. Manuális koordináta beírás")
+        print("0. Mégse")
+
+        mode = self.get_menu_choice(0, 2)
+        if mode == 0:
+            return
+
+        coord = None
+        if mode == 1:
+            print("\n🖱️  Kattints a gomb közepére...")
+            coord = self.get_single_coordinate()
+        else:
+            try:
+                x = int(input("X koordináta: "))
+                y = int(input("Y koordináta: "))
+                coord = [x, y]
+            except ValueError:
+                print("❌ Érvénytelen koordináta!")
+                input("\nNyomj ENTER-t a folytatáshoz...")
+                return
+
+        if not coord or coord == [0, 0]:
+            print("❌ Érvénytelen koordináta!")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
+
+        # Template méret
+        print(f"\nTemplate méret? (default: 80x80)")
+        width_str = input("Szélesség (vagy ENTER = 80): ").strip()
+        height_str = input("Magasság (vagy ENTER = 80): ").strip()
+
+        width = int(width_str) if width_str else 80
+        height = int(height_str) if height_str else 80
+
+        # Capture
+        output_path = self.images_dir / f"{template_name}.png"
+
+        print(f"\n📸 Template capture: {coord} ({width}x{height})")
+        template = ImageManager.capture_button_template(
+            coord[0], coord[1],
+            width=width,
+            height=height,
+            output_path=str(output_path)
+        )
+
+        if template is not None:
+            print(f"✅ Template mentve: {output_path}")
+        else:
+            print("❌ Template capture sikertelen!")
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def test_template_matching(self):
+        """Template matching teszt"""
+        from library import ImageManager
+
+        print("\n" + "="*60)
+        print("🔍 TEMPLATE MATCHING TESZT")
+        print("="*60)
+        print("\nElérhető template-ek:")
+
+        # Template lista
+        templates = list(self.images_dir.glob("*.png"))
+        if not templates:
+            print("❌ Nincs template az images/ mappában!")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
+
+        for i, tpl in enumerate(templates, 1):
+            print(f"  {i}. {tpl.name}")
+
+        print("\n0. Vissza")
+
+        choice = self.get_menu_choice(0, len(templates))
+        if choice == 0:
+            return
+
+        template_path = str(templates[choice - 1])
+
+        # Threshold beállítás
+        print(f"\nEgyezési küszöb? (0.0-1.0, default: 0.7)")
+        threshold_str = input("Threshold (vagy ENTER = 0.7): ").strip()
+        threshold = float(threshold_str) if threshold_str else 0.7
+
+        # Multi-scale?
+        print("\nMulti-scale matching? (lassabb, de robusztusabb)")
+        print("1. Igen (több méret próbálása)")
+        print("2. Nem (csak 1:1)")
+        multi_scale = self.get_menu_choice(1, 2) == 1
+
+        # Test
+        print(f"\n🔍 Template keresése: {templates[choice - 1].name}")
+        print(f"   Threshold: {threshold}, Multi-scale: {multi_scale}")
+
+        coords = ImageManager.find_image(template_path, threshold=threshold, multi_scale=multi_scale)
+
+        if coords:
+            print(f"✅ Template megtalálva: {coords}")
+        else:
+            print("❌ Template nem található!")
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def test_ocr_comparison(self):
+        """EasyOCR vs Tesseract összehasonlítás"""
+        from library import ImageManager
+
+        print("\n" + "="*60)
+        print("🤖 OCR ÖSSZEHASONLÍTÁS")
+        print("="*60)
+        print("\nEz a teszt összehasonlítja az EasyOCR és Tesseract eredményeit.")
+        print("Válassz egy OCR régiót a teszteléshez.\n")
+
+        # Config listázás
+        print("Válassz config-ot:")
+        print("1. Training time régiók")
+        print("2. Resource régiók")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 2)
+        if choice == 0:
+            return
+
+        # Config betöltése
+        if choice == 1:
+            config_file = self.config_dir / 'training_time_regions.json'
+        else:
+            config_file = self.config_dir / 'resource_regions.json'
+
+        if not config_file.exists():
+            print(f"❌ Config nem található: {config_file}")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
+
+        with open(config_file, 'r', encoding='utf-8') as f:
+            regions = json.load(f)
+
+        # Régió választás
+        region_list = list(regions.keys())
+        print("\nVálaszd ki a régiót:")
+        for i, region_name in enumerate(region_list, 1):
+            print(f"  {i}. {region_name}")
+        print("0. Vissza")
+
+        region_choice = self.get_menu_choice(0, len(region_list))
+        if region_choice == 0:
+            return
+
+        region_name = region_list[region_choice - 1]
+        region = regions[region_name]
+
+        # OCR teszt - EasyOCR
+        print(f"\n🤖 EasyOCR teszt: {region_name}")
+        text_easyocr = ImageManager.read_text_from_region(region, use_easyocr=True, debug_save=True)
+        print(f"   Eredmény: '{text_easyocr}'")
+
+        # OCR teszt - Tesseract only
+        print(f"\n📝 Tesseract teszt: {region_name}")
+        text_tesseract = ImageManager.read_text_from_region(region, use_easyocr=False, debug_save=True)
+        print(f"   Eredmény: '{text_tesseract}'")
+
+        # Összehasonlítás
+        print("\n" + "="*60)
+        print("EREDMÉNYEK")
+        print("="*60)
+        print(f"EasyOCR:    '{text_easyocr}'")
+        print(f"Tesseract:  '{text_tesseract}'")
+
+        if text_easyocr == text_tesseract:
+            print("\n✅ Azonos eredmény!")
+        else:
+            print("\n⚠️  Eltérő eredmény!")
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def batch_template_capture(self):
+        """Több gomb template capture egyszerre"""
+        from library import ImageManager
+
+        print("\n" + "="*60)
+        print("📸 BATCH TEMPLATE CAPTURE")
+        print("="*60)
+        print("\nEz a funkció több gombot egyszerre kap el template-ként.")
+        print("Például: training panel mind a 4 building gombja.\n")
+
+        # Config választás
+        print("Válassz config-ot:")
+        print("1. Training coords (buildings)")
+        print("2. Gathering coords (map, search)")
+        print("3. Alliance coords (alliance, help)")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 3)
+        if choice == 0:
+            return
+
+        # Config betöltése
+        config_map = {
+            1: ('training_coords.json', ['barracks.button', 'archery.button', 'stable.button', 'siege.button']),
+            2: ('gathering_coords.json', ['map_button', 'search_button']),
+            3: ('alliance_coords.json', ['alliance_button', 'help_button'])
+        }
+
+        config_file, coord_keys = config_map[choice]
+        config_path = self.config_dir / config_file
+
+        if not config_path.exists():
+            print(f"❌ Config nem található: {config_path}")
+            input("\nNyomj ENTER-t a folytatáshoz...")
+            return
+
+        with open(config_path, 'r', encoding='utf-8') as f:
+            coords = json.load(f)
+
+        # Template capture
+        print(f"\n📸 Template capture: {len(coord_keys)} gomb")
+
+        for key in coord_keys:
+            # Koordináta lekérése
+            if '.' in key:
+                # Nested (pl: barracks.button)
+                parts = key.split('.')
+                coord = coords.get(parts[0], {}).get(parts[1])
+                template_name = f"{parts[0]}_{parts[1]}"
+            else:
+                # Flat (pl: map_button)
+                coord = coords.get(key)
+                template_name = key
+
+            if not coord or coord == [0, 0]:
+                print(f"⚠️  {key}: nincs beállítva, skip")
+                continue
+
+            # Capture
+            output_path = self.images_dir / f"{template_name}.png"
+            print(f"\n   📸 {template_name}: {coord}")
+
+            template = ImageManager.capture_button_template(
+                coord[0], coord[1],
+                width=80, height=80,
+                output_path=str(output_path)
+            )
+
+            if template is not None:
+                print(f"   ✅ {template_name}.png")
+            else:
+                print(f"   ❌ Sikertelen!")
+
+        print("\n✅ Batch capture kész!")
         input("\nNyomj ENTER-t a folytatáshoz...")
 
     # ===== UTILITY METHODS =====

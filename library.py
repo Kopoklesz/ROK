@@ -2,6 +2,7 @@
 ROK Auto Farm - Library
 Alapvető függvények a meglévő library alapján
 FIXED: WindowManager.find_window() exception handling
+ENHANCED: EasyOCR support + Template matching improvements
 """
 import time
 import random
@@ -9,10 +10,11 @@ import pyautogui
 import cv2
 import numpy as np
 import pytesseract
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import win32gui
 import win32con
 from pynput.keyboard import Controller, Key
+from pathlib import Path
 
 # DPI awareness
 try:
@@ -26,6 +28,17 @@ except:
 
 # Tesseract path - MÓDOSÍTSD A SAJÁTODRA!
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# EasyOCR support (optional)
+try:
+    import easyocr
+    EASYOCR_AVAILABLE = True
+    _easyocr_reader = None
+    print("✅ EasyOCR elérhető - ML-alapú OCR használata")
+except ImportError:
+    EASYOCR_AVAILABLE = False
+    print("⚠️  EasyOCR nincs telepítve - Tesseract fallback használata")
+    print("   Telepítés: pip install easyocr")
 
 # Globális változók
 game_window_handle = None
@@ -126,54 +139,139 @@ class ImageManager:
             return None
     
     @staticmethod
-    def find_image(template_path, threshold=0.7):
-        """Template matching"""
+    def find_image(template_path, threshold=0.7, multi_scale=False):
+        """
+        Template matching - ENHANCED verzió
+
+        Args:
+            template_path: Template kép elérési útja
+            threshold: Egyezési küszöb (0-1)
+            multi_scale: Ha True, több skálán is próbál (lassabb, de robusztusabb)
+
+        Returns:
+            tuple: (x, y) koordináták vagy None
+        """
         try:
             # Template betöltése
             template = cv2.imread(template_path)
             if template is None:
+                print(f"⚠️  Template nem található: {template_path}")
                 return None
-            
+
             # Screenshot
             screen = ImageManager.screenshot()
             if screen is None:
                 return None
-            
-            # Matching
-            result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-            
-            if max_val >= threshold:
-                h, w = template.shape[:2]
-                center_x = max_loc[0] + w // 2
-                center_y = max_loc[1] + h // 2
-                
-                # Relatív → Abszolút koordináták
-                rect = WindowManager.get_window_rect()
-                if rect:
-                    center_x += rect[0]
-                    center_y += rect[1]
-                
-                return (center_x, center_y)
-            
-            return None
+
+            best_match = None
+            best_val = threshold
+
+            # Multi-scale matching (opcionális)
+            scales = [1.0]
+            if multi_scale:
+                scales = [0.8, 0.9, 1.0, 1.1, 1.2]
+
+            for scale in scales:
+                # Template átméretezése
+                if scale != 1.0:
+                    width = int(template.shape[1] * scale)
+                    height = int(template.shape[0] * scale)
+                    resized = cv2.resize(template, (width, height))
+                else:
+                    resized = template
+
+                # Matching
+                result = cv2.matchTemplate(screen, resized, cv2.TM_CCOEFF_NORMED)
+                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+                # Jobb match?
+                if max_val > best_val:
+                    best_val = max_val
+                    h, w = resized.shape[:2]
+                    center_x = max_loc[0] + w // 2
+                    center_y = max_loc[1] + h // 2
+
+                    # Relatív → Abszolút koordináták
+                    rect = WindowManager.get_window_rect()
+                    if rect:
+                        center_x += rect[0]
+                        center_y += rect[1]
+
+                    best_match = (center_x, center_y)
+
+            if best_match:
+                print(f"✅ Template match: {template_path} (confidence: {best_val:.2f})")
+
+            return best_match
+
         except Exception as e:
             print(f"Template matching hiba: {e}")
             return None
+
+    @staticmethod
+    def capture_button_template(x, y, width=80, height=80, output_path=None):
+        """
+        Gombot befoglaló template capture
+
+        Wizard használatra: egy gomb körül screenshot-ot készít
+
+        Args:
+            x, y: Gomb középpontja
+            width, height: Template mérete (default: 80x80)
+            output_path: Mentési útvonal (ha None, akkor visszaadja a képet)
+
+        Returns:
+            numpy.ndarray: Captured template vagy None
+        """
+        try:
+            # Régió számítása (középpont körül)
+            rect = WindowManager.get_window_rect()
+            if not rect:
+                print("❌ Ablak nem található")
+                return None
+
+            # Relatív koordináták az ablakon belül
+            x_rel = x - rect[0]
+            y_rel = y - rect[1]
+
+            # Template régió (középpont körül)
+            x1 = max(0, x_rel - width // 2)
+            y1 = max(0, y_rel - height // 2)
+            x2 = x1 + width
+            y2 = y1 + height
+
+            # Screenshot
+            screen = ImageManager.screenshot()
+            if screen is None:
+                return None
+
+            # Crop
+            template = screen[y1:y2, x1:x2]
+
+            # Mentés
+            if output_path:
+                cv2.imwrite(output_path, template)
+                print(f"✅ Template mentve: {output_path}")
+
+            return template
+
+        except Exception as e:
+            print(f"Template capture hiba: {e}")
+            return None
     
     @staticmethod
-    def read_text_from_region(region, debug_save=False):
+    def read_text_from_region(region, debug_save=False, use_easyocr=True):
         """
-        OCR szöveg kiolvasás - JAVÍTOTT VERZIÓ
+        OCR szöveg kiolvasás - ML-ENHANCED VERZIÓ
 
-        Többféle preprocessing módszert próbál:
-        1. OTSU threshold (eredeti)
-        2. Adaptive threshold (jobb éjszaka)
-        3. Kontrasztfokozás + OTSU
+        Többféle OCR módszert próbál:
+        1. EasyOCR (ML-alapú, ha elérhető) - ELSŐDLEGES
+        2. Tesseract + preprocessing (OTSU, Adaptive, CLAHE) - FALLBACK
 
         Args:
             region: dict - OCR régió
             debug_save: bool - Ha True, menti a feldolgozott képet hibakereséshez
+            use_easyocr: bool - Ha True, EasyOCR-t próbál először (default)
 
         Returns:
             str: OCR szöveg
@@ -191,23 +289,49 @@ class ImageManager:
             # Grayscale
             gray = cv2.cvtColor(np.array(cropped), cv2.COLOR_RGB2GRAY)
 
-            # ===== MÓDSZER 1: OTSU Threshold (eredeti) =====
+            # ===== ELSŐDLEGES: EasyOCR (ML-alapú) =====
+            if EASYOCR_AVAILABLE and use_easyocr:
+                try:
+                    # Lazy load EasyOCR reader
+                    global _easyocr_reader
+                    if _easyocr_reader is None:
+                        print("🔄 EasyOCR inicializálása (csak egyszer)...")
+                        _easyocr_reader = easyocr.Reader(['en'], gpu=False)
+                        print("✅ EasyOCR kész")
+
+                    # EasyOCR futtatása
+                    results = _easyocr_reader.readtext(gray, detail=0)
+
+                    if results:
+                        # Összes szöveg összefűzése
+                        easyocr_text = " ".join(results).strip()
+
+                        if easyocr_text:
+                            if debug_save:
+                                print(f"  🤖 EasyOCR: '{easyocr_text}'")
+                            return easyocr_text
+
+                except Exception as e:
+                    print(f"⚠️  EasyOCR hiba: {e}, Tesseract fallback...")
+
+            # ===== FALLBACK: Tesseract + Preprocessing =====
+
+            # MÓDSZER 1: OTSU Threshold
             _, thresh1 = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             text1 = pytesseract.image_to_string(thresh1, config='--psm 7').strip()
 
-            # ===== MÓDSZER 2: Adaptive Threshold (jobb sötétben) =====
+            # MÓDSZER 2: Adaptive Threshold
             thresh2 = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                            cv2.THRESH_BINARY, 11, 2)
             text2 = pytesseract.image_to_string(thresh2, config='--psm 7').strip()
 
-            # ===== MÓDSZER 3: Kontrasztfokozás + OTSU =====
-            # CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            # MÓDSZER 3: Kontrasztfokozás + OTSU
             clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
             enhanced = clahe.apply(gray)
             _, thresh3 = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             text3 = pytesseract.image_to_string(thresh3, config='--psm 7').strip()
 
-            # Debug save (ha kell)
+            # Debug save
             if debug_save:
                 import datetime
                 from pathlib import Path
@@ -217,20 +341,21 @@ class ImageManager:
                 cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_1_otsu.png"), thresh1)
                 cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_2_adaptive.png"), thresh2)
                 cv2.imwrite(str(debug_dir / f"ocr_{timestamp}_3_clahe.png"), thresh3)
+                print(f"  📸 Debug képek: {debug_dir}")
 
-            # Válasszuk ki a leghosszabb valid szöveget (általában az a jó)
+            # Válasszuk ki a leghosszabb valid szöveget
             results = [
                 (text1, len(text1)),
                 (text2, len(text2)),
                 (text3, len(text3))
             ]
 
-            # Szűrjük az üreseket
             valid_results = [(t, l) for t, l in results if l > 0]
 
             if valid_results:
-                # Leghosszabb
                 best_text = max(valid_results, key=lambda x: x[1])[0]
+                if debug_save:
+                    print(f"  📝 Tesseract best: '{best_text}'")
                 return best_text
             else:
                 return ""
