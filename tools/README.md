@@ -460,22 +460,27 @@ pip install easyocr
 - Manuális teszt: Wizard → 9. Advanced Tools → 3. Test EasyOCR vs Tesseract
 
 **Előnyök:**
-- ✅ Jobb OCR pontosság éjjel
+- ✅ **Neural network alapú** - VALÓBAN "megtanulja" a szöveget (pre-trained model)
+- ✅ Jobb OCR pontosság éjjel/nappal
+- ✅ Kevesebb OCR hiba → **kevesebb retry → gyorsabb összesítve**
 - ✅ Kevesebb preprocessing szükséges
-- ✅ Neural network alapú felismerés
 
 **Hátrányok:**
-- ⚠️  Lassabb mint Tesseract (1-2 sec vs 0.1 sec)
+- ⚠️  Egy OCR hívás lassabb (1-2 sec vs 0.1 sec)
 - ⚠️  Több memória (~500MB model)
+
+**Fontos:** Bár egy OCR hívás lassabb, a teljes folyamat gyorsabb, mert nem ragad el retry loop-okban!
 
 ---
 
 ### **Template Matching - Dinamikus Gomb Keresés**
 
 **Mi ez?**
-- OpenCV-alapú képfelismerés
+- OpenCV-alapú képfelismerés (**NEM ML/AI** - egyszerű képillesztés!)
 - Gombok keresése template alapján (nem fix koordináták)
 - Multi-scale matching (több méret próbálása)
+
+**Fontos:** Template matching NEM "tanulja meg" a gombokat! Csak összehasonlítja a mentett képet a képernyővel.
 
 **Használat:**
 
@@ -513,13 +518,14 @@ if coords:
 ```
 
 **Előnyök:**
-- ✅ Ablak méret változás nem probléma
+- ✅ Ablak méret változás nem probléma (multi-scale)
 - ✅ Robusztusabb mint fix koordináták
-- ✅ Multi-scale támogatás
+- ✅ Kis pozíció eltolódást kezel
 
 **Hátrányok:**
-- ⚠️  Lassabb mint koordináta-alapú (0.5-2 sec)
-- ⚠️  Template-ek frissítése szükséges ha UI változik
+- ⚠️  Lassabb mint koordináta-alapú (0.5-2 sec keresés)
+- ⚠️  **Új template kell ha UI változik** (pl. skin, update) - mert NEM tanul, csak összehasonlít!
+- ⚠️  Template-ek tárolása (minden gombhoz 1 kép)
 
 ---
 

@@ -28,13 +28,19 @@ pip install easyocr
 ```
 
 **Előnyök:**
-- ✅ Jobb OCR pontosság éjjel/nappal
-- ✅ Kevesebb OCR hiba
+- ✅ Jobb OCR pontosság éjjel/nappal (neural network)
+- ✅ Kevesebb OCR hiba → kevesebb retry loop
+- ✅ **Gyorsabb összesített futás** (kevesebb 5-60 perc várakozás)
 - ✅ Automatikus fallback Tesseract-ra
 
 **Hátrányok:**
-- ⚠️  Első indítás lassú (model letöltése ~500MB)
-- ⚠️  OCR lassabb (1-2 sec vs 0.1 sec)
+- ⚠️  Egy OCR hívás lassabb (1-2 sec vs 0.1 sec)
+- ⚠️  Első indítás: model letöltése (~500MB)
+- ⚠️  Több memória használat
+
+**Miért gyorsabb összességében?**
+- Tesseract éjjel: OCR hiba → retry → 5 min várakozás → újra hiba... = **órák veszteség**
+- EasyOCR éjjel: 1.5 sec → **sikeres OCR elsőre** → folytatja a munkát
 
 **Teszt:** `setup_wizard.py` → 9. Advanced Tools → 3. Test EasyOCR vs Tesseract
 
