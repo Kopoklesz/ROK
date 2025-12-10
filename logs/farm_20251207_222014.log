@@ -1,0 +1,302 @@
+[22:20:14] ℹ️  Logger inicializálva: C:\Users\Bence\repo\ROK-Scripts\logs\farm_20251207_222014.log
+[22:20:14] ✅ Logger inicializálva (file logging enabled)
+============================================================
+[22:20:14] ℹ️  Játék ablak inicializálás...
+============================================================
+[22:20:14] ✅ Játék ablak OK
+============================================================
+[22:20:14] ℹ️  Queue Manager inicializálás...
+============================================================
+[22:20:14] ℹ️  [Queue] [STARTUP CLEANUP] Queue törölve (1 régi task eltávolítva)
+[22:20:14] ℹ️  Queue betöltve: 0 task
+============================================================
+[22:20:14] ℹ️  Timer Manager indítás...
+============================================================
+[22:20:14] ℹ️  [Timer] [STARTUP CLEANUP] Nincs régi timer, tiszta slate
+[22:20:14] ℹ️  [Timer] Timer Manager elindult (10 sec tick)
+[22:20:14] ℹ️  Aktív timer-ek: 0 db
+============================================================
+[22:20:14] ℹ️  Scheduler inicializálás...
+============================================================
+[22:20:14] ✅ Scheduler készen áll
+============================================================
+[22:20:14] ℹ️  Gathering Manager inicializálás...
+============================================================
+============================================================
+[22:20:14] ℹ️  [Gathering] 🌾 COMMANDERS ELSŐ INDÍTÁSA
+============================================================
+[22:20:14] ℹ️  [Gathering] Commander #1 queue-ba helyezése...
+[22:20:14] ℹ️  [Queue] Task hozzáadva: commander_1_start (gathering, status=pending)
+[22:20:14] ✅ [Gathering] Commander #1 queue-ba téve (start)
+[22:20:14] ℹ️  [Gathering] Commander #2 disabled, skip
+[22:20:14] ℹ️  [Gathering] Commander #3 disabled, skip
+[22:20:14] ℹ️  [Gathering] Commander #4 disabled, skip
+[22:20:14] ℹ️  [Gathering] Commander #5 disabled, skip
+------------------------------------------------------------
+[22:20:14] ✅ [Gathering] 1 commander queue-ba téve, 4 disabled
+============================================================
+============================================================
+[22:20:14] ℹ️  Training Manager indítás...
+============================================================
+============================================================
+[22:20:14] ℹ️  [Training] Manager indítás...
+============================================================
+[22:20:14] ℹ️  [Training] Panel OCR indítása...
+[22:20:14] ⏳ [Training] Várakozás 3.9 mp
+[22:20:18] 🖱️  [Training] PANEL MEGNYITÁS → [45, 215]
+[22:20:18] ✅ [Training] Panel megnyitva
+[22:20:18] ⏳ [Training] Várakozás 5.7 mp (panel betöltés)
+[22:20:23] ℹ️  [Training] BARRACKS ellenőrzése...
+[22:20:23] 📖 [Training] BARRACKS OCR → Region: (x:279, y:430, w:125, h:38)
+[22:20:24] ℹ️  [Training] BARRACKS OCR nyers szöveg (kísérlet 1): 'yleted'
+[22:20:25] ℹ️  [Training] BARRACKS OCR nyers szöveg (kísérlet 2): 'yleted'
+[22:20:27] ℹ️  [Training] BARRACKS OCR nyers szöveg (kísérlet 3): 'yleted'
+[22:20:28] ℹ️  [Training] BARRACKS OCR nyers szöveg (kísérlet 4): 'yleted'
+[22:20:29] ℹ️  [Training] BARRACKS OCR nyers szöveg (kísérlet 5): 'yleted'
+[22:20:29] ⚠️  [Training] BARRACKS OCR sikertelen 5 próba után!
+[22:20:29] ⚠️  [Training] BARRACKS: Ismeretlen státusz → 5 perc retry
+[22:20:29] ℹ️  [Timer] Timer hozzáadva: training_barracks_retry → 300s múlva (2025-12-07 22:25:29)
+[22:20:29] ℹ️  [Training] ARCHERY ellenőrzése...
+[22:20:29] 📖 [Training] ARCHERY OCR → Region: (x:280, y:535, w:109, h:27)
+[22:20:30] ℹ️  [Training] ARCHERY OCR nyers szöveg (kísérlet 1): 'ee'
+[22:20:30] ✅ [Training] ARCHERY → IDLE (OCR: 'ee')
+[22:20:30] ℹ️  [Training] ARCHERY: IDLE → upgrade check
+[22:20:30] ⏳ [Training] Várakozás 3.9 mp
+[22:20:34] 🖱️  [Training] UPGRADE MENÜ megnyitás → [203, 211]
+[22:20:34] ⏳ [Training] Várakozás 3.8 mp (upgrade menü betöltés)
+[22:20:38] 📖 [Training] ARCHERY upgrade check → Region 1
+[22:20:39] ℹ️  [Training] Upgrade Region 1 OCR: 'Lvl 11 Archery Range'
+[22:20:39] ⚠️  [Training] ARCHERY UPGRADING (Region 1)!
+[22:20:39] 📖 [Training] ARCHERY UPGRADE TIME OCR → Region 1
+[22:20:39] ℹ️  [Training] ARCHERY UPGRADE TIME (Region 1, kísérlet 1): '09:46:57'
+[22:20:39] ✅ [Training] ARCHERY → UPGRADE TIME: 09:46:57 (35217 sec)
+[22:20:39] ⏳ [Training] Várakozás 3.8 mp
+[22:20:43] 🖱️  [Training] UPGRADE MENÜ bezárás → [203, 211]
+[22:20:43] ⏳ [Training] Várakozás 4.6 mp
+[22:20:48] ⚠️  [Training] ARCHERY: UPGRADING → timer 09:46:57
+[22:20:48] ℹ️  [Timer] Timer hozzáadva: training_archery_upgrade → 35217s múlva (2025-12-08 08:07:45)
+[22:20:48] ℹ️  [Training] STABLE ellenőrzése...
+[22:20:48] 📖 [Training] STABLE OCR → Region: (x:281, y:633, w:108, h:24)
+[22:20:48] ℹ️  [Training] STABLE OCR nyers szöveg (kísérlet 1): 'yleted'
+[22:20:49] ℹ️  [Training] STABLE OCR nyers szöveg (kísérlet 2): 'yleted'
+[22:20:50] ℹ️  [Training] STABLE OCR nyers szöveg (kísérlet 3): 'yleted'
+[22:20:51] ℹ️  [Training] STABLE OCR nyers szöveg (kísérlet 4): 'yleted'
+[22:20:52] ℹ️  [Training] STABLE OCR nyers szöveg (kísérlet 5): 'yleted'
+[22:20:53] ⚠️  [Training] STABLE OCR sikertelen 5 próba után!
+[22:20:53] ⚠️  [Training] STABLE: Ismeretlen státusz → 5 perc retry
+[22:20:53] ℹ️  [Timer] Timer hozzáadva: training_stable_retry → 300s múlva (2025-12-07 22:25:53)
+[22:20:53] ℹ️  [Training] SIEGE ellenőrzése...
+[22:20:53] 📖 [Training] SIEGE OCR → Region: (x:282, y:731, w:106, h:26)
+[22:20:53] ℹ️  [Training] SIEGE OCR nyers szöveg (kísérlet 1): '00:00:30'
+[22:20:53] ✅ [Training] SIEGE → TIME: 00:00:30 (30 sec)
+[22:20:53] ℹ️  [Training] SIEGE: Training fut → timer 00:00:30
+[22:20:53] ℹ️  [Timer] Timer hozzáadva: training_siege → 30s múlva (2025-12-07 22:21:23)
+[22:20:53] ⏳ [Training] Várakozás 5.7 mp
+[22:20:59] 🖱️  [Training] PANEL BEZÁRÁS → [497, 562]
+[22:20:59] ✅ [Training] Panel bezárva
+[22:20:59] ⏳ [Training] Várakozás 4.2 mp
+============================================================
+[22:21:03] ✅ [Training] Manager inicializálva
+============================================================
+============================================================
+[22:21:03] ℹ️  Alliance Manager indítás...
+============================================================
+[22:21:03] ℹ️  [Queue] Task hozzáadva: alliance_help (alliance, status=pending)
+[22:21:03] ℹ️  Alliance Manager elindult (300 sec interval)
+============================================================
+[22:21:03] ℹ️  Anti-AFK Manager indítás...
+============================================================
+[22:21:03] ℹ️  Anti-AFK Manager elindult (900 sec idle threshold)
+[22:21:03] ℹ️  [Alliance] Help task queue-ba téve
+============================================================
+[22:21:03] ℹ️  Connection Monitor indítás...
+============================================================
+============================================================
+[22:21:03] ℹ️  [ConnectionMonitor] Monitor indítása...
+[22:21:03] ℹ️  [ConnectionMonitor] Check interval: 5 sec
+[22:21:03] ℹ️  [ConnectionMonitor] Detection text: 'NETWORK DISCONNECTED'
+============================================================
+[22:21:03] ✅ [ConnectionMonitor] Monitor elindítva
+############################################################
+[22:21:03] ✅ ✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK
+############################################################
+[22:21:03] ℹ️  Main Loop: Scheduler tick minden 10 másodpercben
+[22:21:03] ℹ️  CTRL+C = graceful shutdown
+############################################################
+============================================================
+[22:21:03] 🎬 Scheduler: Task futtatása → commander_1_start (gathering)
+============================================================
+[22:21:03] ℹ️  [Queue] Task kivéve: commander_1_start (gathering)
+[22:21:03] ℹ️  Task indítva: commander_1_start
+[22:21:03] ℹ️  Gathering Manager hívás: Commander #1
+============================================================
+[22:21:03] ℹ️  [Gathering] 🌾 COMMANDER #1 - GATHERING START
+============================================================
+[22:21:03] ℹ️  [Gathering] Commander #1 indítása...
+[22:21:03] ℹ️  [Gathering] Step 1/5: Resource OCR
+------------------------------------------------------------
+[22:21:03] ℹ️  [Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA
+------------------------------------------------------------
+[22:21:03] ℹ️  [Gathering] Erőforrások kiolvasása...
+[22:21:03] 📖 [Gathering] WHEAT OCR → Region: (x:1033, y:13, w:116, h:39)
+[22:21:04] ℹ️  [Gathering] WHEAT OCR nyers: '781.2K'
+[22:21:04] ✅ [Gathering] WHEAT: 781.2K → 781,200
+[22:21:04] 📖 [Gathering] WOOD OCR → Region: (x:1212, y:13, w:114, h:37)
+[22:21:04] ℹ️  [Gathering] WOOD OCR nyers: '502.0K'
+[22:21:04] ✅ [Gathering] WOOD: 502.0K → 502,000
+[22:21:04] 📖 [Gathering] STONE OCR → Region: (x:1399, y:13, w:118, h:37)
+[22:21:05] ℹ️  [Gathering] STONE OCR nyers: '736.7K'
+[22:21:05] ✅ [Gathering] STONE: 736.7K → 736,700
+[22:21:05] 📖 [Gathering] GOLD OCR → Region: (x:1581, y:12, w:122, h:41)
+[22:21:05] ℹ️  [Gathering] GOLD OCR nyers: '417.8K'
+[22:21:05] ✅ [Gathering] GOLD: 417.8K → 417,800
+[22:21:05] ℹ️  [Gathering] WHEAT adjusted: 781,200 ÷ 2 = 390600
+[22:21:05] ℹ️  [Gathering] WOOD adjusted: 502,000 ÷ 2 = 251000
+[22:21:05] ℹ️  [Gathering] STONE adjusted: 736,700 ÷ 3 = 245567
+[22:21:05] ℹ️  [Gathering] GOLD adjusted: 417,800 ÷ 4 = 104450
+[22:21:05] ✅ [Gathering] Kiválasztva: GOLD
+[22:21:05] ℹ️  [Gathering] Step 2/5: Térkép navigáció
+------------------------------------------------------------
+[22:21:05] ℹ️  [Gathering] 🗺️ TÉRKÉP MEGNYITÁSA
+------------------------------------------------------------
+[22:21:05] ℹ️  [Gathering] [1/13] SPACE billentyű
+[22:21:05] ⏳ [Gathering] Várakozás 9.7 mp
+[22:21:15] 🎬 [Gathering] SPACE lenyomása
+[22:21:15] ✅ [Gathering] SPACE OK
+[22:21:15] ℹ️  [Gathering] [2/13] B billentyű (térkép)
+[22:21:15] ⏳ [Gathering] Várakozás 9.8 mp
+[22:21:24] ℹ️  [Timer] Timer lejárt: training_siege
+[22:21:24] ℹ️  [Queue] Task hozzáadva: siege_restart (training, status=pending)
+[22:21:24] ℹ️  [Timer] Callback futott: siege_restart hozzáadva queue-hoz
+[22:21:25] 🎬 [Gathering] B billentyű lenyomása
+[22:21:25] ✅ [Gathering] B OK
+[22:21:25] ℹ️  [Gathering] Step 3/5: Farm keresés
+------------------------------------------------------------
+[22:21:25] ℹ️  [Gathering] 🔍 GOLD FARM KERESÉS
+------------------------------------------------------------
+[22:21:25] ℹ️  [Gathering] [3/13] Resource icon kattintás
+[22:21:25] ⏳ [Gathering] Várakozás 9.6 mp
+[22:21:35] 🖱️  [Gathering] GOLD ikon → [1540, 946]
+[22:21:35] ✅ [Gathering] Resource icon OK
+[22:21:35] ℹ️  [Gathering] [4/13] Level button kattintás
+[22:21:35] ⏳ [Gathering] Várakozás 9.5 mp
+[22:21:44] 🖱️  [Gathering] Szint gomb → [1566, 603]
+[22:21:44] ✅ [Gathering] Level button OK
+[22:21:44] ℹ️  [Gathering] [5/13] Search button kattintás
+[22:21:44] ⏳ [Gathering] Várakozás 8.9 mp
+[22:21:53] 🖱️  [Gathering] Keresés gomb → [1534, 731]
+[22:21:53] ✅ [Gathering] Search button OK
+[22:21:53] ℹ️  [Gathering] [5a/13] March.png detekció
+[22:22:03] 🔍 [Gathering] march.png keresés...
+[22:22:03] ℹ️  [Gathering] Keresés régióban: (x:1379, y:244, w:270, h:55)
+[22:22:03] ✅ [Gathering] march.png nem található régióban - commander elérhető
+[22:22:03] ℹ️  [Gathering] Step 4/5: Farm process
+------------------------------------------------------------
+[22:22:03] ℹ️  [Gathering] 🎯 GATHERING INDÍTÁS
+------------------------------------------------------------
+[22:22:03] ℹ️  [Gathering] [6/13] Gather button keresés
+[22:22:03] ⏳ [Gathering] Várakozás 6.6 mp
+[22:22:10] 🔍 [Gathering] gather.png keresés...
+[22:22:10] 🔍 Gather.png keresése... (1/25)
+[22:22:11] ✅ Gather.png megtalálva 1. próbálkozásra → (1430, 765)
+[22:22:11] ✅ [Gathering] Gather gomb megtalálva → (1430, 765)
+[22:22:11] 🖱️  [Gathering] Gather gomb kattintás
+[22:22:11] ✅ [Gathering] Gather button OK
+[22:22:11] ℹ️  [Gathering] [7/13] New troops kattintás
+[22:22:11] ⏳ [Gathering] Várakozás 7.8 mp
+[22:22:19] 🖱️  [Gathering] New troops → [1501, 216]
+[22:22:19] ✅ [Gathering] New troops OK
+[22:22:19] ℹ️  [Gathering] [8/13] March Time OCR
+[22:22:19] ⏳ [Gathering] Várakozás 6.5 mp
+[22:22:25] 📖 [Gathering] March Time kiolvasása...
+[22:22:26] ✅ [Gathering] March Time: 00:03:21 (201 sec)
+[22:22:26] ℹ️  [Gathering] [9/13] March button kattintás
+[22:22:26] ⏳ [Gathering] Várakozás 6.8 mp
+[22:22:33] 🖱️  [Gathering] March gomb → [1400, 952]
+[22:22:33] ✅ [Gathering] March button OK
+[22:22:33] ℹ️  [Gathering] [10/13] Várakozás march time + 1 sec (alliance help check közben)
+[22:22:33] ⏳ [Gathering] Várakozás 202 sec (march time + 1, alliance help check minden 5 sec)
+[22:22:38] ℹ️  [Gathering] Alliance help check (marching közben, 5s / 202s)
+[22:22:38] ✅ [Gathering] Alliance hand MEGTALÁLVA marching közben → (1389, 928)
+[22:22:38] ⏳ [Gathering] Várakozás 8.5 mp (alliance help)
+[22:22:47] 🖱️  [Gathering] Alliance help kattintás (marching közben) → (1389, 928)
+[22:22:47] ✅ [Gathering] Alliance help OK (marching közben)
+[22:22:52] ℹ️  [Gathering] Alliance help check (marching közben, 10s / 202s)
+[22:22:52] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:22:57] ℹ️  [Gathering] Alliance help check (marching közben, 15s / 202s)
+[22:22:58] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:03] ℹ️  [Gathering] Alliance help check (marching közben, 20s / 202s)
+[22:23:03] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:08] ℹ️  [Gathering] Alliance help check (marching közben, 25s / 202s)
+[22:23:09] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:14] ℹ️  [Gathering] Alliance help check (marching közben, 30s / 202s)
+[22:23:14] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:19] ℹ️  [Gathering] Alliance help check (marching közben, 35s / 202s)
+[22:23:20] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:25] ℹ️  [Gathering] Alliance help check (marching közben, 40s / 202s)
+[22:23:25] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:30] ℹ️  [Gathering] Alliance help check (marching közben, 45s / 202s)
+[22:23:31] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:36] ℹ️  [Gathering] Alliance help check (marching közben, 50s / 202s)
+[22:23:36] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:41] ℹ️  [Gathering] Alliance help check (marching közben, 55s / 202s)
+[22:23:42] ✅ [Gathering] Alliance hand MEGTALÁLVA marching közben → (1389, 928)
+[22:23:42] ⏳ [Gathering] Várakozás 6.1 mp (alliance help)
+[22:23:48] 🖱️  [Gathering] Alliance help kattintás (marching közben) → (1389, 928)
+[22:23:48] ✅ [Gathering] Alliance help OK (marching közben)
+[22:23:53] ℹ️  [Gathering] Alliance help check (marching közben, 60s / 202s)
+[22:23:53] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:23:58] ℹ️  [Gathering] Alliance help check (marching közben, 65s / 202s)
+[22:23:59] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:04] ℹ️  [Gathering] Alliance help check (marching közben, 70s / 202s)
+[22:24:04] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:09] ℹ️  [Gathering] Alliance help check (marching közben, 75s / 202s)
+[22:24:10] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:15] ℹ️  [Gathering] Alliance help check (marching közben, 80s / 202s)
+[22:24:15] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:20] ℹ️  [Gathering] Alliance help check (marching közben, 85s / 202s)
+[22:24:21] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:26] ℹ️  [Gathering] Alliance help check (marching közben, 90s / 202s)
+[22:24:26] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:31] ℹ️  [Gathering] Alliance help check (marching közben, 95s / 202s)
+[22:24:32] ✅ [Gathering] Alliance hand MEGTALÁLVA marching közben → (1389, 928)
+[22:24:32] ⏳ [Gathering] Várakozás 8.8 mp (alliance help)
+[22:24:41] 🖱️  [Gathering] Alliance help kattintás (marching közben) → (1389, 928)
+[22:24:41] ✅ [Gathering] Alliance help OK (marching közben)
+[22:24:46] ℹ️  [Gathering] Alliance help check (marching közben, 100s / 202s)
+[22:24:46] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:51] ℹ️  [Gathering] Alliance help check (marching közben, 105s / 202s)
+[22:24:52] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:24:57] ℹ️  [Gathering] Alliance help check (marching közben, 110s / 202s)
+[22:24:57] ✅ [Gathering] Alliance hand MEGTALÁLVA marching közben → (1389, 928)
+[22:24:57] ⏳ [Gathering] Várakozás 9.0 mp (alliance help)
+[22:25:06] 🖱️  [Gathering] Alliance help kattintás (marching közben) → (1389, 928)
+[22:25:06] ✅ [Gathering] Alliance help OK (marching közben)
+[22:25:11] ℹ️  [Gathering] Alliance help check (marching közben, 115s / 202s)
+[22:25:12] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:25:17] ℹ️  [Gathering] Alliance help check (marching közben, 120s / 202s)
+[22:25:17] ℹ️  [Gathering] Alliance hand nem található (marching közben)
+[22:25:22] ℹ️  [Gathering] Alliance help check (marching közben, 125s / 202s)
+[22:25:23] ✅ [Gathering] Alliance hand MEGTALÁLVA marching közben → (1389, 928)
+[22:25:23] ⏳ [Gathering] Várakozás 8.7 mp (alliance help)
+[22:25:31] 🖱️  [Gathering] Alliance help kattintás (marching közben) → (1389, 928)
+[22:25:31] ✅ [Gathering] Alliance help OK (marching közben)
+[22:25:34] ℹ️  [Timer] Timer lejárt: training_barracks_retry
+[22:25:34] ℹ️  [Queue] Task hozzáadva: barracks_restart (training, status=pending)
+[22:25:34] ℹ️  [Timer] Callback futott: barracks_restart hozzáadva queue-hoz
+############################################################
+[22:25:35] ⚠️  ⚠️  CTRL+C - Leállítás...
+############################################################
+[22:25:35] ℹ️  Connection Monitor leállítás...
+[22:25:37] ℹ️  [ConnectionMonitor] Monitor leállítva
+[22:25:37] ℹ️  Timer Manager leállítás...
+[22:25:37] ℹ️  [Timer] Timer Manager leállítva
+[22:25:37] ℹ️  Training Manager leállítás...
+[22:25:37] ℹ️  [Training] Manager leállítva
+[22:25:37] ℹ️  Alliance Manager leállítás...
+[22:25:37] ℹ️  Alliance Manager leállítva
+[22:25:37] ℹ️  Anti-AFK Manager leállítás...
+[22:25:38] ℹ️  Anti-AFK Manager leállítva
+[22:25:38] ℹ️  Queue mentése...
+[22:25:38] ℹ️  Timer-ek mentése...
+[22:25:38] ℹ️  Logger bezárása...
