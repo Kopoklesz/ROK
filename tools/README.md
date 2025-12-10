@@ -34,9 +34,13 @@ ROK/
 
 ---
 
-## 🛠️ Config Validator Tool
+## 🛠️ Test Tools
 
-### Használat
+### 1. Config Validator
+
+**Config ellenőrzés + vizualizáció**
+
+#### Használat
 
 #### 1. **Összes teszt futtatása**
 ```bash
@@ -133,6 +137,139 @@ python setup_wizard.py
 5. **Run Full Test Suite**
    - Mind a 4 teszt egyben
    - Teljes validáció
+
+6. **Test Module (ÚJ!)**
+   - Training/Gathering/Explorer modul tesztelése
+   - Lépésről-lépésre vizualizáció
+   - HTML riport generálás
+
+---
+
+## 🧪 Module Tester - MODUL-SPECIFIKUS TESZTELÉS
+
+### **Mi ez?**
+
+Minden modul (Training/Gathering/Explorer) **teljes folyamatát** végigfuttatja + vizualizálja:
+- 📸 Screenshot **minden lépésnél**
+- 🖱️ Kattintások **vizualizálva** (kereszt + címke)
+- 📖 OCR olvasások **vizualizálva** (téglalap + eredmény)
+- 📊 HTML riport **minden lépéssel**
+- ❌ Hiba esetén: **pontosan látod hol akadt meg**
+
+### **Használat**
+
+#### **Wizard-ból:**
+```bash
+python setup_wizard.py
+# Válaszd: 8. Test & Verify
+# Válaszd: 6. Test Module
+# Válaszd a modult: Training/Gathering/Explorer
+```
+
+#### **Standalone:**
+```bash
+# Training teszt
+python tools/module_tester.py --module training
+
+# Gathering teszt
+python tools/module_tester.py --module gathering
+
+# Explorer teszt
+python tools/module_tester.py --module explorer
+```
+
+### **Mit csinál?**
+
+#### **Training Module Test:**
+1. Config betöltése
+2. Training panel megnyitása (vizualizálja a kattintást)
+3. Mind a 4 building OCR olvasása (vizualizálja az OCR régiókat + eredményeket)
+4. Panel bezárása
+5. Clean state (ESC + 2x SPACE)
+6. HTML riport generálás
+
+#### **Gathering Module Test:**
+1. Config betöltése
+2. Resource OCR (wheat/wood/stone/gold) - vizualizálja mind a 4 régiót
+3. Map button kattintás
+4. Search button kattintás
+5. Clean state
+6. HTML riport
+
+#### **Explorer Module Test:**
+1. Config betöltése
+2. Map button kattintás
+3. Explore button kattintás
+4. Send button kattintás (ha van)
+5. Clean state
+6. HTML riport
+
+### **Eredmények**
+
+**Fájlok:** `logs/module_tests/{module_name}/`
+
+**1. HTML Riport:** `{timestamp}_report.html`
+- Lépésről-lépésre timeline
+- Minden screenshot beágyazva
+- Kattintások + OCR eredmények
+- Hibák kiemelve
+
+**2. Screenshot-ok:** `{timestamp}_step_XXX_*.png`
+- `step_001.png` - Általános screenshot
+- `step_002_click_Open_Panel.png` - Kattintás vizualizálva
+- `step_003_ocr_BARRACKS_Time.png` - OCR vizualizálva
+- `step_XXX_ERROR.png` - Hiba screenshot (ha volt)
+
+**3. JSON Log:** `{timestamp}_test_log.json`
+- Teljes teszt log strukturáltan
+- Minden lépés időbélyeggel
+- Programatikus feldolgozáshoz
+
+### **Példa Vizualizáció**
+
+#### **Kattintás screenshot:**
+```
+🖱️ Piros kereszt + kör a kattintás helyén
+📝 Címke: "Open Panel"
+```
+
+#### **OCR screenshot:**
+```
+📖 Zöld téglalap az OCR régió körül
+📝 Címke: "BARRACKS Time"
+✅ Eredmény a képen: "Result: 'Training 02:15:30'"
+```
+
+#### **Hiba screenshot:**
+```
+❌ Screenshot a hiba pillanatában
+📝 Hiba üzenet rá írva
+→ Pontosan látod mi volt a képernyőn amikor megakadt
+```
+
+### **Mikor használd?**
+
+1. **Új setup ellenőrzésére:**
+   ```bash
+   # Mindent beállítottál → Teszteld le
+   python tools/module_tester.py --module training
+   ```
+
+2. **Hibakeresésre:**
+   ```
+   "Training manager mindig megakad!"
+   → Futtasd a training tesztet
+   → Nézd meg a HTML riportot
+   → Látod melyik lépésnél akad meg
+   → Látod mi volt a képernyőn
+   ```
+
+3. **Módosítás után ellenőrzésre:**
+   ```
+   "Átállítottam a koordinátákat"
+   → Module teszt
+   → Látod működik-e az új setup
+   ```
 
 ---
 

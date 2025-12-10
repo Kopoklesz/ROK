@@ -1161,10 +1161,11 @@ class SetupWizardMenu:
             print("3. Visualize OCR Regions (Screenshot)")
             print("4. Test OCR Regions (Live)")
             print("5. Run Full Test Suite")
+            print("6. Test Module (Training/Gathering/Explorer)")
             print("0. Vissza")
             print("\n" + "="*60)
 
-            choice = self.get_menu_choice(0, 5)
+            choice = self.get_menu_choice(0, 6)
 
             if choice == 0:
                 break
@@ -1178,6 +1179,8 @@ class SetupWizardMenu:
                 self.test_ocr_live()
             elif choice == 5:
                 self.run_full_test()
+            elif choice == 6:
+                self.test_module()
 
     def validate_configs(self):
         """Config validálás futtatása"""
@@ -1307,6 +1310,53 @@ class SetupWizardMenu:
         print("Nézd meg az eredményeket:")
         print("  - logs/config_visualization.png")
         print("  - logs/ocr_regions_visualization.png")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def test_module(self):
+        """Module tesztelés vizualizációval"""
+        print("\n" + "="*60)
+        print("MODULE TESZTELÉS")
+        print("="*60)
+        print("\nVálaszd ki a modult:")
+        print("1. Training Manager")
+        print("2. Gathering Manager")
+        print("3. Explorer Manager")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 3)
+
+        if choice == 0:
+            return
+
+        module_map = {
+            1: 'training',
+            2: 'gathering',
+            3: 'explorer'
+        }
+
+        module_name = module_map[choice]
+
+        print(f"\n🧪 {module_name.upper()} teszt indul...")
+        print("\nMit fog csinálni:")
+        print("  - Lépésről-lépésre végigmegy a modul folyamatán")
+        print("  - Minden lépésnél screenshot-ot készít")
+        print("  - Vizualizálja a kattintásokat/OCR-eket")
+        print("  - HTML riportot generál")
+        print(f"\nEredmények: logs/module_tests/{module_name}/")
+
+        input("\nNyomj ENTER-t az indításhoz...")
+
+        import subprocess
+        result = subprocess.run([
+            'python3',
+            'tools/module_tester.py',
+            '--module', module_name
+        ], cwd=Path(__file__).parent)
+
+        print(f"\n✅ {module_name.upper()} teszt kész!")
+        print(f"\nNézd meg a riportot:")
+        print(f"  - logs/module_tests/{module_name}/*_report.html")
+        print(f"  - logs/module_tests/{module_name}/*.png (screenshot-ok)")
         input("\nNyomj ENTER-t a folytatáshoz...")
 
     # ===== UTILITY METHODS =====
