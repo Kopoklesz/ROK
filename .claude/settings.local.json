@@ -5,7 +5,11 @@
       "Bash(mv:*)",
       "Bash(python -m py_compile:*)",
       "Bash(dir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git diff:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []

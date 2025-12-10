@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "timer_id": "commander_1_gather_retry",
+    "deadline": "2025-12-10 06:17:54",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "commander_1_restart",
+      "task_type": "gathering",
+      "data": {
+        "commander_id": 1
+      }
+    }
+  },
+  {
+    "timer_id": "training_siege_retry",
+    "deadline": "2025-12-10 06:19:01",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "siege_restart",
+      "task_type": "training",
+      "data": {
+        "building": "siege"
+      }
+    }
+  },
+  {
+    "timer_id": "training_barracks_retry",
+    "deadline": "2025-12-10 06:19:53",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "barracks_restart",
+      "task_type": "training",
+      "data": {
+        "building": "barracks"
+      }
+    }
+  },
+  {
+    "timer_id": "training_stable_retry",
+    "deadline": "2025-12-10 06:20:46",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "stable_restart",
+      "task_type": "training",
+      "data": {
+        "building": "stable"
+      }
+    }
+  }
+]
