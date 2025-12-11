@@ -6,7 +6,7 @@ import time
 import json
 from pathlib import Path
 
-from library import safe_click, press_key, wait_random, ImageManager
+from library import safe_click, press_key, wait_random, ImageManager, find_and_close_popups
 from utils.logger import FarmLogger as log
 from utils.ocr_parser import parse_resource_value
 
@@ -121,8 +121,36 @@ class Explorer:
             log.success("✅ Van felfedezés folyamatban (% jel megtalálva)")
             need_exploration = False
         else:
-            log.warning("⚠️ Nincs % jel → Felfedezés indítása szükséges!")
-            need_exploration = True
+            log.warning("⚠️ Nincs % jel → OCR szemét vagy popup!")
+
+            # BACKUP: X gomb keresése (popup bezárás)
+            log.info("[Explorer] X gomb keresése (popup cleanup backup)...")
+            popup_closed = find_and_close_popups(max_attempts=2, threshold=0.65)
+
+            if popup_closed:
+                log.success("[Explorer] Popup bezárva X gombbal")
+                # Újra próbálkozás OCR-rel (1x)
+                time.sleep(1.0)
+                log.ocr("[Explorer] OCR újrapróbálás popup bezárás után...")
+
+                text1 = ImageManager.read_text_from_region(region1) if region1 else ""
+                text2 = ImageManager.read_text_from_region(region2) if region2 else ""
+                text3 = ImageManager.read_text_from_region(region3) if region3 else ""
+
+                log.info(f"Régió 1 OCR (retry): '{text1}'")
+                log.info(f"Régió 2 OCR (retry): '{text2}'")
+                log.info(f"Régió 3 OCR (retry): '{text3}'")
+
+                # % jel check retry
+                if '%' in text1 or '%' in text2 or '%' in text3:
+                    log.success("✓ % jel megtalálva retry után → Felfedezés folyamatban")
+                    need_exploration = False
+                else:
+                    log.warning("⚠️ Még mindig nincs % jel → Felfedezés indítása szükséges!")
+                    need_exploration = True
+            else:
+                log.info("[Explorer] Nincs popup → Felfedezés indítása szükséges")
+                need_exploration = True
 
         # 5. Scout bezárása
         delay = wait_random(self.human_wait_min, self.human_wait_max)

@@ -424,6 +424,72 @@ def wait_random(min_sec=3, max_sec=8):
     return delay
 
 
+def find_and_close_popups(search_region=None, max_attempts=3, threshold=0.7):
+    """
+    X gomb keresése és automatikus kattintás (popup bezárás)
+
+    HASZNÁLAT:
+    - OCR előtt hívjuk meg, ha szemét szöveget olvas
+    - Megpróbálja megtalálni az X gombot (close button)
+    - Ha talál, rákattint és bezárja a popup-ot
+
+    Args:
+        search_region: dict - Keresési régió {'x', 'y', 'width', 'height'}
+                             Ha None, akkor teljes képernyő
+        max_attempts: int - Max próbálkozások száma
+        threshold: float - Template matching threshold (0.7 = 70% egyezés)
+
+    Returns:
+        bool: True ha zárt be valamit, False ha nem talált semmit
+    """
+    from pathlib import Path
+
+    # X gomb template fájlok keresése
+    images_dir = Path(__file__).parent / 'images'
+    x_templates = [
+        images_dir / 'close_x.png',
+        images_dir / 'x_button.png',
+        images_dir / 'popup_close.png'
+    ]
+
+    # Válasszuk ki az első létező template-et
+    x_template = None
+    for template_path in x_templates:
+        if template_path.exists():
+            x_template = str(template_path)
+            break
+
+    if not x_template:
+        # Nincs template, nem tudunk X gombot keresni
+        return False
+
+    print(f"[Popup Close] X gomb keresése: {Path(x_template).name}")
+
+    for attempt in range(1, max_attempts + 1):
+        print(f"[Popup Close] Próbálkozás {attempt}/{max_attempts}...")
+
+        # Template matching
+        coords = ImageManager.find_image(x_template, threshold=threshold, region=search_region)
+
+        if coords:
+            print(f"[Popup Close] ✓ X gomb megtalálva → {coords}")
+
+            # Kattintás az X gombra
+            time.sleep(0.3)
+            safe_click(coords)
+
+            print(f"[Popup Close] ✓ Popup bezárva")
+            time.sleep(0.5)  # Rövid várakozás a bezárás után
+
+            return True
+        else:
+            print(f"[Popup Close] X gomb nem található (attempt {attempt}/{max_attempts})")
+            time.sleep(0.3)
+
+    print(f"[Popup Close] Nincs popup ({max_attempts} próba)")
+    return False
+
+
 def get_screen_center():
     """Képernyő középpont számítása"""
     width, height = pyautogui.size()

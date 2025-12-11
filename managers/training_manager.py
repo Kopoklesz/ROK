@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from collections import Counter
 
-from library import safe_click, press_key, wait_random
+from library import safe_click, press_key, wait_random, find_and_close_popups
 from utils.logger import FarmLogger as log
 from utils.queue_manager import queue_manager
 from utils.timer_manager import timer_manager
@@ -385,11 +385,21 @@ class TrainingManager:
                 log.success(f"[Training] {building_name.upper()} → COMPLETED (OCR: '{consensus_text}')")
                 return {'type': 'completed', 'value': 0}
 
-            # ===== 4. SIKERTELEN OCR → RETRY =====
+            # ===== 4. SIKERTELEN OCR → POPUP CHECK + RETRY =====
             # Ha parse_time None-t adott (sikertelen OCR)
-            # NE detektáljuk IDLE-ként, hanem próbálkozzunk újra!
+            # BACKUP: Próbáljuk meg bezárni a popup-okat X gombbal
             if time_sec is None:
                 log.warning(f"[Training] {building_name.upper()} OCR nem értelmezhető ('{consensus_text}'), retry {main_attempt}/{max_attempts}")
+
+                # POPUP CLOSE: Minden 3. sikertelen próbálkozásnál próbáljuk bezárni
+                if main_attempt % 3 == 0 and main_attempt <= 9:
+                    log.info(f"[Training] X gomb keresése (popup cleanup backup)...")
+                    popup_closed = find_and_close_popups(max_attempts=2, threshold=0.65)
+                    if popup_closed:
+                        log.success(f"[Training] Popup bezárva X gombbal, OCR retry...")
+                        time.sleep(1.0)
+                        continue
+
                 time.sleep(0.7)
                 continue
 

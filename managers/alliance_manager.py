@@ -8,7 +8,7 @@ import time
 import threading
 from pathlib import Path
 
-from library import ImageManager, safe_click, wait_random
+from library import ImageManager, safe_click, wait_random, press_key
 from utils.logger import FarmLogger as log
 from utils.queue_manager import queue_manager
 
@@ -130,6 +130,20 @@ class AllianceManager:
                 safe_click((x, y))
 
                 log.success(f"[Alliance] Help kattintás OK (fix koordináta #{idx})")
+
+                # CLEANUP: 2x SPACE (kivéve ha marching)
+                # TODO: Ellenőrizni kell hogy van-e aktív gathering (marching)
+                # Egyelőre mindig cleanup-olunk
+                delay = wait_random(2, 4)
+                log.wait(f"[Alliance] Várakozás {delay:.1f} mp (cleanup)")
+                time.sleep(delay)
+
+                log.info("[Alliance] UI cleanup: 2x SPACE")
+                press_key('space')
+                time.sleep(0.5)
+                press_key('space')
+                log.success("[Alliance] UI cleanup befejezve")
+
                 log.separator('=', 60)
                 return
 
