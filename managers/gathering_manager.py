@@ -430,20 +430,17 @@ class GatheringManager:
 
                 log.info(f"[Gathering] Task visszatéve queue-ba {retry_seconds//60} perc múlvára")
 
-                # Bezárás (ESC + 2x SPACE = clean state)
+                # Bezárás (2x SPACE = clean state)
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
-                log.action("[Gathering] ESC lenyomása (minden menü bezárása)")
-                press_key('esc')
-                time.sleep(0.5)
                 log.action("[Gathering] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Gathering] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Gathering] ESC + 2x SPACE → clean state (városban, minden bezárva)")
+                log.info("[Gathering] 2x SPACE → clean state (városban, minden bezárva)")
 
                 # Progressive retry
                 timer_manager.add_timer(
@@ -579,20 +576,17 @@ class GatheringManager:
                 log.error(f"[Gathering] Gather Time OCR 60 próba után sikertelen! ({failure_count}x)")
                 log.info(f"[Gathering] Task visszatéve queue-ba {retry_seconds//60} perc múlvára")
 
-                # Bezárás (ESC + 2x SPACE = clean state)
+                # Bezárás (2x SPACE = clean state)
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
                 time.sleep(delay)
 
-                log.action("[Gathering] ESC lenyomása (minden menü bezárása)")
-                press_key('esc')
-                time.sleep(0.5)
                 log.action("[Gathering] SPACE #1 lenyomása (kigugrás)")
                 press_key('space')
                 time.sleep(1.0)
                 log.action("[Gathering] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Gathering] ESC + 2x SPACE → clean state (városban, minden bezárva)")
+                log.info("[Gathering] 2x SPACE → clean state (városban, minden bezárva)")
 
                 # Progressive retry
                 timer_manager.add_timer(

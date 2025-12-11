@@ -267,6 +267,22 @@ class ModuleTester:
             'timestamp': datetime.now().isoformat()
         })
 
+    def warning(self, message):
+        """
+        Figyelmeztetés jelzés
+
+        Args:
+            message: Figyelmeztetés üzenet
+        """
+        print(f"\n⚠️  FIGYELMEZTETÉS: {message}")
+
+        self.test_log.append({
+            'type': 'warning',
+            'step': self.step_counter,
+            'message': message,
+            'timestamp': datetime.now().isoformat()
+        })
+
     def end_test(self):
         """Test befejezése + riport generálás"""
         print("\n" + "="*60)
@@ -422,10 +438,23 @@ class TrainingTester(ModuleTester):
             training_coords = self._load_config('training_coords.json')
             training_regions = self._load_config('training_time_regions.json')
 
-            if not training_coords or not training_regions:
-                self.error("Config fájlok hiányoznak!")
+            if not training_coords:
+                self.error("training_coords.json hiányzik!")
                 self.end_test()
                 return
+
+            # Check if OCR regions are configured
+            ocr_available = False
+            if training_regions:
+                # Check if any region has valid x,y coordinates (not 0,0)
+                for key, region in training_regions.items():
+                    if isinstance(region, dict) and region.get('x', 0) != 0:
+                        ocr_available = True
+                        break
+
+            if not ocr_available:
+                self.warning("⚠️ OCR régiók nincsenek beállítva - OCR tesztek kihagyva")
+                self.warning("   Csak koordináta kattintások lesznek vizualizálva")
 
             # Step 1: Panel megnyitás
             self.step("Training panel megnyitása")
@@ -434,21 +463,26 @@ class TrainingTester(ModuleTester):
                 self.click(open_panel, "Open Panel")
                 self.wait(2, "Panel betöltés")
 
-            # Step 2: Buildings OCR
-            buildings = ['barracks', 'archery', 'stable', 'siege']
-            for building in buildings:
-                self.step(f"{building.upper()} OCR olvasása")
+            # Step 2: Buildings OCR (only if OCR regions available)
+            if ocr_available:
+                buildings = ['barracks', 'archery', 'stable', 'siege']
+                for building in buildings:
+                    self.step(f"{building.upper()} OCR olvasása")
 
-                region = training_regions.get(building)
-                if region:
-                    ocr_text = self.ocr_read(region, f"{building.upper()} Time")
+                    region_key = f"{building}_time"
+                    region = training_regions.get(region_key)
 
-                    if ocr_text:
-                        self.success(f"{building.upper()} OCR OK: '{ocr_text}'")
+                    if region and region.get('x', 0) != 0:
+                        ocr_text = self.ocr_read(region, f"{building.upper()} Time")
+
+                        if ocr_text:
+                            self.success(f"{building.upper()} OCR OK: '{ocr_text}'")
+                        else:
+                            self.warning(f"{building.upper()} OCR üres (lehet nincs training)")
                     else:
-                        self.error(f"{building.upper()} OCR üres!")
-                else:
-                    self.error(f"{building.upper()} régió nincs beállítva!")
+                        self.warning(f"{building.upper()} OCR régió nincs beállítva - skip")
+            else:
+                self.step("OCR tesztek kihagyva (régiók nincsenek beállítva)")
 
             # Step 3: Panel bezárás
             self.step("Training panel bezárása")
@@ -458,9 +492,7 @@ class TrainingTester(ModuleTester):
                 self.wait(1, "Panel bezárás")
 
             # Step 4: Clean state
-            self.step("Clean state (ESC + 2x SPACE)")
-            self.keypress('esc', "Bezár minden menüt")
-            self.wait(0.5, "ESC után")
+            self.step("Clean state (2x SPACE)")
             self.keypress('space', "Kigugrás városból")
             self.wait(1, "SPACE #1 után")
             self.keypress('space', "Visszaugrás városba")
@@ -501,7 +533,7 @@ class GatheringTester(ModuleTester):
             # Load configs
             self.step("Config betöltése")
             gathering_coords = self._load_config('gathering_coords.json')
-            resource_regions = self._load_config('resource_regions.json')
+            resource_regions = self._load_config('farm_regions.json')
 
             if not gathering_coords or not resource_regions:
                 self.error("Config fájlok hiányoznak!")
@@ -536,9 +568,7 @@ class GatheringTester(ModuleTester):
                 self.wait(2, "Search panel betöltés")
 
             # Step 4: Clean state
-            self.step("Clean state (ESC + 2x SPACE)")
-            self.keypress('esc', "Bezár minden menüt")
-            self.wait(0.5, "ESC után")
+            self.step("Clean state (2x SPACE)")
             self.keypress('space', "Kigugrás térképről")
             self.wait(1, "SPACE #1 után")
             self.keypress('space', "Visszaugrás városba")
@@ -572,7 +602,7 @@ class ExplorerTester(ModuleTester):
         self.config_dir = Path(__file__).parent.parent / 'config'
 
     def run_full_test(self):
-        """Teljes explorer teszt"""
+        """Teljes explorer teszt - követi az explorer.py workflow-t"""
         self.start_test("Explorer Manager Full Test")
 
         try:
@@ -585,34 +615,108 @@ class ExplorerTester(ModuleTester):
                 self.end_test()
                 return
 
-            # Step 1: Map button
-            self.step("Map button kattintás")
-            map_button = explorer_coords.get('map_button', [0, 0])
-            if map_button != [0, 0]:
-                self.click(map_button, "Map Button")
-                self.wait(3, "Térkép betöltés")
+            # Check if OCR regions are configured
+            ocr_available = False
+            ocr_regions = ['exploration_region_1', 'exploration_region_2', 'exploration_region_3']
+            for region_key in ocr_regions:
+                region = explorer_coords.get(region_key)
+                if isinstance(region, dict) and region.get('x', 0) != 0:
+                    ocr_available = True
+                    break
 
-            # Step 2: Explore button
-            self.step("Explore button kattintás")
+            if not ocr_available:
+                self.warning("⚠️ Exploration OCR régiók nincsenek beállítva - OCR tesztek kihagyva")
+                self.warning("   Csak koordináta kattintások lesznek vizualizálva")
+
+            # ===== STEP 1: CHECK EXPLORATION (like check_exploration() in explorer.py) =====
+            self.step("Check Exploration - Que menü megnyitása")
+            open_queue = explorer_coords.get('open_queue_menu', [0, 0])
+            if open_queue != [0, 0]:
+                self.click(open_queue, "Open Queue Menu")
+                self.wait(2, "Queue menü betöltés")
+
+            self.step("Check Exploration - Que fül bezárása")
+            close_queue_tab = explorer_coords.get('close_queue_tab', [0, 0])
+            if close_queue_tab != [0, 0]:
+                self.click(close_queue_tab, "Close Queue Tab")
+                self.wait(1, "Queue tab bezárás")
+
+            self.step("Check Exploration - Scout fül megnyitása")
+            open_scout_tab = explorer_coords.get('open_scout_tab', [0, 0])
+            if open_scout_tab != [0, 0]:
+                self.click(open_scout_tab, "Open Scout Tab")
+                self.wait(2, "Scout tab betöltés")
+
+            # OCR reading (if available)
+            if ocr_available:
+                self.step("Check Exploration - Felfedezés % OCR olvasás")
+                for i, region_key in enumerate(ocr_regions, 1):
+                    region = explorer_coords.get(region_key)
+                    if region and region.get('x', 0) != 0:
+                        ocr_text = self.ocr_read(region, f"Exploration Region {i}")
+                        if ocr_text:
+                            self.success(f"Region {i} OCR OK: '{ocr_text}'")
+                        else:
+                            self.warning(f"Region {i} OCR üres")
+                    else:
+                        self.warning(f"Region {i} nincs beállítva")
+            else:
+                self.step("Exploration OCR olvasás kihagyva (régiók nincsenek beállítva)")
+
+            self.step("Check Exploration - Scout bezárása")
+            close_scout = explorer_coords.get('close_scout', [0, 0])
+            if close_scout != [0, 0]:
+                self.click(close_scout, "Close Scout")
+                self.wait(1, "Scout bezárás")
+
+            self.step("Check Exploration - Que fül megnyitása")
+            open_queue_tab = explorer_coords.get('open_queue_tab', [0, 0])
+            if open_queue_tab != [0, 0]:
+                self.click(open_queue_tab, "Open Queue Tab")
+                self.wait(1, "Queue tab megnyitás")
+
+            self.step("Check Exploration - Que menü bezárása")
+            close_queue = explorer_coords.get('close_queue_menu', [0, 0])
+            if close_queue != [0, 0]:
+                self.click(close_queue, "Close Queue Menu")
+                self.wait(1, "Queue menü bezárás")
+
+            # ===== STEP 2: START EXPLORATION (like start_exploration() in explorer.py) =====
+            self.step("Start Exploration - Scout épület kattintás")
+            scout_building = explorer_coords.get('scout_building', [0, 0])
+            if scout_building != [0, 0]:
+                self.click(scout_building, "Scout Building")
+                self.wait(2, "Scout building megnyitás")
+
+            self.step("Start Exploration - Pre-explore gomb")
+            pre_explore = explorer_coords.get('pre_explore_button', [0, 0])
+            if pre_explore != [0, 0]:
+                self.click(pre_explore, "Pre-explore Button")
+                self.wait(1, "Pre-explore")
+
+            self.step("Start Exploration - Explore gomb (1. kattintás)")
             explore_button = explorer_coords.get('explore_button', [0, 0])
             if explore_button != [0, 0]:
-                self.click(explore_button, "Explore Button")
-                self.wait(2, "Explore panel")
+                self.click(explore_button, "Explore Button (1st)")
+                self.wait(1.5, "Fix 1.5 mp várakozás")
 
-            # Step 3: Send button (if exists)
-            self.step("Send button kattintás (ha van)")
-            send_button = explorer_coords.get('send_button', [0, 0])
-            if send_button != [0, 0]:
-                self.click(send_button, "Send Button")
-                self.wait(1, "Send után")
+            self.step("Start Exploration - Explore gomb (2. kattintás)")
+            if explore_button != [0, 0]:
+                self.click(explore_button, "Explore Button (2nd)")
+                self.wait(1, "Explore után")
 
-            # Step 4: Clean state
-            self.step("Clean state (ESC + 2x SPACE)")
-            self.keypress('esc', "Bezár minden menüt")
-            self.wait(0.5, "ESC után")
-            self.keypress('space', "Kigugrás térképről")
+            # Additional click before clean state (screen center or confirm)
+            self.step("Start Exploration - Fix kattintás (képernyő közép)")
+            screen_center = explorer_coords.get('screen_center', [0, 0])
+            if screen_center != [0, 0]:
+                self.click(screen_center, "Screen Center")
+                self.wait(1, "Fix kattintás után")
+
+            # ===== STEP 3: CLEAN STATE =====
+            self.step("Clean state (2x SPACE)")
+            self.keypress('space', "SPACE (1.)")
             self.wait(1, "SPACE #1 után")
-            self.keypress('space', "Visszaugrás városba")
+            self.keypress('space', "SPACE (2.)")
             self.wait(1, "SPACE #2 után")
 
             self.success("Explorer teszt sikeresen befejezve!")

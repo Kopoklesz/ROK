@@ -9,7 +9,10 @@
       "Bash(git diff:*)",
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(where:*)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

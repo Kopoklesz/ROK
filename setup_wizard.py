@@ -2,6 +2,7 @@
 ROK Auto Farm - Setup Wizard (Menu-Based v2.0 COMPLETE)
 FIXED: Minden hiányzó függvény implementálva
 """
+import sys
 import json
 import cv2
 import numpy as np
@@ -1014,6 +1015,7 @@ class SetupWizardMenu:
         print("  10. Scout épület")
         print("  11. Pre-explore gomb (új!)")
         print("  12. Explore gomb")
+        print("  13. Képernyő közép (fix kattintás explore után, 2x SPACE előtt)")
         print("\n⚠️  ENTER = új koordináta beállítása, ESC = régi megtartása\n")
 
         coord_names = [
@@ -1028,7 +1030,8 @@ class SetupWizardMenu:
             'close_queue_menu',     # 9. Que menü bezárása
             'scout_building',       # 10. Scout épület
             'pre_explore_button',   # 11. Pre-explore gomb - ÚJ!
-            'explore_button'        # 12. Explore gomb
+            'explore_button',       # 12. Explore gomb
+            'screen_center'         # 13. Képernyő közép (fix kattintás 2x SPACE előtt)
         ]
 
         coord_labels = {
@@ -1043,7 +1046,8 @@ class SetupWizardMenu:
             'close_queue_menu': 'Que menü bezárása',
             'scout_building': 'Scout épület',
             'pre_explore_button': 'Pre-explore gomb (explore előtt)',
-            'explore_button': 'Explore gomb (végleges)'
+            'explore_button': 'Explore gomb (végleges)',
+            'screen_center': 'Képernyő közép (fix kattintás explore után)'
         }
 
         # Meglévő koordináták betöltése
@@ -1193,7 +1197,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/config_validator.py',
             '--mode', 'check'
         ], cwd=Path(__file__).parent)
@@ -1226,7 +1230,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/config_validator.py',
             '--mode', 'visual-coords',
             '--type', type_map[choice]
@@ -1261,7 +1265,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/config_validator.py',
             '--mode', 'visual-ocr',
             '--type', type_map[choice]
@@ -1282,7 +1286,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/config_validator.py',
             '--mode', 'test-ocr'
         ], cwd=Path(__file__).parent)
@@ -1304,7 +1308,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/config_validator.py',
             '--mode', 'all'
         ], cwd=Path(__file__).parent)
@@ -1351,7 +1355,7 @@ class SetupWizardMenu:
 
         import subprocess
         result = subprocess.run([
-            'python3',
+            sys.executable,
             'tools/module_tester.py',
             '--module', module_name
         ], cwd=Path(__file__).parent)
@@ -1537,7 +1541,7 @@ class SetupWizardMenu:
         if choice == 1:
             config_file = self.config_dir / 'training_time_regions.json'
         else:
-            config_file = self.config_dir / 'resource_regions.json'
+            config_file = self.config_dir / 'farm_regions.json'
 
         if not config_file.exists():
             print(f"❌ Config nem található: {config_file}")

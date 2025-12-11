@@ -76,10 +76,10 @@ class ConfigValidator:
         if gathering_coords:
             print("✅ gathering_coords.json")
 
-        # Resource regions
-        resource_regions = self.load_config('resource_regions.json')
+        # Resource regions (farm_regions.json)
+        resource_regions = self.load_config('farm_regions.json')
         if resource_regions:
-            print("✅ resource_regions.json")
+            print("✅ farm_regions.json")
             self._validate_regions(resource_regions, "Resource")
 
         # Alliance
@@ -284,9 +284,9 @@ class ConfigValidator:
             if training_regions:
                 self._draw_regions(draw, training_regions, font, "red")
 
-        # Resource régiók
+        # Resource régiók (farm_regions.json)
         if region_type in ['resource', 'all']:
-            resource_regions = self.load_config('resource_regions.json')
+            resource_regions = self.load_config('farm_regions.json')
             if resource_regions:
                 self._draw_regions(draw, resource_regions, font, "green")
 
@@ -344,9 +344,9 @@ class ConfigValidator:
                 else:
                     print(f"  ⚠️  {region_name}: Üres OCR")
 
-        # Resource régiók
+        # Resource régiók (farm_regions.json)
         print("\nResource régiók:")
-        resource_regions = self.load_config('resource_regions.json')
+        resource_regions = self.load_config('farm_regions.json')
         if resource_regions:
             for region_name, region in resource_regions.items():
                 if not region or region.get('x', 0) == 0:
