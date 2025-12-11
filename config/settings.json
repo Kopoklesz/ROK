@@ -36,7 +36,7 @@
   },
   
   "alliance": {
-    "enabled": true,
+    "enabled": false,
     "check_interval_seconds": 300
   },
   
