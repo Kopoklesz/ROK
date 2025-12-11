@@ -286,6 +286,18 @@ class ImageManager:
             # Kivágás
             cropped = img.crop((x, y, x + w, y + h))
 
+            # ===== DEBUG SAVE: EREDETI SCREENSHOT =====
+            if debug_save:
+                import datetime
+                from pathlib import Path
+                debug_dir = Path(__file__).parent / 'logs' / 'ocr_debug'
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                # Eredeti screenshot mentése (COLOR)
+                cropped.save(str(debug_dir / f"ocr_{timestamp}_0_original.png"))
+                print(f"  📸 Original screenshot: {debug_dir}/ocr_{timestamp}_0_original.png")
+            # ============================================
+
             # Grayscale
             gray = cv2.cvtColor(np.array(cropped), cv2.COLOR_RGB2GRAY)
 

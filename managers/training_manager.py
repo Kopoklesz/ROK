@@ -194,7 +194,18 @@ class TrainingManager:
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] Scan befejezve → 2x SPACE → clean state")
+
+                # POPUP CLEANUP: ESC lenyomások
+                delay = wait_random(2, 4)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp (popup cleanup)")
+                time.sleep(delay)
+
+                log.info("[Training] Popup cleanup: 3x ESC")
+                for i in range(3):
+                    press_key('esc')
+                    time.sleep(0.3)
+
+                log.info("[Training] Scan befejezve → 2x SPACE + 3x ESC → clean state")
 
     def _is_building_upgrading(self, building_name):
         """
@@ -611,6 +622,17 @@ class TrainingManager:
             press_key('space')
             log.success("[Training] SPACE #2 OK")
 
+            # 7b. POPUP CLEANUP: ESC lenyomások (notification/popup bezárás)
+            delay = wait_random(2, 4)
+            log.wait(f"[Training] Várakozás {delay:.1f} mp (animáció lezárás)")
+            time.sleep(delay)
+
+            log.info("[Training] Popup cleanup: 3x ESC")
+            for i in range(3):
+                press_key('esc')
+                time.sleep(0.3)
+            log.success("[Training] Popup cleanup befejezve")
+
             # 8. Panel megnyitás ÚJRA
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
@@ -679,7 +701,7 @@ class TrainingManager:
             safe_click(close_panel_coords)
             log.success("[Training] Panel bezárva")
 
-            # Ha OCR sikertelen volt → 2x SPACE reset (clean state)
+            # Ha OCR sikertelen volt → 2x SPACE reset + ESC cleanup (clean state)
             if ocr_failed:
                 delay = wait_random(self.human_wait_min, self.human_wait_max)
                 log.wait(f"[Training] Várakozás {delay:.1f} mp")
@@ -690,7 +712,18 @@ class TrainingManager:
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
-                log.info("[Training] 2x SPACE → clean state (városban, minden bezárva)")
+
+                # POPUP CLEANUP
+                delay = wait_random(2, 4)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp (popup cleanup)")
+                time.sleep(delay)
+
+                log.info("[Training] Popup cleanup: 3x ESC")
+                for i in range(3):
+                    press_key('esc')
+                    time.sleep(0.3)
+
+                log.info("[Training] 2x SPACE + 3x ESC → clean state (városban, minden bezárva)")
 
             log.separator('=', 60)
             log.success(f"[Training] {building_name.upper()} training befejezve!")
