@@ -11,6 +11,7 @@ from pathlib import Path
 from library import ImageManager, safe_click, wait_random, press_key
 from utils.logger import FarmLogger as log
 from utils.queue_manager import queue_manager
+from utils.timer_manager import timer_manager
 
 
 class AllianceManager:
@@ -86,6 +87,33 @@ class AllianceManager:
         
         log.info("Alliance Manager leállítva")
     
+    def _check_if_gathering_active(self):
+        """
+        Ellenőrzi hogy van-e aktív gathering (marching)
+
+        Returns:
+            bool: True ha van aktív gathering, False ha nincs
+        """
+        try:
+            timers = timer_manager.get_all_timers()
+
+            for timer in timers:
+                # Gathering timer ellenőrzés
+                timer_id = timer.get('timer_id', '')
+                callback_data = timer.get('callback_data', {})
+                task_type = callback_data.get('task_type', '')
+
+                # Ha commander_ prefix vagy gathering task type → marching aktív
+                if timer_id.startswith('commander_') or task_type == 'gathering':
+                    log.info(f"[Alliance] Aktív gathering timer található: {timer_id} (type: {task_type})")
+                    return True
+
+            return False
+
+        except Exception as e:
+            log.warning(f"[Alliance] Gathering check hiba: {e}, fallback: False")
+            return False
+
     def _timer_loop(self):
         """
         Háttérszál: 5 percenként queue-ba task
@@ -94,7 +122,7 @@ class AllianceManager:
             # Első trigger azonnal (induláskor)
             queue_manager.add_task("alliance_help", "alliance")
             log.info(f"[Alliance] Help task queue-ba téve")
-            
+
             # Várakozás (5 perc, de 1 sec-enként ellenőrzi a running flag-et)
             for _ in range(self.check_interval):
                 if not self.running:
@@ -131,18 +159,23 @@ class AllianceManager:
 
                 log.success(f"[Alliance] Help kattintás OK (fix koordináta #{idx})")
 
-                # CLEANUP: 2x SPACE (kivéve ha marching)
-                # TODO: Ellenőrizni kell hogy van-e aktív gathering (marching)
-                # Egyelőre mindig cleanup-olunk
+                # CLEANUP: 2x SPACE (KRITIKUS: kivéve ha marching!)
                 delay = wait_random(2, 4)
-                log.wait(f"[Alliance] Várakozás {delay:.1f} mp (cleanup)")
+                log.wait(f"[Alliance] Várakozás {delay:.1f} mp (cleanup check)")
                 time.sleep(delay)
 
-                log.info("[Alliance] UI cleanup: 2x SPACE")
-                press_key('space')
-                time.sleep(0.5)
-                press_key('space')
-                log.success("[Alliance] UI cleanup befejezve")
+                # Gathering check BEFORE cleanup
+                is_marching = self._check_if_gathering_active()
+
+                if not is_marching:
+                    log.info("[Alliance] UI cleanup: 2x SPACE (nincs aktív gathering)")
+                    press_key('space')
+                    time.sleep(0.5)
+                    press_key('space')
+                    log.success("[Alliance] UI cleanup befejezve")
+                else:
+                    log.warning("[Alliance] ⚠️ SPACE cleanup SKIPPED - MARCHING AKTÍV (gathering folyamatban)")
+                    log.warning("[Alliance] SPACE megnyomása törölné a gathering-ot!")
 
                 log.separator('=', 60)
                 return
@@ -178,6 +211,25 @@ class AllianceManager:
                 safe_click(coords)
 
                 log.success("[Alliance] Help kattintás OK (template matching)")
+
+                # CLEANUP: 2x SPACE (KRITIKUS: kivéve ha marching!)
+                delay = wait_random(2, 4)
+                log.wait(f"[Alliance] Várakozás {delay:.1f} mp (cleanup check)")
+                time.sleep(delay)
+
+                # Gathering check BEFORE cleanup
+                is_marching = self._check_if_gathering_active()
+
+                if not is_marching:
+                    log.info("[Alliance] UI cleanup: 2x SPACE (nincs aktív gathering)")
+                    press_key('space')
+                    time.sleep(0.5)
+                    press_key('space')
+                    log.success("[Alliance] UI cleanup befejezve")
+                else:
+                    log.warning("[Alliance] ⚠️ SPACE cleanup SKIPPED - MARCHING AKTÍV (gathering folyamatban)")
+                    log.warning("[Alliance] SPACE megnyomása törölné a gathering-ot!")
+
                 log.separator('=', 60)
                 return
             else:
