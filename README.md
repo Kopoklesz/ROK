@@ -13,13 +13,38 @@ pip install -r requirements.txt
 1. Töltsd le: https://github.com/UB-Mannheim/tesseract/wiki
 2. Telepítsd (alapértelmezett hely: `C:\Program Files\Tesseract-OCR`)
 3. Nyisd meg a `library.py` fájlt
-4. Módosítsd az útvonalat (25. sor):
+4. Módosítsd az útvonalat (30. sor):
 
 ```python
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 ```
 
-### C) Játék ablak nevének beállítása
+### C) 🤖 EasyOCR telepítése (OPCIONÁLIS - ML-alapú OCR)
+
+**Miért?** Jobb OCR pontosság, különösen éjszaka! Neural network alapú felismerés.
+
+```bash
+pip install easyocr
+```
+
+**Előnyök:**
+- ✅ Jobb OCR pontosság éjjel/nappal (neural network)
+- ✅ Kevesebb OCR hiba → kevesebb retry loop
+- ✅ **Gyorsabb összesített futás** (kevesebb 5-60 perc várakozás)
+- ✅ Automatikus fallback Tesseract-ra
+
+**Hátrányok:**
+- ⚠️  Egy OCR hívás lassabb (1-2 sec vs 0.1 sec)
+- ⚠️  Első indítás: model letöltése (~500MB)
+- ⚠️  Több memória használat
+
+**Miért gyorsabb összességében?**
+- Tesseract éjjel: OCR hiba → retry → 5 min várakozás → újra hiba... = **órák veszteség**
+- EasyOCR éjjel: 1.5 sec → **sikeres OCR elsőre** → folytatja a munkát
+
+**Teszt:** `setup_wizard.py` → 9. Advanced Tools → 3. Test EasyOCR vs Tesseract
+
+### D) Játék ablak nevének beállítása
 
 Nyisd meg a `library.py` fájlt, és módosítsd a 33. sort:
 
@@ -139,19 +164,65 @@ python farm_manager.py
 
 ---
 
+## 🚀 ML-Enhanced Features (ÚJ v2.1)
+
+### Advanced Tools Menu
+
+```bash
+python setup_wizard.py
+# Válaszd: 9. Advanced Tools
+```
+
+#### 1️⃣ Template Capture - Gomb mentése
+- Koordinátából készít template-et
+- Használd ha ablak méret változik
+- Batch capture: mind a 4 training gomb egyszerre
+
+#### 2️⃣ Test Template Matching
+- Template keresése a képernyőn
+- Multi-scale támogatás
+- Threshold beállítás
+
+#### 3️⃣ EasyOCR vs Tesseract Teszt
+- ML vs pattern-matching OCR
+- Élő teszt összehasonlítás
+- Debug save (logs/ocr_debug/)
+
+#### 4️⃣ Test & Verify Menu
+- Config validálás
+- Koordináta vizualizáció
+- OCR régió vizualizáció
+- Module-specific testing (Training/Gathering/Explorer)
+
+**Részletes dokumentáció:** `tools/README.md`
+
+---
+
 **Ha minden kész, jó farmolást!** 🌾🚜
 
+---
 
+## 📋 Roadmap & Változások
 
-**Jövő**
+### ✅ Kész (v2.1 ML-Enhanced)
+- EasyOCR támogatás (ML-alapú OCR)
+- Enhanced template matching (multi-scale)
+- Button template capture tool
+- Advanced Tools menu
+- OCR comparison tool
+- Batch template capture
 
--Szövetségi rally csatlakozás
--Szövetségi rally indítás
--Fő épület fejlesztés
+### ✅ Kész (v2.0)
+- Module-specific testing
+- Config validator + visualizer
+- Progressive retry logic
+- ESC + 2x SPACE clean state
+- OCR preprocessing (OTSU, Adaptive, CLAHE)
 
-**Javítás**
-
--Szövetségi segítségnyújtás
--Fagyás elleni védelem
--Város nézet elleni védelem
--Szövetségi 
+### 🔜 Tervezett
+- Szövetségi rally csatlakozás
+- Szövetségi rally indítás
+- Fő épület fejlesztés
+- Relatív koordináták (%-os)
+- Hybrid mode (koordináta + template fallback)
+- Web UI config editor 

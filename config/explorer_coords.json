@@ -1,0 +1,60 @@
+{
+  "open_queue_menu": [
+    50,
+    199
+  ],
+  "close_queue_tab": [
+    242,
+    341
+  ],
+  "open_scout_tab": [
+    259,
+    412
+  ],
+  "exploration_region_1": {
+    "x": 112,
+    "y": 489,
+    "width": 344,
+    "height": 56
+  },
+  "exploration_region_2": {
+    "x": 115,
+    "y": 694,
+    "width": 341,
+    "height": 48
+  },
+  "close_scout": [
+    211,
+    419
+  ],
+  "open_queue_tab": [
+    193,
+    344
+  ],
+  "close_queue_menu": [
+    495,
+    545
+  ],
+  "scout_building": [
+    1713,
+    678
+  ],
+  "explore_button": [
+    642,
+    405
+  ],
+  "exploration_region_3": {
+    "x": 112,
+    "y": 596,
+    "width": 339,
+    "height": 44
+  },
+  "pre_explore_button": [
+    1777,
+    933
+  ],
+  "screen_center": [
+    1637,
+    125
+  ]
+}

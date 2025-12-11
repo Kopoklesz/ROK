@@ -267,17 +267,27 @@ class BaseFarm:
         
         return None
     
-    def read_time(self, time_key):
-        """Idő kiolvasás OCR-rel"""
+    def read_time(self, time_key, debug_save=False):
+        """
+        Idő kiolvasás OCR-rel (javított preprocessing)
+
+        Args:
+            time_key: Idő kulcs (march_time, gather_time, stb.)
+            debug_save: Debug screenshot mentése
+
+        Returns:
+            int: Másodpercek vagy None
+        """
         region = self.time_regions.get(time_key, {})
-        
+
         if not region:
             return None
-        
-        ocr_text = ImageManager.read_text_from_region(region)
-        
+
+        # Javított OCR preprocessing használata
+        ocr_text = ImageManager.read_text_from_region(region, debug_save=debug_save)
+
         if not ocr_text:
             return None
-        
+
         time_sec = parse_time(ocr_text)
         return time_sec

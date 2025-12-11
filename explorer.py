@@ -192,14 +192,23 @@ class Explorer:
         log.click(f"Explore gomb (2. kattintás) → ({coords[0]}, {coords[1]})")
         safe_click(coords)
 
-        # 6. Space (1.)
+        # 6. Fix kattintás (képernyő közép)
+        delay = wait_random(self.human_wait_min, self.human_wait_max)
+        log.wait(f"Várakozás {delay:.1f} mp")
+        time.sleep(delay)
+        coords = self.coords.get('screen_center', [0, 0])
+        if coords != [0, 0]:
+            log.click(f"Képernyő közép kattintás → ({coords[0]}, {coords[1]})")
+            safe_click(coords)
+
+        # 7. Space (1.)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)
         log.action("SPACE billentyű lenyomása (1.)")
         press_key('space')
 
-        # 7. Space (2.)
+        # 8. Space (2.)
         delay = wait_random(self.human_wait_min, self.human_wait_max)
         log.wait(f"Várakozás {delay:.1f} mp")
         time.sleep(delay)

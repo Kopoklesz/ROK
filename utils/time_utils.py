@@ -105,16 +105,18 @@ def parse_time(ocr_text):
         if len(text_lower) <= 3 and any(part in text_lower for part in ['ed', 'd', 'e']):
             return 0
 
-        # ===== ÚJ: Ha semmi nem illeszkedett, de nem idle =====
-        # → valószínűleg completed, de rosszul olvasva
-        # Visszaadunk 0-t (restart futhat)
-        return 0
-        # ===================================================
+        # ===== JAVÍTVA: Ha semmi nem illeszkedett =====
+        # NE adjunk vissza 0-t automatikusan!
+        # Inkább jelezzük, hogy az OCR sikertelen volt.
+        # Ha nem idle, nem időformátum, és nem completed
+        # → None (sikertelen OCR, ne indíts restart-ot!)
+        return None
+        # ==============================================
 
     except Exception as e:
         print(f"Time parse hiba: {ocr_text} → {e}")
-        # Hiba esetén is 0-t adunk vissza (inkább restart mint hibás idő)
-        return 0
+        # Hiba esetén None-t adunk vissza (sikertelen OCR)
+        return None
 
 
 def format_time(seconds):
@@ -188,10 +190,13 @@ if __name__ == "__main__":
         ("Complet", 0),
         ("mpleted", 0),
 
-        # ===== FALLBACK: Ha nem idő és nem idle → 0 (restart) =====
-        ("asdfsdf", 0),  # Random szemét → completed (restart)
-        ("xyz", 0),       # Random szöveg → completed
-        ("123", 0),       # Csak számok, de nem idő formátum → completed
+        # ===== FALLBACK: Ha nem idő és nem idle → None (sikertelen OCR) =====
+        ("asdfsdf", None),  # Random szemét → sikertelen OCR
+        ("xyz", None),       # Random szöveg → sikertelen OCR
+        ("123", None),       # Csak számok, de nem idő formátum → sikertelen OCR
+        ("Ta, Ww", None),    # Rossz OCR (éjszakai hiba) → sikertelen OCR
+        (";", None),         # Rossz OCR → sikertelen OCR
+        ("fg", None),        # Rossz OCR → sikertelen OCR
     ]
 
     print("Parse tesztek:")
