@@ -1378,10 +1378,11 @@ class SetupWizardMenu:
             print("2. Test Template Matching")
             print("3. Test EasyOCR vs Tesseract")
             print("4. Batch Template Capture (több gomb)")
+            print("5. Setup X-Button Template (popup detection)")
             print("0. Vissza")
             print("\n" + "="*60)
 
-            choice = self.get_menu_choice(0, 4)
+            choice = self.get_menu_choice(0, 5)
 
             if choice == 0:
                 break
@@ -1393,6 +1394,8 @@ class SetupWizardMenu:
                 self.test_ocr_comparison()
             elif choice == 4:
                 self.batch_template_capture()
+            elif choice == 5:
+                self.setup_x_button_template()
 
     def capture_button_template(self):
         """Button template capture koordinátából"""
@@ -1663,6 +1666,72 @@ class SetupWizardMenu:
                 print(f"   ❌ Sikertelen!")
 
         print("\n✅ Batch capture kész!")
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def setup_x_button_template(self):
+        """X-button template (popup bezárás detektáláshoz)"""
+        print("\n" + "="*60)
+        print("📍 X-BUTTON TEMPLATE SETUP (POPUP DETECTION)")
+        print("="*60)
+        print("\nJelöld ki az X gombot (popup bezárás)!")
+        print("Ez a template automatikus popup detektáláshoz kell.")
+        print("\n⚠️  FONTOS:")
+        print("  - Csak az X ikont jelöld ki (kb. 20x20 - 40x40 pixel)")
+        print("  - Minél kisebb a terület, annál pontosabb a keresés")
+        print("  - Több X template is létrehozható (close_x.png, x_button.png, popup_close.png)")
+        print("\nJelenleg a bot a következő template-eket keresi:")
+        print("  1. close_x.png (elsődleges)")
+        print("  2. x_button.png (másodlagos)")
+        print("  3. popup_close.png (harmadlagos)")
+
+        # Meglévő template-ek ellenőrzése
+        x_templates = [
+            self.images_dir / 'close_x.png',
+            self.images_dir / 'x_button.png',
+            self.images_dir / 'popup_close.png'
+        ]
+
+        print("\n--- Meglévő template-ek ---")
+        for tpl_path in x_templates:
+            if tpl_path.exists():
+                print(f"  ✅ {tpl_path.name}")
+            else:
+                print(f"  ❌ {tpl_path.name} (nincs)")
+
+        # Template választás
+        print("\n--- Melyik template-et szeretnéd beállítani? ---")
+        print("1. close_x.png (ajánlott)")
+        print("2. x_button.png")
+        print("3. popup_close.png")
+        print("0. Vissza")
+
+        choice = self.get_menu_choice(0, 3)
+        if choice == 0:
+            return
+
+        template_path = x_templates[choice - 1]
+
+        if not self.wait_for_enter_or_esc(f"ENTER = {template_path.name} beállítása, ESC = skip"):
+            return
+
+        # Régió kijelölés
+        region = self.selector.select_region("X-BUTTON (popup bezárás ikon)")
+
+        if region:
+            screen = ImageGrab.grab()
+            screen_np = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+
+            x, y, w, h = region['x'], region['y'], region['width'], region['height']
+            cropped = screen_np[y:y+h, x:x+w]
+
+            cv2.imwrite(str(template_path), cropped)
+            print(f"\n✅ X-button template mentve: {template_path}")
+            print(f"   Méret: {w}x{h} pixel")
+            print(f"\nℹ️  Ez a template automatikusan használva lesz:")
+            print(f"   - Training Manager OCR failure-nél")
+            print(f"   - Explorer % detection failure-nél")
+            print(f"   - Bármilyen OCR szemét detektálásnál")
+
         input("\nNyomj ENTER-t a folytatáshoz...")
 
     # ===== UTILITY METHODS =====
