@@ -2,10 +2,12 @@
 ROK Auto Farm - Gathering Manager
 Commander-based gathering manager
 
-MÓDOSÍTÁSOK (2025-10-07):
+MÓDOSÍTÁSOK (2025-12-14):
 1. March.png detekció Search button után → bezárás + 5 perc retry
-2. Gather button fail → 1x SPACE + 5 perc retry
-3. Gather Time validáció (max 2h) + 60 fail után 5 perc retry
+2. Gather button fail → progressive retry (5/15/30 perc)
+3. March Time OCR → Konszenzus alapú (3 olvasás), default 5 perc ha sikertelen
+4. Gather Time validáció → max 8h (ROK max), default 3 óra ha sikertelen
+   - 60 próba retry, majd commander elküldése 3 óra idővel
 """
 import time
 import json
@@ -240,7 +242,7 @@ class GatheringManager:
     def _run_single_farm(self, commander_id, task_data):
         """
         Egyetlen farm ciklus futtatása
-        
+
         13 lépés (+ 5a march detekció):
         1. SPACE
         2. B (térkép)
@@ -250,7 +252,7 @@ class GatheringManager:
         5a. March.png detekció (ÚJ) ← MÓDOSÍTÁS #1
         6. Gather button + RETRY LOGIC ← MÓDOSÍTÁS #2
         7. New troops
-        8. March Time OCR
+        8. March Time OCR (konszenzus)
         9. March button
         10. Várakozás (march + 1 sec)
         11. Képernyő közép
@@ -476,22 +478,31 @@ class GatheringManager:
             safe_click(coords)
             log.success(f"[Gathering] New troops OK")
             
-            # 8. March Time OCR
-            log.info(f"[Gathering] [8/13] March Time OCR")
+            # 8. March Time OCR (konszenzus alapú, mint training manager)
+            log.info(f"[Gathering] [8/13] March Time OCR (konszenzus)")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
             time.sleep(delay)
-            
-            log.ocr(f"[Gathering] March Time kiolvasása...")
-            # Javított OCR preprocessing használata
-            march_time = farm.read_time('march_time', debug_save=False)
-            
-            if march_time is None:
-                march_time = self.default_march_time
-                log.warning(f"[Gathering] March Time OCR hiba! Default: {march_time} sec")
+
+            log.ocr(f"[Gathering] March Time kiolvasása (konszenzus)...")
+            # Konszenzus: 3 OCR olvasás
+            from collections import Counter
+            march_readings = []
+            for sub_attempt in range(3):
+                if sub_attempt > 0:
+                    time.sleep(0.2)
+                temp_march = farm.read_time('march_time', debug_save=False)
+                if temp_march:
+                    march_readings.append(temp_march)
+
+            if march_readings:
+                march_counter = Counter(march_readings)
+                march_time, votes = march_counter.most_common(1)[0]
+                log.success(f"[Gathering] March Time konszenzus ({votes}/{len(march_readings)}): {format_time(march_time)} ({march_time} sec)")
             else:
-                log.success(f"[Gathering] March Time: {format_time(march_time)} ({march_time} sec)")
-            
+                march_time = 300  # Default 5 perc
+                log.warning(f"[Gathering] March Time OCR hiba! Default: 5 perc (300 sec)")
+
             # 9. March button
             log.info(f"[Gathering] [9/13] March button kattintás")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
@@ -511,7 +522,7 @@ class GatheringManager:
             self._wait_with_alliance_help_check(wait_duration)
 
             log.success(f"[Gathering] Várakozás OK")
-            
+
             # 11. Képernyő közepe
             log.info(f"[Gathering] [11/13] Képernyő közép kattintás")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
@@ -522,8 +533,8 @@ class GatheringManager:
             log.click(f"[Gathering] Képernyő közép → {coords}")
             safe_click(coords)
             log.success(f"[Gathering] Screen center OK")
-            
-            # ===== 12. Gather Time OCR (MÓDOSÍTÁS #3 + PROGRESSIVE RETRY) =====
+
+            # 12. Gather Time OCR (max 60 retry, default 3 óra ha sikertelen)
             log.info(f"[Gathering] [12/13] Gather Time OCR (max 60 retry)")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
@@ -536,15 +547,15 @@ class GatheringManager:
                 debug_save = ((attempt + 1) % 5 == 0)
                 temp_time = farm.read_time('gather_time', debug_save=debug_save)
 
-                # VALIDÁCIÓ: max 2 óra (7200 sec)
-                if temp_time and temp_time <= 7200:
+                # VALIDÁCIÓ: max 8 óra (28800 sec) - ROK max gather time
+                if temp_time and temp_time <= 28800:
                     gather_time = temp_time
                     # Sikeres OCR → failure counter reset
                     self.gather_time_failure_count[commander_id] = 0
                     log.success(f"[Gathering] Gather Time: {format_time(gather_time)} ({gather_time} sec) - {attempt+1}. próba")
                     break
-                elif temp_time and temp_time > 7200:
-                    log.warning(f"[Gathering] Gather Time túl nagy: {format_time(temp_time)} > 2h, retry...")
+                elif temp_time and temp_time > 28800:
+                    log.warning(f"[Gathering] Gather Time túl nagy: {format_time(temp_time)} > 8h, retry...")
 
                 if (attempt + 1) % 10 == 0:
                     log.warning(f"[Gathering] Gather Time OCR hiba ({attempt+1}/60), retry...")
@@ -552,54 +563,12 @@ class GatheringManager:
                 time.sleep(1.0)
 
             if gather_time is None:
-                # OCR sikertelen → progressive retry
-                if commander_id not in self.gather_time_failure_count:
-                    self.gather_time_failure_count[commander_id] = 0
+                # OCR sikertelen → default 3 óra (10800 sec) és újrapróbálás
+                gather_time = 10800  # 3 óra default
+                log.warning(f"[Gathering] ⚠️ Gather Time OCR 60 próba után sikertelen!")
+                log.warning(f"[Gathering] ⚠️ Default 3 óra (10800 sec) beállítva, commander elküldve")
+                log.warning(f"[Gathering] ⚠️ 3 óra múlva újra megpróbálja...")
 
-                self.gather_time_failure_count[commander_id] += 1
-                failure_count = self.gather_time_failure_count[commander_id]
-
-                # Progressive retry időzítés:
-                # 1-2. hiba: 5 perc
-                # 3-4. hiba: 15 perc
-                # 5-6. hiba: 30 perc
-                # 7+. hiba: 60 perc
-                if failure_count <= 2:
-                    retry_seconds = 300  # 5 perc
-                elif failure_count <= 4:
-                    retry_seconds = 900  # 15 perc
-                elif failure_count <= 6:
-                    retry_seconds = 1800  # 30 perc
-                else:
-                    retry_seconds = 3600  # 60 perc
-
-                log.error(f"[Gathering] Gather Time OCR 60 próba után sikertelen! ({failure_count}x)")
-                log.info(f"[Gathering] Task visszatéve queue-ba {retry_seconds//60} perc múlvára")
-
-                # Bezárás (2x SPACE = clean state)
-                delay = wait_random(self.human_wait_min, self.human_wait_max)
-                log.wait(f"[Gathering] Várakozás {delay:.1f} mp")
-                time.sleep(delay)
-
-                log.action("[Gathering] SPACE #1 lenyomása (kigugrás)")
-                press_key('space')
-                time.sleep(1.0)
-                log.action("[Gathering] SPACE #2 lenyomása (városba vissza)")
-                press_key('space')
-                log.info("[Gathering] 2x SPACE → clean state (városban, minden bezárva)")
-
-                # Progressive retry
-                timer_manager.add_timer(
-                    timer_id=f"commander_{commander_id}_gather_time_retry",
-                    deadline_seconds=retry_seconds,
-                    task_id=f"commander_{commander_id}_restart",
-                    task_type="gathering",
-                    data=task_data
-                )
-
-                log.success(f"[Gathering] Commander #{commander_id} retry: {retry_seconds//60} perc múlva")
-                return "RETRY_LATER"
-            
             # 13. SPACE (bezárás)
             log.info(f"[Gathering] [13/13] SPACE (bezárás)")
             delay = wait_random(self.human_wait_min, self.human_wait_max)
@@ -608,7 +577,7 @@ class GatheringManager:
             log.action("[Gathering] SPACE lenyomása")
             press_key('space')
             log.success(f"[Gathering] SPACE OK")
-            
+
             log.separator('-', 60)
             log.success(f"[Gathering] Farm ciklus befejezve: March={format_time(march_time)}, Gather={format_time(gather_time)}")
             log.separator('-', 60)

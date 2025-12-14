@@ -47,12 +47,16 @@ def parse_time(ocr_text):
 
         # PREFIX ELTÁVOLÍTÁS (ha van "Gathering Time:" vagy hasonló)
         time_text = text
-        if ':' in text:
+        if ':' in text or '.' in text:
             parts = text.split()
             for part in reversed(parts):
-                if part.count(':') >= 1:
+                if part.count(':') >= 1 or part.count('.') >= 1:
                     time_text = part
                     break
+
+        # KRITIKUS FIX: PONT → KETTŐSPONT csere (OCR gyakran pontot lát kettőspont helyett!)
+        # Példa: "Training 00.29.59" → "Training 00:29:59"
+        time_text = time_text.replace('.', ':')
 
         # Csak számok és kettőspont megtartása
         time_clean = re.sub(r'[^0-9:]', '', time_text)
@@ -66,6 +70,13 @@ def parse_time(ocr_text):
             minutes = int(time_parts[1])
             seconds = int(time_parts[2])
 
+            # KRITIKUS VALIDÁCIÓ: perc és másodperc max 59!
+            # Ha OCR összevonja a számokat ("01:17803" helyett "01:17:03")
+            # akkor a másodperc 803 lesz → HIBA!
+            if minutes > 59 or seconds > 59:
+                # Rossz OCR, ne fogadjuk el!
+                return None
+
             total_seconds = hours * 3600 + minutes * 60 + seconds
             return total_seconds
 
@@ -73,6 +84,11 @@ def parse_time(ocr_text):
             # MM:SS formátum
             minutes = int(time_parts[0])
             seconds = int(time_parts[1])
+
+            # KRITIKUS VALIDÁCIÓ: másodperc max 59!
+            if seconds > 59:
+                # Rossz OCR, ne fogadjuk el!
+                return None
 
             total_seconds = minutes * 60 + seconds
             return total_seconds

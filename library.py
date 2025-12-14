@@ -139,7 +139,7 @@ class ImageManager:
             return None
     
     @staticmethod
-    def find_image(template_path, threshold=0.7, multi_scale=False):
+    def find_image(template_path, threshold=0.7, multi_scale=False, search_region=None):
         """
         Template matching - ENHANCED verzió
 
@@ -147,6 +147,8 @@ class ImageManager:
             template_path: Template kép elérési útja
             threshold: Egyezési küszöb (0-1)
             multi_scale: Ha True, több skálán is próbál (lassabb, de robusztusabb)
+            search_region: dict - Keresési régió {'x', 'y', 'width', 'height'}
+                          Ha None, akkor teljes képernyő
 
         Returns:
             tuple: (x, y) koordináták vagy None
@@ -162,6 +164,20 @@ class ImageManager:
             screen = ImageManager.screenshot()
             if screen is None:
                 return None
+
+            # Régió alapú keresés
+            region_offset_x = 0
+            region_offset_y = 0
+            if search_region:
+                x = search_region.get('x', 0)
+                y = search_region.get('y', 0)
+                w = search_region.get('width', screen.shape[1])
+                h = search_region.get('height', screen.shape[0])
+
+                # Screenshot régió kivágása
+                screen = screen[y:y+h, x:x+w]
+                region_offset_x = x
+                region_offset_y = y
 
             best_match = None
             best_val = threshold
@@ -188,8 +204,8 @@ class ImageManager:
                 if max_val > best_val:
                     best_val = max_val
                     h, w = resized.shape[:2]
-                    center_x = max_loc[0] + w // 2
-                    center_y = max_loc[1] + h // 2
+                    center_x = max_loc[0] + w // 2 + region_offset_x
+                    center_y = max_loc[1] + h // 2 + region_offset_y
 
                     # Relatív → Abszolút koordináták
                     rect = WindowManager.get_window_rect()
@@ -424,6 +440,51 @@ def wait_random(min_sec=3, max_sec=8):
     return delay
 
 
+def is_garbage_ocr_text(text):
+    """
+    Ellenőrzi hogy az OCR szöveg "szemét-e" (popup/rossz képernyő)
+
+    Példák rossz szövegekre:
+    - 'Wi} 2' (helyett: '95%')
+    - 'King's' (helyett: 'Ancient')
+    - 'iim' (helyett: 'Ruins')
+    - 'TS Un &' (random karakterek)
+    - 'Wh ne' (szétszakadt szavak)
+
+    Args:
+        text: OCR szöveg
+
+    Returns:
+        bool: True ha szemét szöveg (popup valószínű)
+    """
+    if not text or len(text.strip()) < 2:
+        return True
+
+    import re
+    text = text.strip()
+
+    # Ismert szemét minták (a logokból)
+    garbage_patterns = [
+        r'Wi\}\s*\d',        # 'Wi} 2'
+        r"King'?s",          # "King's"
+        r'^iim$',            # 'iim'
+        r'[A-Z]{1,2}\s+[A-Z][a-z]\s+[&\$#@]',  # 'TS Un &'
+        r'Wh\s+ne',          # 'Wh ne'
+        r'^[a-z]{2,3}$',     # Túl rövid lowercase szavak (pl 'iim')
+    ]
+
+    for pattern in garbage_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+
+    # Ha túl sok speciális karakter van
+    special_chars = sum(1 for c in text if c in r'{}[]()<>~`!@#$%^&*_+=|\\')
+    if special_chars > len(text) * 0.3:  # 30%+ speciális karakter
+        return True
+
+    return False
+
+
 def find_and_close_popups(search_region=None, max_attempts=3, threshold=0.7):
     """
     X gomb keresése és automatikus kattintás (popup bezárás)
@@ -468,8 +529,8 @@ def find_and_close_popups(search_region=None, max_attempts=3, threshold=0.7):
     for attempt in range(1, max_attempts + 1):
         print(f"[Popup Close] Próbálkozás {attempt}/{max_attempts}...")
 
-        # Template matching
-        coords = ImageManager.find_image(x_template, threshold=threshold, region=search_region)
+        # Template matching (régió alapú, ha van megadva)
+        coords = ImageManager.find_image(x_template, threshold=threshold, search_region=search_region)
 
         if coords:
             print(f"[Popup Close] ✓ X gomb megtalálva → {coords}")

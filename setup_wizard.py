@@ -1379,10 +1379,11 @@ class SetupWizardMenu:
             print("3. Test EasyOCR vs Tesseract")
             print("4. Batch Template Capture (több gomb)")
             print("5. Setup X-Button Template (popup detection)")
+            print("6. Setup Popup Search Region (X-button keresési zóna)")
             print("0. Vissza")
             print("\n" + "="*60)
 
-            choice = self.get_menu_choice(0, 5)
+            choice = self.get_menu_choice(0, 6)
 
             if choice == 0:
                 break
@@ -1396,6 +1397,8 @@ class SetupWizardMenu:
                 self.batch_template_capture()
             elif choice == 5:
                 self.setup_x_button_template()
+            elif choice == 6:
+                self.setup_popup_search_region()
 
     def capture_button_template(self):
         """Button template capture koordinátából"""
@@ -1731,6 +1734,64 @@ class SetupWizardMenu:
             print(f"   - Training Manager OCR failure-nél")
             print(f"   - Explorer % detection failure-nél")
             print(f"   - Bármilyen OCR szemét detektálásnál")
+
+        input("\nNyomj ENTER-t a folytatáshoz...")
+
+    def setup_popup_search_region(self):
+        """Popup X-button keresési zóna beállítása"""
+        print("\n" + "="*60)
+        print("📍 POPUP SEARCH REGION SETUP")
+        print("="*60)
+        print("\nÁllítsd be azt a területet, ahol az X gombot keresni kell!")
+        print("Ez gyorsítja a popup detektálást és csökkenti a hamis pozitívokat.")
+        print("\n⚠️  FONTOS:")
+        print("  - Jelöld ki azt a területet, ahol popup ablakok megjelenhetnek")
+        print("  - Általában a képernyő közepét/felső részét érdemes kijelölni")
+        print("  - Ha nem vagy biztos, jelöld ki a teljes képernyőt")
+        print("  - Ez a régió csak az X gomb kereséséhez kell (nem az OCR-hez)")
+
+        # Meglévő konfig betöltése
+        popup_regions_file = self.config_dir / 'popup_regions.json'
+        if popup_regions_file.exists():
+            with open(popup_regions_file, 'r', encoding='utf-8') as f:
+                popup_regions = json.load(f)
+
+            existing = popup_regions.get('popup_search_region', {})
+            if existing:
+                print("\n--- Meglévő popup search region ---")
+                print(f"  X: {existing.get('x', 0)}")
+                print(f"  Y: {existing.get('y', 0)}")
+                print(f"  Szélesség: {existing.get('width', 0)}")
+                print(f"  Magasság: {existing.get('height', 0)}")
+        else:
+            popup_regions = {}
+
+        if not self.wait_for_enter_or_esc("ENTER = Új régió beállítása, ESC = skip"):
+            return
+
+        # Régió kijelölés
+        region = self.selector.select_region("POPUP SEARCH REGION (X-button keresési zóna)")
+
+        if region:
+            # Config mentése
+            popup_regions['popup_search_region'] = {
+                'x': region['x'],
+                'y': region['y'],
+                'width': region['width'],
+                'height': region['height'],
+                'description': 'X button search region for popup detection'
+            }
+
+            with open(popup_regions_file, 'w', encoding='utf-8') as f:
+                json.dump(popup_regions, f, indent=2)
+
+            print(f"\n✅ Popup search region mentve: {popup_regions_file}")
+            print(f"   X: {region['x']}, Y: {region['y']}")
+            print(f"   Szélesség: {region['width']}, Magasság: {region['height']}")
+            print(f"\nℹ️  Ez a régió használva lesz:")
+            print(f"   - Explorer popup detektálásnál")
+            print(f"   - Training Manager popup detektálásnál")
+            print(f"   - Gyorsabb X gomb keresés (csak ezen a területen keres)")
 
         input("\nNyomj ENTER-t a folytatáshoz...")
 
