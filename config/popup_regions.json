@@ -1,9 +1,9 @@
 {
   "popup_search_region": {
-    "x": 0,
-    "y": 0,
-    "width": 1920,
-    "height": 1080,
+    "x": 8,
+    "y": 7,
+    "width": 1910,
+    "height": 498,
     "description": "X button search region for popup detection"
   }
 }

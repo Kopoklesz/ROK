@@ -1,31 +1,19 @@
 [
   {
-    "timer_id": "training_siege_retry",
-    "deadline": "2025-12-14 08:43:31",
+    "timer_id": "training_stable_retry",
+    "deadline": "2025-12-15 06:15:13",
     "callback_type": "queue_add",
     "callback_data": {
-      "task_id": "siege_restart",
+      "task_id": "stable_restart",
       "task_type": "training",
       "data": {
-        "building": "siege"
-      }
-    }
-  },
-  {
-    "timer_id": "commander_1_gather_retry",
-    "deadline": "2025-12-14 08:16:01",
-    "callback_type": "queue_add",
-    "callback_data": {
-      "task_id": "commander_1_restart",
-      "task_type": "gathering",
-      "data": {
-        "commander_id": 1
+        "building": "stable"
       }
     }
   },
   {
     "timer_id": "training_barracks_retry",
-    "deadline": "2025-12-14 09:01:42",
+    "deadline": "2025-12-15 06:20:33",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "barracks_restart",
@@ -37,7 +25,7 @@
   },
   {
     "timer_id": "training_archery_retry",
-    "deadline": "2025-12-14 09:02:27",
+    "deadline": "2025-12-15 06:27:37",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "archery_restart",
@@ -48,26 +36,38 @@
     }
   },
   {
+    "timer_id": "commander_1_gather_retry",
+    "deadline": "2025-12-15 06:16:25",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "commander_1_restart",
+      "task_type": "gathering",
+      "data": {
+        "commander_id": 1
+      }
+    }
+  },
+  {
+    "timer_id": "training_siege_retry",
+    "deadline": "2025-12-15 06:48:06",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "siege_restart",
+      "task_type": "training",
+      "data": {
+        "building": "siege"
+      }
+    }
+  },
+  {
     "timer_id": "commander_2_gather_retry",
-    "deadline": "2025-12-14 08:36:56",
+    "deadline": "2025-12-15 06:31:53",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "commander_2_restart",
       "task_type": "gathering",
       "data": {
         "commander_id": 2
-      }
-    }
-  },
-  {
-    "timer_id": "training_stable",
-    "deadline": "2025-12-14 14:10:31",
-    "callback_type": "queue_add",
-    "callback_data": {
-      "task_id": "stable_restart",
-      "task_type": "training",
-      "data": {
-        "building": "stable"
       }
     }
   }
