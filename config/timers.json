@@ -1,19 +1,7 @@
 [
   {
-    "timer_id": "training_barracks_retry",
-    "deadline": "2025-12-11 06:34:21",
-    "callback_type": "queue_add",
-    "callback_data": {
-      "task_id": "barracks_restart",
-      "task_type": "training",
-      "data": {
-        "building": "barracks"
-      }
-    }
-  },
-  {
     "timer_id": "training_stable_retry",
-    "deadline": "2025-12-11 06:36:17",
+    "deadline": "2025-12-15 06:15:13",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "stable_restart",
@@ -24,8 +12,20 @@
     }
   },
   {
+    "timer_id": "training_barracks_retry",
+    "deadline": "2025-12-15 06:20:33",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "barracks_restart",
+      "task_type": "training",
+      "data": {
+        "building": "barracks"
+      }
+    }
+  },
+  {
     "timer_id": "training_archery_retry",
-    "deadline": "2025-12-11 06:55:57",
+    "deadline": "2025-12-15 06:27:37",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "archery_restart",
@@ -37,7 +37,7 @@
   },
   {
     "timer_id": "commander_1_gather_retry",
-    "deadline": "2025-12-11 06:49:18",
+    "deadline": "2025-12-15 06:16:25",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "commander_1_restart",
@@ -48,14 +48,26 @@
     }
   },
   {
-    "timer_id": "training_siege",
-    "deadline": "2025-12-11 07:08:52",
+    "timer_id": "training_siege_retry",
+    "deadline": "2025-12-15 06:48:06",
     "callback_type": "queue_add",
     "callback_data": {
       "task_id": "siege_restart",
       "task_type": "training",
       "data": {
         "building": "siege"
+      }
+    }
+  },
+  {
+    "timer_id": "commander_2_gather_retry",
+    "deadline": "2025-12-15 06:31:53",
+    "callback_type": "queue_add",
+    "callback_data": {
+      "task_id": "commander_2_restart",
+      "task_type": "gathering",
+      "data": {
+        "commander_id": 2
       }
     }
   }

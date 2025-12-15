@@ -1,0 +1,6 @@
+DEBUG:
+
+1. Marching idő kiovlasás hiba. Egyszer próbálja meg és 5 perct állít be defaultnak.
+2. Valami baj volt a barracks elindítással, ugyanis COmpleted, elindította és Completed maradt.
+
+1a. Hogyha a gathering időt nem tudja kiolvasni, akkor ne akarjon küldeni mg egy commandert, mert ebből lesz az egyik legnagyobb baj.

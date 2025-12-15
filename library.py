@@ -139,7 +139,7 @@ class ImageManager:
             return None
     
     @staticmethod
-    def find_image(template_path, threshold=0.7, multi_scale=False):
+    def find_image(template_path, threshold=0.7, multi_scale=False, search_region=None):
         """
         Template matching - ENHANCED verzió
 
@@ -147,6 +147,8 @@ class ImageManager:
             template_path: Template kép elérési útja
             threshold: Egyezési küszöb (0-1)
             multi_scale: Ha True, több skálán is próbál (lassabb, de robusztusabb)
+            search_region: dict - Keresési régió {'x', 'y', 'width', 'height'}
+                          Ha None, akkor teljes képernyő
 
         Returns:
             tuple: (x, y) koordináták vagy None
@@ -162,6 +164,20 @@ class ImageManager:
             screen = ImageManager.screenshot()
             if screen is None:
                 return None
+
+            # Régió alapú keresés
+            region_offset_x = 0
+            region_offset_y = 0
+            if search_region:
+                x = search_region.get('x', 0)
+                y = search_region.get('y', 0)
+                w = search_region.get('width', screen.shape[1])
+                h = search_region.get('height', screen.shape[0])
+
+                # Screenshot régió kivágása
+                screen = screen[y:y+h, x:x+w]
+                region_offset_x = x
+                region_offset_y = y
 
             best_match = None
             best_val = threshold
@@ -188,8 +204,8 @@ class ImageManager:
                 if max_val > best_val:
                     best_val = max_val
                     h, w = resized.shape[:2]
-                    center_x = max_loc[0] + w // 2
-                    center_y = max_loc[1] + h // 2
+                    center_x = max_loc[0] + w // 2 + region_offset_x
+                    center_y = max_loc[1] + h // 2 + region_offset_y
 
                     # Relatív → Abszolút koordináták
                     rect = WindowManager.get_window_rect()
@@ -285,6 +301,18 @@ class ImageManager:
 
             # Kivágás
             cropped = img.crop((x, y, x + w, y + h))
+
+            # ===== DEBUG SAVE: EREDETI SCREENSHOT =====
+            if debug_save:
+                import datetime
+                from pathlib import Path
+                debug_dir = Path(__file__).parent / 'logs' / 'ocr_debug'
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                # Eredeti screenshot mentése (COLOR)
+                cropped.save(str(debug_dir / f"ocr_{timestamp}_0_original.png"))
+                print(f"  📸 Original screenshot: {debug_dir}/ocr_{timestamp}_0_original.png")
+            # ============================================
 
             # Grayscale
             gray = cv2.cvtColor(np.array(cropped), cv2.COLOR_RGB2GRAY)
@@ -410,6 +438,117 @@ def wait_random(min_sec=3, max_sec=8):
     """Random várakozás (emberi faktor)"""
     delay = random.uniform(min_sec, max_sec)
     return delay
+
+
+def is_garbage_ocr_text(text):
+    """
+    Ellenőrzi hogy az OCR szöveg "szemét-e" (popup/rossz képernyő)
+
+    Példák rossz szövegekre:
+    - 'Wi} 2' (helyett: '95%')
+    - 'King's' (helyett: 'Ancient')
+    - 'iim' (helyett: 'Ruins')
+    - 'TS Un &' (random karakterek)
+    - 'Wh ne' (szétszakadt szavak)
+
+    Args:
+        text: OCR szöveg
+
+    Returns:
+        bool: True ha szemét szöveg (popup valószínű)
+    """
+    if not text or len(text.strip()) < 2:
+        return True
+
+    import re
+    text = text.strip()
+
+    # Ismert szemét minták (a logokból)
+    garbage_patterns = [
+        r'Wi\}\s*\d',        # 'Wi} 2'
+        r"King'?s",          # "King's"
+        r'^iim$',            # 'iim'
+        r'[A-Z]{1,2}\s+[A-Z][a-z]\s+[&\$#@]',  # 'TS Un &'
+        r'Wh\s+ne',          # 'Wh ne'
+        r'^[a-z]{2,3}$',     # Túl rövid lowercase szavak (pl 'iim')
+    ]
+
+    for pattern in garbage_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+
+    # Ha túl sok speciális karakter van
+    special_chars = sum(1 for c in text if c in r'{}[]()<>~`!@#$%^&*_+=|\\')
+    if special_chars > len(text) * 0.3:  # 30%+ speciális karakter
+        return True
+
+    return False
+
+
+def find_and_close_popups(search_region=None, max_attempts=3, threshold=0.7):
+    """
+    X gomb keresése és automatikus kattintás (popup bezárás)
+
+    HASZNÁLAT:
+    - OCR előtt hívjuk meg, ha szemét szöveget olvas
+    - Megpróbálja megtalálni az X gombot (close button)
+    - Ha talál, rákattint és bezárja a popup-ot
+
+    Args:
+        search_region: dict - Keresési régió {'x', 'y', 'width', 'height'}
+                             Ha None, akkor teljes képernyő
+        max_attempts: int - Max próbálkozások száma
+        threshold: float - Template matching threshold (0.7 = 70% egyezés)
+
+    Returns:
+        bool: True ha zárt be valamit, False ha nem talált semmit
+    """
+    from pathlib import Path
+
+    # X gomb template fájlok keresése
+    images_dir = Path(__file__).parent / 'images'
+    x_templates = [
+        images_dir / 'close_x.png',
+        images_dir / 'x_button.png',
+        images_dir / 'popup_close.png'
+    ]
+
+    # Válasszuk ki az első létező template-et
+    x_template = None
+    for template_path in x_templates:
+        if template_path.exists():
+            x_template = str(template_path)
+            break
+
+    if not x_template:
+        # Nincs template, nem tudunk X gombot keresni
+        return False
+
+    print(f"[Popup Close] X gomb keresése: {Path(x_template).name}")
+
+    for attempt in range(1, max_attempts + 1):
+        print(f"[Popup Close] Próbálkozás {attempt}/{max_attempts}...")
+
+        # Template matching (régió alapú, ha van megadva)
+        coords = ImageManager.find_image(x_template, threshold=threshold, search_region=search_region)
+
+        if coords:
+            print(f"[Popup Close] ✓ X gomb megtalálva → {coords}")
+
+            # Kattintás az X gombra
+            time.sleep(0.3)
+            safe_click(coords)
+
+            print(f"[Popup Close] ✓ Popup bezárva")
+            time.sleep(0.5)  # Rövid várakozás a bezárás után
+
+            return True
+        else:
+            print(f"[Popup Close] X gomb nem található (attempt {attempt}/{max_attempts})")
+            time.sleep(0.3)
+
+    print(f"[Popup Close] Nincs popup ({max_attempts} próba)")
+    return False
 
 
 def get_screen_center():

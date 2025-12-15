@@ -3,7 +3,7 @@
     "max_commanders": 5,
     "commanders": [
       {"id": 1, "enabled": true},
-      {"id": 2, "enabled": false},
+      {"id": 2, "enabled": true},
       {"id": 3, "enabled": false},
       {"id": 4, "enabled": false},
       {"id": 5, "enabled": false}
@@ -36,7 +36,7 @@
   },
   
   "alliance": {
-    "enabled": true,
+    "enabled": false,
     "check_interval_seconds": 300
   },
   

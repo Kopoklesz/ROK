@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from collections import Counter
 
-from library import safe_click, press_key, wait_random
+from library import safe_click, press_key, wait_random, find_and_close_popups, is_garbage_ocr_text
 from utils.logger import FarmLogger as log
 from utils.queue_manager import queue_manager
 from utils.timer_manager import timer_manager
@@ -50,6 +50,14 @@ class TrainingManager:
                 self.time_regions = json.load(f)
         else:
             self.time_regions = {}
+
+        # Popup keresési régiók
+        popup_file = self.config_dir / 'popup_regions.json'
+        if popup_file.exists():
+            with open(popup_file, 'r', encoding='utf-8') as f:
+                self.popup_regions = json.load(f)
+        else:
+            self.popup_regions = {}
 
         # Training koordináták
         training_coords_file = self.config_dir / 'training_coords.json'
@@ -194,6 +202,12 @@ class TrainingManager:
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
+
+                # POPUP CLEANUP: Várakozás
+                delay = wait_random(2, 4)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp (popup cleanup)")
+                time.sleep(delay)
+
                 log.info("[Training] Scan befejezve → 2x SPACE → clean state")
 
     def _is_building_upgrading(self, building_name):
@@ -374,11 +388,43 @@ class TrainingManager:
                 log.success(f"[Training] {building_name.upper()} → COMPLETED (OCR: '{consensus_text}')")
                 return {'type': 'completed', 'value': 0}
 
-            # ===== 4. SIKERTELEN OCR → RETRY =====
-            # Ha parse_time None-t adott (sikertelen OCR)
-            # NE detektáljuk IDLE-ként, hanem próbálkozzunk újra!
+            # ===== 4. SIKERTELEN OCR → INTELLIGENS POPUP DETEKTÁLÁS =====
+            # Ha parse_time None-t adott (sikertelen OCR) ÉS szemét szöveg
             if time_sec is None:
                 log.warning(f"[Training] {building_name.upper()} OCR nem értelmezhető ('{consensus_text}'), retry {main_attempt}/{max_attempts}")
+
+                # INTELLIGENS POPUP DETEKTÁLÁS
+                # Csak ha 2+ egymást követő sikertelen OCR van ÉS szemét szöveg
+                if main_attempt >= 2 and is_garbage_ocr_text(consensus_text):
+                    log.warning(f"⚠️ Szemét OCR szöveg detektálva: '{consensus_text}' → Popup valószínű!")
+                    log.info("🔍 X gomb keresés aktiválva (popup bezárás)...")
+
+                    # X gomb keresés és bezárás (régió alapú)
+                    search_region = self.popup_regions.get('popup_search_region')
+                    popup_closed = find_and_close_popups(search_region=search_region, max_attempts=2, threshold=0.75)
+
+                    if popup_closed:
+                        log.success("✅ Popup bezárva! Queue panel újranyitása...")
+
+                        # Queue panel újranyitása
+                        delay = wait_random(2, 4)
+                        time.sleep(delay)
+
+                        # Queue menü bezárása + újranyitása
+                        coords = self.training_coords.get('close_queue_menu', [0, 0])
+                        safe_click(coords)
+                        time.sleep(1.0)
+
+                        coords = self.training_coords.get('open_queue_menu', [0, 0])
+                        safe_click(coords)
+                        time.sleep(1.0)
+
+                        # OCR újrapróbálás (ne növeljük a main_attempt-et, csak retry)
+                        log.info(f"[Training] {building_name.upper()} OCR újrapróbálás (popup bezárás után)...")
+                        continue
+                    else:
+                        log.warning("⚠️ X gomb nem található")
+
                 time.sleep(0.7)
                 continue
 
@@ -611,6 +657,12 @@ class TrainingManager:
             press_key('space')
             log.success("[Training] SPACE #2 OK")
 
+            # 7b. POPUP CLEANUP: Várakozás (animáció lezárás)
+            delay = wait_random(2, 4)
+            log.wait(f"[Training] Várakozás {delay:.1f} mp (animáció lezárás)")
+            time.sleep(delay)
+            log.success("[Training] Popup cleanup befejezve")
+
             # 8. Panel megnyitás ÚJRA
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
@@ -690,6 +742,12 @@ class TrainingManager:
                 time.sleep(1.0)
                 log.action("[Training] SPACE #2 lenyomása (városba vissza)")
                 press_key('space')
+
+                # POPUP CLEANUP
+                delay = wait_random(2, 4)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp (popup cleanup)")
+                time.sleep(delay)
+
                 log.info("[Training] 2x SPACE → clean state (városban, minden bezárva)")
 
             log.separator('=', 60)

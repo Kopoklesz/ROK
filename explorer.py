@@ -6,7 +6,7 @@ import time
 import json
 from pathlib import Path
 
-from library import safe_click, press_key, wait_random, ImageManager
+from library import safe_click, press_key, wait_random, ImageManager, find_and_close_popups, is_garbage_ocr_text
 from utils.logger import FarmLogger as log
 from utils.ocr_parser import parse_resource_value
 
@@ -20,6 +20,7 @@ class Explorer:
         # Konfigurációk betöltése
         self.settings = self._load_settings()
         self.coords = self._load_coordinates()
+        self.popup_regions = self._load_popup_regions()
 
         # Paraméterek
         self.human_wait_min = self.settings.get('human_wait_min', 3)
@@ -38,6 +39,14 @@ class Explorer:
         coords_file = self.config_dir / 'explorer_coords.json'
         if coords_file.exists():
             with open(coords_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+
+    def _load_popup_regions(self):
+        """Popup keresési régiók betöltése"""
+        popup_file = self.config_dir / 'popup_regions.json'
+        if popup_file.exists():
+            with open(popup_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {}
 
@@ -114,15 +123,81 @@ class Explorer:
             text3 = ""
             log.warning("Régió 3 nincs beállítva")
 
-        # % jelenlétének ellenőrzése (mind a 3 régióban)
-        has_percent = '%' in text1 or '%' in text2 or '%' in text3
+        # % jelenlétének ellenőrzése (MIND A 3 régióban kell!)
+        # JAVÍTVA: OR → AND (mind a 3 régióban kell % jel)
+        percent_count = sum([
+            1 if '%' in text1 else 0,
+            1 if '%' in text2 else 0,
+            1 if '%' in text3 else 0
+        ])
 
-        if has_percent:
-            log.success("✅ Van felfedezés folyamatban (% jel megtalálva)")
+        has_all_percent = '%' in text1 and '%' in text2 and '%' in text3
+
+        if has_all_percent:
+            log.success(f"✅ Mind a 3 régióban van felfedezés folyamatban (3/3 % jel)")
             need_exploration = False
         else:
-            log.warning("⚠️ Nincs % jel → Felfedezés indítása szükséges!")
-            need_exploration = True
+            log.warning(f"⚠️ Hiányzó felfedezés! ({percent_count}/3 % jel)")
+
+            # INTELLIGENS POPUP DETEKTÁLÁS
+            # Ha mind a 3 régió szemét szöveget tartalmaz → valószínű popup
+            garbage_count = sum([
+                1 if is_garbage_ocr_text(text1) else 0,
+                1 if is_garbage_ocr_text(text2) else 0,
+                1 if is_garbage_ocr_text(text3) else 0
+            ])
+
+            if garbage_count >= 2:
+                log.warning(f"⚠️ Szemét OCR szövegek ({garbage_count}/3) → Popup valószínű!")
+                log.info("🔍 X gomb keresés aktiválva (popup bezárás)...")
+
+                # X gomb keresés és bezárás (régió alapú)
+                search_region = self.popup_regions.get('popup_search_region')
+                popup_closed = find_and_close_popups(search_region=search_region, max_attempts=3, threshold=0.7)
+
+                if popup_closed:
+                    log.success("✅ Popup bezárva! Scout panel újranyitása...")
+
+                    # Scout panel újranyitása
+                    delay = wait_random(self.human_wait_min, self.human_wait_max)
+                    time.sleep(delay)
+
+                    # Scout fül megnyitása újra
+                    coords = self.coords.get('open_scout_tab', [0, 0])
+                    log.click(f"Scout fül megnyitása (újra) → ({coords[0]}, {coords[1]})")
+                    safe_click(coords)
+
+                    # OCR újrapróbálás
+                    delay = wait_random(self.human_wait_min, self.human_wait_max)
+                    time.sleep(delay)
+
+                    log.ocr("Felfedezés % újraolvasása (tiszta képernyő)...")
+
+                    if region1:
+                        text1 = ImageManager.read_text_from_region(region1)
+                        log.info(f"Régió 1 OCR (újra): '{text1}'")
+                    if region2:
+                        text2 = ImageManager.read_text_from_region(region2)
+                        log.info(f"Régió 2 OCR (újra): '{text2}'")
+                    if region3:
+                        text3 = ImageManager.read_text_from_region(region3)
+                        log.info(f"Régió 3 OCR (újra): '{text3}'")
+
+                    # Újra ellenőrzés
+                    has_all_percent = '%' in text1 and '%' in text2 and '%' in text3
+
+                    if has_all_percent:
+                        log.success("✅ Popup bezárás után: Mind a 3 régióban van felfedezés!")
+                        need_exploration = False
+                    else:
+                        log.warning("⚠️ Popup bezárás után is hiányzó felfedezés → Scout indítás")
+                        need_exploration = True
+                else:
+                    log.warning("⚠️ X gomb nem található → Scout indítás szükséges")
+                    need_exploration = True
+            else:
+                log.info("ℹ️ Normális OCR szövegek → Scout indítás szükséges")
+                need_exploration = True
 
         # 5. Scout bezárása
         delay = wait_random(self.human_wait_min, self.human_wait_max)

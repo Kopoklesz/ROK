@@ -64,7 +64,7 @@ class ConnectionMonitor:
                 "detection_region": None,
                 "detection_text": "NETWORK DISCONNECTED",
                 "confirm_button": None,
-                "recovery_wait_seconds": 30,
+                "recovery_wait_seconds": 120,  # 2 perc várakozás CONFIRM után
                 "default_recovery_time_seconds": 5400  # 1.5 óra = 90 perc
             }
 
@@ -73,7 +73,7 @@ class ConnectionMonitor:
         self.detection_region = config.get('detection_region')
         self.detection_text = config.get('detection_text', 'NETWORK DISCONNECTED')
         self.confirm_button = config.get('confirm_button')
-        self.recovery_wait = config.get('recovery_wait_seconds', 30)
+        self.recovery_wait = config.get('recovery_wait_seconds', 120)  # 2 perc default
         self.default_recovery_time = config.get('default_recovery_time_seconds', 5400)
 
     def start(self):
