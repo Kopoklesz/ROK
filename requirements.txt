@@ -13,3 +13,7 @@ pywin32>=306
 
 # Optional but recommended
 numpy>=1.24.0
+
+# Optional: ML-based OCR (more accurate but slower)
+# Uncomment if you want to use EasyOCR instead of Tesseract
+# easyocr>=1.7.0
