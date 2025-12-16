@@ -2,9 +2,9 @@
 ROK Auto Farm - Setup Wizard (Menu-Based v2.2 COMPLETE)
 FIXED: Minden hiányzó függvény implementálva
 v2.2 ÚJ (Training v1.4.0):
-- DINAMIKUS TIER ÉS LEVEL: Több tier (T1-T5) és farm level (1-5) támogatás!
-- Új struktúra: tiers{} és levels{} objektumok minden épülethez
-- Config-ban épület-specifikus tier/level választás
+- DINAMIKUS TIER: Több tier (T1-T5) támogatás épületenként!
+- Új struktúra: tiers{} objektum minden épülethez
+- Config-ban épület-specifikus tier választás
 v2.1:
 - Training v1.3.0: training_confirm_time_region (OCR confirm után, NE queue-ban!)
 - Training v1.3.0: insufficient_resource_region (erőforrás hiány detektálás)
@@ -680,8 +680,7 @@ class SetupWizardMenu:
         print("  2. building - Épület gomb")
         print("  3. button - Akció gomb")
         print("  4. tiers{} - Tier választások (T1-T5) TÖBB IS!")
-        print("  5. levels{} - Farm level választások (1-5) TÖBB IS!")
-        print("  6. confirm - Megerősítés gomb")
+        print("  5. confirm - Megerősítés gomb")
 
         buildings = ['barracks', 'archery', 'stable', 'siege']
 
@@ -694,9 +693,6 @@ class SetupWizardMenu:
 
         # Tier választások (T1-T5)
         tier_choices = ['t1', 't2', 't3', 't4', 't5']
-
-        # Level választások (1-5)
-        level_choices = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5']
 
         for building in buildings:
             print("\n" + "="*60)
@@ -755,36 +751,7 @@ class SetupWizardMenu:
                     config[building]['tiers'][tier] = point
                     print(f"✅ {tier} mentve: ({point[0]}, {point[1]})")
 
-            # 3. LEVELS (ÚJ v1.4.0)
-            print("\n" + "="*60)
-            print(f"📊 {building.upper()} - FARM LEVELS (1-5)")
-            print("="*60)
-            print("\nJelöld ki az összes farm level gombot!")
-            print("Csak azokat jelöld ki, amiket használni fogsz!")
-
-            if 'levels' not in config[building]:
-                config[building]['levels'] = {}
-
-            for level in level_choices:
-                print("\n" + "-"*60)
-                print(f"📊 {level.upper()}")
-                print("-"*60)
-
-                old_value = config[building]['levels'].get(level)
-                if old_value:
-                    print(f"ℹ️  Jelenlegi: {old_value}")
-                else:
-                    print(f"ℹ️  Nincs beállítva")
-
-                if not self.wait_for_enter_or_esc(f"ENTER = {level}, ESC = skip"):
-                    continue
-
-                point = self.selector.select_point(f"{building.upper()} - {level.upper()}")
-                if point:
-                    config[building]['levels'][level] = point
-                    print(f"✅ {level} mentve: ({point[0]}, {point[1]})")
-
-            # 4. Confirm gomb
+            # 3. Confirm gomb
             print("\n" + "-"*60)
             print("📍 CONFIRM (megerősítés)")
             print("-"*60)

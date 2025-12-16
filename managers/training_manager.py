@@ -1,8 +1,8 @@
 """
 ROK Auto Farm - Training Manager
 ÚJ VERZIÓ (1.4.0):
-- DINAMIKUS TIER ÉS LEVEL: Több tier (T1-T5) és farm level (1-5) támogatás!
-- Config-ban épület-specifikus tier/level választás
+- DINAMIKUS TIER: Több tier (T1-T5) támogatás épületenként!
+- Config-ban épület-specifikus tier választás
 - OPTIMALIZÁLT FLOW: Confirm után közvetlenül OCR, NEM kell visszamenni queue menübe!
 - Erőforrás ellenőrzés: ha insufficient → 2 fix pont kattintás + confirm újra
 - Panel-alapú OCR rendszer
@@ -43,12 +43,11 @@ class TrainingManager:
         training_config = settings.get('training', {})
         self.buildings = training_config.get('buildings', {})
 
-        # Épület-specifikus tier és level választások (v1.4.0)
-        # Formátum: {"barracks": {"tier": "t4", "level": "level_3"}, ...}
+        # Épület-specifikus tier választás (v1.4.0)
+        # Formátum: {"barracks": {"tier": "t4"}, ...}
         self.building_settings = {
             building_name: {
-                'tier': building_config.get('tier', 't4'),  # default: t4
-                'level': building_config.get('level', 'level_1')  # default: level_1
+                'tier': building_config.get('tier', 't4')  # default: t4
             }
             for building_name, building_config in self.buildings.items()
         }
@@ -671,13 +670,13 @@ class TrainingManager:
 
         ÚJ TRAINING FÁZIS (v1.4.0):
         1. HA skip_gather = FALSE → Troop gather
-        2-5. Building/Button/Tier (DINAMIKUS!)/Level (DINAMIKUS!)/Confirm #1
+        2-5. Building/Button/Tier (DINAMIKUS!)/Confirm #1
         6. Training time OCR (CONFIRM UTÁN, ne menj vissza queue-ba!)
         7. Resource check → ha insufficient: buy_resource_1, buy_resource_2, Confirm #2
         8. 2× SPACE
         9. Timer beállítása (az OCR-ből kapott idővel)
 
-        v1.4.0 ÚJ: Tier és Level DINAMIKUS választás config alapján!
+        v1.4.0 ÚJ: Tier DINAMIKUS választás config alapján!
         """
         log.separator('=', 60)
         log.info(f"[Training] ⚔️  {building_name.upper()} TRAINING INDÍTÁS (v1.4.0)")
@@ -688,11 +687,10 @@ class TrainingManager:
         # Koordináták betöltése
         coords = self.training_coords.get(building_name, {})
 
-        # Tier és level választás (v1.4.0)
+        # Tier választás (v1.4.0)
         selected_tier = self.building_settings.get(building_name, {}).get('tier', 't4')
-        selected_level = self.building_settings.get(building_name, {}).get('level', 'level_1')
 
-        log.info(f"[Training] {building_name.upper()} beállítások: tier={selected_tier}, level={selected_level}")
+        log.info(f"[Training] {building_name.upper()} beállítások: tier={selected_tier}")
 
         try:
             # 1. Troop Gather (CSAK ha nem skip_gather)
@@ -745,22 +743,6 @@ class TrainingManager:
 
             safe_click(tier_coords)
             log.success(f"[Training] TIER [{selected_tier.upper()}] OK")
-
-            # 4b. Level (ÚJ v1.4.0: farm level választás)
-            delay = wait_random(self.human_wait_min, self.human_wait_max)
-            log.wait(f"[Training] Várakozás {delay:.1f} mp")
-            time.sleep(delay)
-
-            # Level koordináta kiválasztása (új struktúra: levels{level_1, level_2, ...})
-            levels_dict = coords.get('levels', {})
-            if levels_dict and selected_level in levels_dict:
-                level_coords = levels_dict[selected_level]
-                log.click(f"[Training] LEVEL [{selected_level.upper()}] kattintás → {level_coords}")
-                safe_click(level_coords)
-                log.success(f"[Training] LEVEL [{selected_level.upper()}] OK")
-            else:
-                # Ha nincs level koordináta, skip (régi struktúra kompatibilitás)
-                log.info(f"[Training] LEVEL [{selected_level}] nincs beállítva, skip")
 
             # 5. Confirm #1
             delay = wait_random(self.human_wait_min, self.human_wait_max)
