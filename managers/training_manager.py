@@ -1,6 +1,10 @@
 """
 ROK Auto Farm - Training Manager
-ÚJ VERZIÓ (1.2.0):
+ÚJ VERZIÓ (1.4.0):
+- DINAMIKUS TIER: Több tier (T1-T5) támogatás épületenként!
+- Config-ban épület-specifikus tier választás
+- OPTIMALIZÁLT FLOW: Confirm után közvetlenül OCR, NEM kell visszamenni queue menübe!
+- Erőforrás ellenőrzés: ha insufficient → 2 fix pont kattintás + confirm újra
 - Panel-alapú OCR rendszer
 - Mind a 4 egység időt beolvassa egyszerre
 - "completed" és "idle" státusz kezelés
@@ -38,6 +42,15 @@ class TrainingManager:
         # Training config
         training_config = settings.get('training', {})
         self.buildings = training_config.get('buildings', {})
+
+        # Épület-specifikus tier választás (v1.4.0)
+        # Formátum: {"barracks": {"tier": "t4"}, ...}
+        self.building_settings = {
+            building_name: {
+                'tier': building_config.get('tier', 't4')  # default: t4
+            }
+            for building_name, building_config in self.buildings.items()
+        }
 
         # Human wait (training gyorsabb: 2-6 sec)
         self.human_wait_min = 2
@@ -560,6 +573,91 @@ class TrainingManager:
 
             return {'action': 'timer_set', 'skip_gather': False, 'upgraded_checked': False}
 
+    def _read_training_time_after_confirm(self, building_name, max_attempts=15):
+        """
+        Training time beolvasása a CONFIRM gomb megnyomása után
+
+        Ez az ÚJ verzió: NEM kell visszamenni a queue menübe!
+        Közvetlenül a confirm után beolvassa az időt egy külön régióból.
+
+        Args:
+            building_name: str
+            max_attempts: int
+
+        Returns:
+            int or None: Training time másodpercben, vagy None ha sikertelen
+        """
+        region_key = "training_confirm_time_region"
+        region = self.time_regions.get(region_key)
+
+        if not region or region.get('x', 0) == 0:
+            log.warning(f"[Training] {building_name.upper()}: training_confirm_time_region nincs beállítva!")
+            return None
+
+        log.ocr(f"[Training] {building_name.upper()} TIME OCR (confirm után) → Region: (x:{region.get('x',0)}, y:{region.get('y',0)})")
+
+        for attempt in range(1, max_attempts + 1):
+            ocr_text = ImageManager.read_text_from_region(region)
+
+            if not ocr_text:
+                time.sleep(0.5)
+                continue
+
+            log.info(f"[Training] {building_name.upper()} TIME OCR (kísérlet {attempt}/{max_attempts}): '{ocr_text}'")
+
+            # Parse time
+            time_sec = parse_time(ocr_text)
+
+            if time_sec is not None and time_sec > 0:
+                log.success(f"[Training] {building_name.upper()} → TRAINING TIME: {format_time(time_sec)} ({time_sec} sec)")
+                return time_sec
+
+            time.sleep(0.5)
+
+        log.warning(f"[Training] {building_name.upper()} TIME OCR sikertelen {max_attempts} kísérlet után")
+        return None
+
+    def _check_insufficient_resources(self, building_name):
+        """
+        Ellenőrzi hogy elég-e az erőforrás a képzéshez
+
+        OCR alapú detektálás: keres "insufficient" vagy hasonló szöveget
+
+        Args:
+            building_name: str
+
+        Returns:
+            bool: True ha NINCS elég erőforrás, False ha van elég
+        """
+        region_key = "insufficient_resource_region"
+        region = self.time_regions.get(region_key)
+
+        if not region or region.get('x', 0) == 0:
+            log.info(f"[Training] {building_name.upper()}: insufficient_resource_region nincs beállítva, skip check")
+            return False
+
+        log.ocr(f"[Training] {building_name.upper()} RESOURCE CHECK")
+
+        # 3 gyors OCR olvasás
+        for attempt in range(3):
+            ocr_text = ImageManager.read_text_from_region(region)
+
+            if ocr_text:
+                text_lower = ocr_text.lower()
+                log.info(f"[Training] {building_name.upper()} RESOURCE OCR: '{ocr_text}'")
+
+                # Keresünk "insufficient", "not enough", "need more" stb. szövegeket
+                insufficient_patterns = ['insufficient', 'not enough', 'need', 'require']
+
+                if any(pattern in text_lower for pattern in insufficient_patterns):
+                    log.warning(f"[Training] {building_name.upper()} → INSUFFICIENT RESOURCES detektálva!")
+                    return True
+
+            time.sleep(0.3)
+
+        log.success(f"[Training] {building_name.upper()} → Resources OK")
+        return False
+
     def _execute_training(self, building_name, skip_gather):
         """
         Training végrehajtása (koordináta kattintások + OCR frissítés)
@@ -570,22 +668,29 @@ class TrainingManager:
             building_name: str
             skip_gather: bool
 
-        TRAINING FÁZIS:
+        ÚJ TRAINING FÁZIS (v1.4.0):
         1. HA skip_gather = FALSE → Troop gather
-        2-5. Building/Button/Tier/Confirm
-        6. 2× SPACE
-        7. Panel megnyitás
-        8. Épület OCR + timer beállítása
-        9. Panel bezárás
+        2-5. Building/Button/Tier (DINAMIKUS!)/Confirm #1
+        6. Training time OCR (CONFIRM UTÁN, ne menj vissza queue-ba!)
+        7. Resource check → ha insufficient: buy_resource_1, buy_resource_2, Confirm #2
+        8. 2× SPACE
+        9. Timer beállítása (az OCR-ből kapott idővel)
+
+        v1.4.0 ÚJ: Tier DINAMIKUS választás config alapján!
         """
         log.separator('=', 60)
-        log.info(f"[Training] ⚔️  {building_name.upper()} TRAINING INDÍTÁS")
+        log.info(f"[Training] ⚔️  {building_name.upper()} TRAINING INDÍTÁS (v1.4.0)")
         if skip_gather:
             log.info("[Training] IDLE státusz → Gather troops KIHAGYVA")
         log.separator('=', 60)
 
         # Koordináták betöltése
         coords = self.training_coords.get(building_name, {})
+
+        # Tier választás (v1.4.0)
+        selected_tier = self.building_settings.get(building_name, {}).get('tier', 't4')
+
+        log.info(f"[Training] {building_name.upper()} beállítások: tier={selected_tier}")
 
         try:
             # 1. Troop Gather (CSAK ha nem skip_gather)
@@ -621,27 +726,93 @@ class TrainingManager:
             safe_click(button_coords)
             log.success("[Training] BUTTON OK")
 
-            # 4. Tier
+            # 4. Tier (DINAMIKUS: config alapján választott tier)
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
             time.sleep(delay)
 
-            tier_coords = coords.get('tier', [0, 0])
-            log.click(f"[Training] TIER kattintás → {tier_coords}")
-            safe_click(tier_coords)
-            log.success("[Training] TIER OK")
+            # Tier koordináta kiválasztása (új struktúra: tiers{t1, t2, t3, t4, t5})
+            tiers_dict = coords.get('tiers', {})
+            if tiers_dict and selected_tier in tiers_dict:
+                tier_coords = tiers_dict[selected_tier]
+                log.click(f"[Training] TIER [{selected_tier.upper()}] kattintás → {tier_coords}")
+            else:
+                # Fallback: régi struktúra kompatibilitás
+                tier_coords = coords.get('tier', [0, 0])
+                log.click(f"[Training] TIER kattintás (fallback) → {tier_coords}")
 
-            # 5. Confirm
+            safe_click(tier_coords)
+            log.success(f"[Training] TIER [{selected_tier.upper()}] OK")
+
+            # 5. Confirm #1
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
             time.sleep(delay)
 
             confirm_coords = coords.get('confirm', [0, 0])
-            log.click(f"[Training] CONFIRM kattintás → {confirm_coords}")
+            log.click(f"[Training] CONFIRM #1 kattintás → {confirm_coords}")
             safe_click(confirm_coords)
-            log.success("[Training] CONFIRM OK")
+            log.success("[Training] CONFIRM #1 OK")
 
-            # 6. SPACE #1
+            # 6. Training time OCR (CONFIRM UTÁN - ne menj vissza queue-ba!)
+            delay = wait_random(self.human_wait_min, self.human_wait_max)
+            log.wait(f"[Training] Várakozás {delay:.1f} mp")
+            time.sleep(delay)
+
+            log.info(f"[Training] {building_name.upper()} → Training time beolvasása (confirm után)...")
+            training_time_sec = self._read_training_time_after_confirm(building_name)
+
+            if training_time_sec is None:
+                log.warning(f"[Training] {building_name.upper()} → TIME OCR sikertelen!")
+                # Fallback: 5 perc retry
+                self.ocr_failure_count[building_name] += 1
+                training_time_sec = 300
+            else:
+                # OCR sikeres
+                self.ocr_failure_count[building_name] = 0
+
+            # 7. Resource check
+            log.info(f"[Training] {building_name.upper()} → Erőforrás ellenőrzés...")
+            insufficient = self._check_insufficient_resources(building_name)
+
+            # 8. Ha insufficient → buy resources + Confirm #2
+            if insufficient:
+                log.warning(f"[Training] {building_name.upper()} → INSUFFICIENT RESOURCES → Erőforrás vásárlás...")
+
+                # Buy resource point 1
+                buy_resource_1 = self.training_coords.get('buy_resource_1', [0, 0])
+                if buy_resource_1 != [0, 0]:
+                    delay = wait_random(self.human_wait_min, self.human_wait_max)
+                    log.wait(f"[Training] Várakozás {delay:.1f} mp")
+                    time.sleep(delay)
+
+                    log.click(f"[Training] BUY RESOURCE #1 → {buy_resource_1}")
+                    safe_click(buy_resource_1)
+                    log.success("[Training] BUY RESOURCE #1 OK")
+
+                # Buy resource point 2
+                buy_resource_2 = self.training_coords.get('buy_resource_2', [0, 0])
+                if buy_resource_2 != [0, 0]:
+                    delay = wait_random(self.human_wait_min, self.human_wait_max)
+                    log.wait(f"[Training] Várakozás {delay:.1f} mp")
+                    time.sleep(delay)
+
+                    log.click(f"[Training] BUY RESOURCE #2 → {buy_resource_2}")
+                    safe_click(buy_resource_2)
+                    log.success("[Training] BUY RESOURCE #2 OK")
+
+                # Confirm #2 (final confirm)
+                delay = wait_random(self.human_wait_min, self.human_wait_max)
+                log.wait(f"[Training] Várakozás {delay:.1f} mp")
+                time.sleep(delay)
+
+                log.click(f"[Training] CONFIRM #2 kattintás → {confirm_coords}")
+                safe_click(confirm_coords)
+                log.success("[Training] CONFIRM #2 OK")
+            else:
+                log.success(f"[Training] {building_name.upper()} → Resources OK, skip buy")
+
+            # 9. SPACE #1
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
             time.sleep(delay)
@@ -649,7 +820,7 @@ class TrainingManager:
             press_key('space')
             log.success("[Training] SPACE #1 OK")
 
-            # 7. SPACE #2
+            # 10. SPACE #2
             delay = wait_random(self.human_wait_min, self.human_wait_max)
             log.wait(f"[Training] Várakozás {delay:.1f} mp")
             time.sleep(delay)
@@ -657,98 +828,24 @@ class TrainingManager:
             press_key('space')
             log.success("[Training] SPACE #2 OK")
 
-            # 7b. POPUP CLEANUP: Várakozás (animáció lezárás)
+            # 11. POPUP CLEANUP: Várakozás (animáció lezárás)
             delay = wait_random(2, 4)
             log.wait(f"[Training] Várakozás {delay:.1f} mp (animáció lezárás)")
             time.sleep(delay)
             log.success("[Training] Popup cleanup befejezve")
 
-            # 8. Panel megnyitás ÚJRA
-            delay = wait_random(self.human_wait_min, self.human_wait_max)
-            log.wait(f"[Training] Várakozás {delay:.1f} mp")
-            time.sleep(delay)
+            # 12. Timer beállítása (az OCR-ből kapott idővel)
+            log.info(f"[Training] {building_name.upper()} → Timer beállítása: {format_time(training_time_sec)}")
 
-            open_panel_coords = self.training_coords.get('open_panel', [0, 0])
-            log.click(f"[Training] PANEL MEGNYITÁS → {open_panel_coords}")
-            safe_click(open_panel_coords)
-            log.success("[Training] Panel megnyitva")
-
-            # 9. Épület OCR + timer beállítása (csak ez az 1 épület)
-            log.info(f"[Training] {building_name.upper()} OCR frissítése...")
-            result = self._read_training_status(building_name)
-            ocr_failed = False
-
-            if result.get('type') == 'time':
-                time_sec = result.get('value')
-                log.info(f"[Training] {building_name.upper()} új idő: {format_time(time_sec)}")
-
-                # OCR sikeres, failure counter reset
-                self.ocr_failure_count[building_name] = 0
-
-                timer_id = f"training_{building_name}"
-                timer_manager.remove_timer(timer_id)
-                timer_manager.add_timer(
-                    timer_id=timer_id,
-                    deadline_seconds=time_sec,
-                    task_id=f"{building_name}_restart",
-                    task_type="training",
-                    data={"building": building_name}
-                )
-            else:
-                # OCR sikertelen, progressive retry
-                ocr_failed = True
-                self.ocr_failure_count[building_name] += 1
-                failure_count = self.ocr_failure_count[building_name]
-
-                if failure_count <= 2:
-                    retry_seconds = 300  # 5 perc
-                elif failure_count <= 4:
-                    retry_seconds = 900  # 15 perc
-                elif failure_count <= 6:
-                    retry_seconds = 1800  # 30 perc
-                else:
-                    retry_seconds = 3600  # 60 perc
-
-                log.warning(f"[Training] {building_name.upper()} OCR nem sikerült ({failure_count}x) → {retry_seconds//60} perc retry")
-
-                timer_id = f"training_{building_name}_retry"
-                timer_manager.remove_timer(timer_id)
-                timer_manager.add_timer(
-                    timer_id=timer_id,
-                    deadline_seconds=retry_seconds,
-                    task_id=f"{building_name}_restart",
-                    task_type="training",
-                    data={"building": building_name}
-                )
-
-            # 10. Panel bezárás
-            delay = wait_random(self.human_wait_min, self.human_wait_max)
-            log.wait(f"[Training] Várakozás {delay:.1f} mp")
-            time.sleep(delay)
-
-            close_panel_coords = self.training_coords.get('close_panel', [0, 0])
-            log.click(f"[Training] PANEL BEZÁRÁS → {close_panel_coords}")
-            safe_click(close_panel_coords)
-            log.success("[Training] Panel bezárva")
-
-            # Ha OCR sikertelen volt → 2x SPACE reset (clean state)
-            if ocr_failed:
-                delay = wait_random(self.human_wait_min, self.human_wait_max)
-                log.wait(f"[Training] Várakozás {delay:.1f} mp")
-                time.sleep(delay)
-
-                log.action("[Training] SPACE #1 lenyomása (kigugrás)")
-                press_key('space')
-                time.sleep(1.0)
-                log.action("[Training] SPACE #2 lenyomása (városba vissza)")
-                press_key('space')
-
-                # POPUP CLEANUP
-                delay = wait_random(2, 4)
-                log.wait(f"[Training] Várakozás {delay:.1f} mp (popup cleanup)")
-                time.sleep(delay)
-
-                log.info("[Training] 2x SPACE → clean state (városban, minden bezárva)")
+            timer_id = f"training_{building_name}"
+            timer_manager.remove_timer(timer_id)
+            timer_manager.add_timer(
+                timer_id=timer_id,
+                deadline_seconds=training_time_sec,
+                task_id=f"{building_name}_restart",
+                task_type="training",
+                data={"building": building_name}
+            )
 
             log.separator('=', 60)
             log.success(f"[Training] {building_name.upper()} training befejezve!")

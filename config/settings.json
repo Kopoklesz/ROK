@@ -4,58 +4,58 @@
     "commanders": [
       {"id": 1, "enabled": true},
       {"id": 2, "enabled": true},
-      {"id": 3, "enabled": false},
+      {"id": 3, "enabled": true},
       {"id": 4, "enabled": false},
       {"id": 5, "enabled": false}
     ]
   },
-  
+
   "training": {
     "buildings": {
       "barracks": {
-        "enabled": true,
+        "enabled": false,
         "troop_type": "tier1_infantry",
         "prep_time_seconds": 300
       },
       "archery": {
-        "enabled": true,
+        "enabled": false,
         "troop_type": "tier1_archer",
         "prep_time_seconds": 300
       },
       "stable": {
-        "enabled": true,
+        "enabled": false,
         "troop_type": "tier1_cavalry",
         "prep_time_seconds": 300
       },
       "siege": {
-        "enabled": true,
+        "enabled": false,
         "troop_type": "tier1_siege",
         "prep_time_seconds": 300
       }
     }
   },
-  
+
   "alliance": {
     "enabled": false,
     "check_interval_seconds": 300
   },
-  
+
   "anti_afk": {
-    "enabled": true,
+    "enabled": false,
     "idle_threshold_seconds": 900,
     "resource_offset_y": 50
   },
-  
+
   "human_wait": {
     "min_seconds": 5,
     "max_seconds": 10
   },
-  
+
   "startup_wait": {
     "min_seconds": 20,
     "max_seconds": 25
   },
-  
+
   "defaults": {
     "march_time_seconds": 300,
     "gather_time_seconds": 5400

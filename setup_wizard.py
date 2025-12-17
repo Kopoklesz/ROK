@@ -1,6 +1,14 @@
 """
-ROK Auto Farm - Setup Wizard (Menu-Based v2.0 COMPLETE)
+ROK Auto Farm - Setup Wizard (Menu-Based v2.2 COMPLETE)
 FIXED: Minden hiányzó függvény implementálva
+v2.2 ÚJ (Training v1.4.0):
+- DINAMIKUS TIER: Több tier (T1-T5) támogatás épületenként!
+- Új struktúra: tiers{} objektum minden épülethez
+- Config-ban épület-specifikus tier választás
+v2.1:
+- Training v1.3.0: training_confirm_time_region (OCR confirm után, NE queue-ban!)
+- Training v1.3.0: insufficient_resource_region (erőforrás hiány detektálás)
+- Training v1.3.0: buy_resource_1, buy_resource_2 (nyersanyag vásárlás gombok)
 """
 import sys
 import json
@@ -57,7 +65,7 @@ class SetupWizardMenu:
     def show_main_menu(self):
         """Főmenü megjelenítése"""
         print("\n" + "="*60)
-        print("ROK AUTO FARM - SETUP WIZARD v2.1 ML-ENHANCED")
+        print("ROK AUTO FARM - SETUP WIZARD v2.2 (Training v1.4.0)")
         print("="*60)
         print("\n1. 🌾 Gathering Setup")
         print("2. ⚔️  Training Setup")
@@ -490,6 +498,50 @@ class SetupWizardMenu:
                 config[region_key] = region
                 print(f"✅ {region_key} mentve: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
 
+        # ===== ÚJ: TRAINING CONFIRM TIME REGION (v1.3.0) =====
+        print("\n" + "="*60)
+        print("⏱️  TRAINING CONFIRM TIME REGION (v1.3.0 ÚJ!)")
+        print("="*60)
+        print("\n⚠️  KRITIKUS: Ez a legfontosabb régió!")
+        print("A CONFIRM gomb megnyomása után azonnal megjelenik a képzési idő.")
+        print("Jelöld ki CSAK az időt (pl. '5m 30s'), NE a teljes sort!")
+        print("\nEz az ÚJ flow: Confirm → OCR (itt) → Resource check → SPACE")
+        print("NEM kell visszamenni a queue menübe! Gyorsabb és biztonságosabb.")
+
+        region_key = 'training_confirm_time_region'
+        old_value = config.get(region_key)
+        if old_value:
+            print(f"\nℹ️  Jelenlegi: {old_value}")
+        else:
+            print(f"\nℹ️  Nincs beállítva")
+
+        if self.wait_for_enter_or_esc(f"ENTER = {region_key} régió, ESC = skip"):
+            region = self.selector.select_region("TRAINING CONFIRM TIME (CSAK AZ IDŐ!)")
+            if region:
+                config[region_key] = region
+                print(f"✅ {region_key} mentve: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
+
+        # ===== ÚJ: INSUFFICIENT RESOURCE REGION (v1.3.0) =====
+        print("\n" + "="*60)
+        print("🔴 INSUFFICIENT RESOURCE REGION (v1.3.0 ÚJ!)")
+        print("="*60)
+        print("\nJelöld ki azt a régiót, ahol 'Insufficient resources' vagy")
+        print("'Not enough' szöveg megjelenik, ha nincs elég nyersanyag.")
+        print("\nHa ez a régió üres vagy nem detektál semmit, a bot folytatja.")
+
+        region_key = 'insufficient_resource_region'
+        old_value = config.get(region_key)
+        if old_value:
+            print(f"\nℹ️  Jelenlegi: {old_value}")
+        else:
+            print(f"\nℹ️  Nincs beállítva")
+
+        if self.wait_for_enter_or_esc(f"ENTER = {region_key} régió, ESC = skip"):
+            region = self.selector.select_region("INSUFFICIENT RESOURCE TEXT (hiba szöveg helye)")
+            if region:
+                config[region_key] = region
+                print(f"✅ {region_key} mentve: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
+
         # ===== TRAINING TIME REGIONS =====
         print("\n" + "="*60)
         print("⏱️  TRAINING TIME RÉGIÓK (4 épület)")
@@ -583,27 +635,64 @@ class SetupWizardMenu:
                 config[coord_key] = point
                 print(f"✅ {coord_key} mentve: ({point[0]}, {point[1]})")
 
+        # ===== ÚJ: RESOURCE BUY COORDINATES (v1.3.0) =====
+        print("\n" + "="*60)
+        print("💰 RESOURCE BUY KOORDINÁTÁK (v1.3.0 ÚJ!)")
+        print("="*60)
+        print("\nHa nincs elég nyersanyag a képzéshez, a bot megnyom 2 fix pontot.")
+        print("Ezek általában 'Use' vagy 'Buy' gombok a hibaüzenetben.")
+        print("Ha nem állítod be, a bot kihagyja ezt a lépést.")
+
+        buy_coords = [
+            ('buy_resource_1', 'Buy/Use Resource #1 gomb'),
+            ('buy_resource_2', 'Buy/Use Resource #2 gomb')
+        ]
+
+        for coord_key, coord_desc in buy_coords:
+            print("\n" + "-"*60)
+            print(f"💰 {coord_desc}")
+            print("-"*60)
+
+            # Meglévő érték
+            old_value = config.get(coord_key)
+            if old_value:
+                print(f"ℹ️  Jelenlegi: {old_value}")
+            else:
+                print(f"ℹ️  Nincs beállítva")
+
+            if not self.wait_for_enter_or_esc(f"ENTER = {coord_key}, ESC = skip"):
+                continue
+
+            # Pont kijelölés
+            point = self.selector.select_point(coord_desc)
+
+            if point:
+                config[coord_key] = point
+                print(f"✅ {coord_key} mentve: ({point[0]}, {point[1]})")
+
         # ===== ÉPÜLET KOORDINÁTÁK =====
         print("\n" + "="*60)
-        print("🏰 ÉPÜLET KOORDINÁTÁK")
+        print("🏰 ÉPÜLET KOORDINÁTÁK (v1.4.0 ÚJ STRUKTÚRA!)")
         print("="*60)
         print("\n4 épület: barracks, archery, stable, siege")
-        print("\nMinden épülethez 5 koordináta szükséges:")
+        print("\nMinden épülethez TÖBB koordináta szükséges:")
         print("  1. troop_gather - Csapat gyűjtés gomb")
         print("  2. building - Épület gomb")
         print("  3. button - Akció gomb")
-        print("  4. tier - Tier kiválasztás")
+        print("  4. tiers{} - Tier választások (T1-T5) TÖBB IS!")
         print("  5. confirm - Megerősítés gomb")
 
         buildings = ['barracks', 'archery', 'stable', 'siege']
 
-        coord_types = [
+        # Alapvető koordináták
+        basic_coords = [
             ('troop_gather', 'Troop Gather (csapat gyűjtés)'),
             ('building', 'Building (épület)'),
-            ('button', 'Button (gomb)'),
-            ('tier', 'Tier (szint)'),
-            ('confirm', 'Confirm (megerősítés)')
+            ('button', 'Button (gomb)')
         ]
+
+        # Tier választások (T1-T5)
+        tier_choices = ['t1', 't2', 't3', 't4', 't5']
 
         for building in buildings:
             print("\n" + "="*60)
@@ -613,12 +702,12 @@ class SetupWizardMenu:
             if building not in config:
                 config[building] = {}
 
-            for coord_key, coord_desc in coord_types:
+            # 1. Alapvető koordináták
+            for coord_key, coord_desc in basic_coords:
                 print("\n" + "-"*60)
                 print(f"📍 {coord_desc}")
                 print("-"*60)
 
-                # Meglévő érték
                 old_value = config[building].get(coord_key)
                 if old_value:
                     print(f"ℹ️  Jelenlegi: {old_value}")
@@ -628,12 +717,56 @@ class SetupWizardMenu:
                 if not self.wait_for_enter_or_esc(f"ENTER = {coord_key}, ESC = skip"):
                     continue
 
-                # Pont kijelölés (nem tartomány!)
                 point = self.selector.select_point(f"{building.upper()} - {coord_desc}")
-
                 if point:
                     config[building][coord_key] = point
                     print(f"✅ {coord_key} mentve: ({point[0]}, {point[1]})")
+
+            # 2. TIERS (ÚJ v1.4.0)
+            print("\n" + "="*60)
+            print(f"🎯 {building.upper()} - TIERS (T1-T5)")
+            print("="*60)
+            print("\nJelöld ki az összes tier gombot!")
+            print("Csak azokat jelöld ki, amiket használni fogsz!")
+
+            if 'tiers' not in config[building]:
+                config[building]['tiers'] = {}
+
+            for tier in tier_choices:
+                print("\n" + "-"*60)
+                print(f"🎯 {tier.upper()}")
+                print("-"*60)
+
+                old_value = config[building]['tiers'].get(tier)
+                if old_value:
+                    print(f"ℹ️  Jelenlegi: {old_value}")
+                else:
+                    print(f"ℹ️  Nincs beállítva")
+
+                if not self.wait_for_enter_or_esc(f"ENTER = {tier}, ESC = skip"):
+                    continue
+
+                point = self.selector.select_point(f"{building.upper()} - {tier.upper()}")
+                if point:
+                    config[building]['tiers'][tier] = point
+                    print(f"✅ {tier} mentve: ({point[0]}, {point[1]})")
+
+            # 3. Confirm gomb
+            print("\n" + "-"*60)
+            print("📍 CONFIRM (megerősítés)")
+            print("-"*60)
+
+            old_value = config[building].get('confirm')
+            if old_value:
+                print(f"ℹ️  Jelenlegi: {old_value}")
+            else:
+                print(f"ℹ️  Nincs beállítva")
+
+            if self.wait_for_enter_or_esc("ENTER = confirm, ESC = skip"):
+                point = self.selector.select_point(f"{building.upper()} - CONFIRM")
+                if point:
+                    config[building]['confirm'] = point
+                    print(f"✅ confirm mentve: ({point[0]}, {point[1]})")
 
         # Mentés
         with open(coords_file, 'w', encoding='utf-8') as f:
