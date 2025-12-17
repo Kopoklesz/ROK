@@ -1,0 +1,529 @@
+============================================================
+  ROK AUTO FARM MANAGER
+============================================================
+
+[INFO] Farm Manager inditasa...
+
+✅ EasyOCR elérhető - ML-alapú OCR használata
+[22:51:27] ℹ️  [Queue] Queue betöltve: 2 task
+[22:51:27] ℹ️  [Timer] Timer-ek betöltve: 2 db
+[22:51:27] ℹ️  [Alliance] Manager inicializálva
+############################################################
+[22:51:27] ℹ️  🚀 ROK AUTO FARM MANAGER - ORCHESTRATOR
+############################################################
+[22:51:27] ℹ️  Logger inicializálva: C:\Users\Mini-PC1\Documents\repo\ROK\logs\farm_20251217_225127.log
+[22:51:27] ✅ Logger inicializálva (file logging enabled)
+============================================================
+[22:51:27] ℹ️  Játék ablak inicializálás...
+============================================================
+[22:51:27] ✅ Játék ablak OK
+============================================================
+[22:51:27] ℹ️  Queue Manager inicializálás...
+============================================================
+[22:51:27] ℹ️  [Queue] [STARTUP CLEANUP] Queue törölve (2 régi task eltávolítva)
+[22:51:27] ℹ️  Queue betöltve: 0 task
+============================================================
+[22:51:27] ℹ️  Timer Manager indítás...
+============================================================
+[22:51:27] ℹ️  [Timer] [STARTUP CLEANUP] Timerek törölve (2 régi timer eltávolítva)
+[22:51:27] ℹ️  [Timer] Timer Manager elindult (10 sec tick)
+[22:51:27] ℹ️  Aktív timer-ek: 0 db
+============================================================
+[22:51:27] ℹ️  Scheduler inicializálás...
+============================================================
+[22:51:27] ✅ Scheduler készen áll
+============================================================
+[22:51:27] ℹ️  Gathering Manager inicializálás...
+============================================================
+============================================================
+[22:51:27] ℹ️  [Gathering] 🌾 COMMANDERS ELSŐ INDÍTÁSA
+============================================================
+[22:51:27] ℹ️  [Gathering] Commander #1 queue-ba helyezése...
+[22:51:27] ℹ️  [Queue] Task hozzáadva: commander_1_start (gathering, status=pending)
+[22:51:27] ✅ [Gathering] Commander #1 queue-ba téve (start)
+[22:51:27] ℹ️  [Gathering] Commander #2 queue-ba helyezése...
+[22:51:27] ℹ️  [Queue] Task hozzáadva: commander_2_start (gathering, status=pending)
+[22:51:27] ✅ [Gathering] Commander #2 queue-ba téve (start)
+[22:51:27] ℹ️  [Gathering] Commander #3 queue-ba helyezése...
+[22:51:27] ℹ️  [Queue] Task hozzáadva: commander_3_start (gathering, status=pending)
+[22:51:27] ✅ [Gathering] Commander #3 queue-ba téve (start)
+[22:51:27] ℹ️  [Gathering] Commander #4 disabled, skip
+[22:51:27] ℹ️  [Gathering] Commander #5 disabled, skip
+------------------------------------------------------------
+[22:51:27] ✅ [Gathering] 3 commander queue-ba téve, 2 disabled
+============================================================
+============================================================
+[22:51:27] ℹ️  Training Manager indítás...
+============================================================
+============================================================
+[22:51:27] ℹ️  [Training] Manager indítás...
+============================================================
+[22:51:27] ℹ️  [Training] Panel OCR indítása...
+[22:51:27] ⏳ [Training] Várakozás 3.0 mp
+[22:51:30] 🖱️  [Training] PANEL MEGNYITÁS → [45, 215]
+[22:51:30] ✅ [Training] Panel megnyitva
+[22:51:30] ℹ️  [Training] BARRACKS: Disabled, skip
+[22:51:30] ℹ️  [Training] ARCHERY: Disabled, skip
+[22:51:30] ℹ️  [Training] STABLE: Disabled, skip
+[22:51:30] ℹ️  [Training] SIEGE: Disabled, skip
+[22:51:30] ⏳ [Training] Várakozás 5.1 mp
+[22:51:35] 🖱️  [Training] PANEL BEZÁRÁS → [497, 562]
+[22:51:35] ✅ [Training] Panel bezárva
+[22:51:35] ⏳ [Training] Várakozás 2.8 mp
+[22:51:38] 🎬 [Training] SPACE #1 lenyomása (kigugrás)
+[22:51:39] 🎬 [Training] SPACE #2 lenyomása (városba vissza)
+[22:51:39] ⏳ [Training] Várakozás 2.4 mp (popup cleanup)
+[22:51:42] ℹ️  [Training] Scan befejezve → 2x SPACE → clean state
+============================================================
+[22:51:42] ✅ [Training] Manager inicializálva
+============================================================
+============================================================
+[22:51:42] ℹ️  Alliance Manager indítás...
+============================================================
+[22:51:42] ℹ️  [Queue] Task hozzáadva: alliance_help (alliance, status=pending)
+[22:51:42] ℹ️  Alliance Manager elindult (300 sec interval)
+============================================================
+[22:51:42] ℹ️  Anti-AFK Manager indítás...
+============================================================
+[22:51:42] ℹ️  Anti-AFK Manager disabled (config)
+============================================================
+[22:51:42] ℹ️  Connection Monitor indítás...
+============================================================
+============================================================
+[22:51:42] ℹ️  [ConnectionMonitor] Monitor indítása...
+[22:51:42] ℹ️  [ConnectionMonitor] Check interval: 5 sec
+[22:51:42] ℹ️  [ConnectionMonitor] Detection text: 'NETWORK DISCONNECTED'
+============================================================
+[22:51:42] ℹ️  [Alliance] Help task queue-ba téve
+[22:51:42] ✅ [ConnectionMonitor] Monitor elindítva
+############################################################
+[22:51:42] ✅ ✅ ÖSSZES MANAGER ELINDULT - MAIN LOOP KEZDŐDIK
+############################################################
+[22:51:42] ℹ️  Main Loop: Scheduler tick minden 10 másodpercben
+[22:51:42] ℹ️  CTRL+C = graceful shutdown
+############################################################
+============================================================
+[22:51:42] 🎬 Scheduler: Task futtatása → commander_1_start (gathering)
+============================================================
+[22:51:42] ℹ️  [Queue] Task kivéve: commander_1_start (gathering)
+[22:51:42] ℹ️  Task indítva: commander_1_start
+[22:51:42] ℹ️  Gathering Manager hívás: Commander #1
+============================================================
+[22:51:42] ℹ️  [Gathering] 🌾 COMMANDER #1 - GATHERING START
+============================================================
+[22:51:42] ℹ️  [Gathering] Commander #1 indítása...
+[22:51:42] ℹ️  [Gathering] Step 1/5: Resource OCR
+------------------------------------------------------------
+[22:51:42] ℹ️  [Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA
+------------------------------------------------------------
+[22:51:42] ℹ️  [Gathering] Erőforrások kiolvasása...
+[22:51:42] 📖 [Gathering] WHEAT OCR → Region: (x:1033, y:13, w:116, h:39)
+🔄 EasyOCR inicializálása (csak egyszer)...
+Using CPU. Note: This module is much faster with a GPU.
+🔄 EasyOCR inicializálása (csak egyszer)...
+Using CPU. Note: This module is much faster with a GPU.
+✅ EasyOCR kész
+✅ EasyOCR kész
+C:\Users\Mini-PC1\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\dataloader.py:668: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  warnings.warn(warn_msg)
+[22:51:47] ℹ️  [Gathering] WHEAT OCR nyers: '1.1M'
+[22:51:47] ✅ [Gathering] WHEAT: 1.1M → 1,100,000
+[22:51:47] 📖 [Gathering] WOOD OCR → Region: (x:1212, y:13, w:114, h:37)
+[22:51:47] ℹ️  [Gathering] WOOD OCR nyers: '1.9M'
+[22:51:47] ✅ [Gathering] WOOD: 1.9M → 1,900,000
+[22:51:47] 📖 [Gathering] STONE OCR → Region: (x:1399, y:13, w:118, h:37)
+[22:51:47] ℹ️  [Gathering] STONE OCR nyers: '4.8M'
+[22:51:47] ✅ [Gathering] STONE: 4.8M → 4,800,000
+[22:51:47] 📖 [Gathering] GOLD OCR → Region: (x:1581, y:12, w:122, h:41)
+[22:51:47] ℹ️  [Gathering] GOLD OCR nyers: '1.0M'
+[22:51:47] ✅ [Gathering] GOLD: 1.0M → 1,000,000
+[22:51:47] ℹ️  [Gathering] WHEAT adjusted: 1,100,000 ÷ 4 = 275000
+[22:51:47] ℹ️  [Gathering] WOOD adjusted: 1,900,000 ÷ 4 = 475000
+[22:51:47] ℹ️  [Gathering] STONE adjusted: 4,800,000 ÷ 3 = 1600000
+[22:51:47] ℹ️  [Gathering] GOLD adjusted: 1,000,000 ÷ 2 = 500000
+[22:51:47] ✅ [Gathering] Kiválasztva: WHEAT
+[22:51:47] ℹ️  [Gathering] Step 2/5: Térkép navigáció
+------------------------------------------------------------
+[22:51:47] ℹ️  [Gathering] 🗺️ TÉRKÉP MEGNYITÁSA
+------------------------------------------------------------
+[22:51:47] ℹ️  [Gathering] [1/13] SPACE billentyű
+[22:51:47] ⏳ [Gathering] Várakozás 9.7 mp
+[22:51:57] 🎬 [Gathering] SPACE lenyomása
+[22:51:57] ✅ [Gathering] SPACE OK
+[22:51:57] ℹ️  [Gathering] [2/13] B billentyű (térkép)
+[22:51:57] ⏳ [Gathering] Várakozás 8.7 mp
+[22:52:06] 🎬 [Gathering] B billentyű lenyomása
+[22:52:06] ✅ [Gathering] B OK
+[22:52:06] ℹ️  [Gathering] Step 3/5: Farm keresés
+------------------------------------------------------------
+[22:52:06] ℹ️  [Gathering] 🔍 WHEAT FARM KERESÉS
+------------------------------------------------------------
+[22:52:06] ℹ️  [Gathering] [3/13] Resource icon kattintás
+[22:52:06] ⏳ [Gathering] Várakozás 8.2 mp
+[22:52:14] 🖱️  [Gathering] WHEAT ikon → [676, 950]
+[22:52:14] ✅ [Gathering] Resource icon OK
+[22:52:14] ℹ️  [Gathering] [4/13] Level button kattintás
+[22:52:14] ⏳ [Gathering] Várakozás 7.2 mp
+[22:52:21] 🖱️  [Gathering] Szint gomb → [642, 603]
+[22:52:21] ✅ [Gathering] Level button OK
+[22:52:21] ℹ️  [Gathering] [5/13] Search button kattintás
+[22:52:21] ⏳ [Gathering] Várakozás 7.9 mp
+[22:52:29] 🖱️  [Gathering] Keresés gomb → [669, 733]
+[22:52:29] ✅ [Gathering] Search button OK
+[22:52:29] ℹ️  [Gathering] [5a/13] March.png detekció
+[22:52:38] ℹ️  [Gathering] Step 4/5: Farm process
+------------------------------------------------------------
+[22:52:38] ℹ️  [Gathering] 🎯 GATHERING INDÍTÁS
+------------------------------------------------------------
+[22:52:38] ℹ️  [Gathering] [6/13] Gather button keresés
+[22:52:38] ⏳ [Gathering] Várakozás 6.3 mp
+[22:52:44] 🔍 [Gathering] gather.png keresés...
+[22:52:44] 🔍 Gather.png keresése... (1/25)
+[ WARN:1@82.772] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:44] ⚠️  Gather.png nem található (1/25), újrapróbálkozás...
+[22:52:45] 🔍 Gather.png keresése... (2/25)
+[ WARN:1@83.274] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:45] ⚠️  Gather.png nem található (2/25), újrapróbálkozás...
+[22:52:45] 🔍 Gather.png keresése... (3/25)
+[ WARN:1@83.776] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:45] ⚠️  Gather.png nem található (3/25), újrapróbálkozás...
+[22:52:46] 🔍 Gather.png keresése... (4/25)
+[ WARN:1@84.277] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:46] ⚠️  Gather.png nem található (4/25), újrapróbálkozás...
+[22:52:46] 🔍 Gather.png keresése... (5/25)
+[ WARN:1@84.778] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:46] ⚠️  Gather.png nem található (5/25), újrapróbálkozás...
+[22:52:47] 🔍 Gather.png keresése... (6/25)
+[ WARN:1@85.279] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:47] ⚠️  Gather.png nem található (6/25), újrapróbálkozás...
+[22:52:47] 🔍 Gather.png keresése... (7/25)
+[ WARN:1@85.780] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:47] ⚠️  Gather.png nem található (7/25), újrapróbálkozás...
+[22:52:48] 🔍 Gather.png keresése... (8/25)
+[ WARN:1@86.281] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:48] ⚠️  Gather.png nem található (8/25), újrapróbálkozás...
+[22:52:48] 🔍 Gather.png keresése... (9/25)
+[ WARN:1@86.782] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:48] ⚠️  Gather.png nem található (9/25), újrapróbálkozás...
+[22:52:49] 🔍 Gather.png keresése... (10/25)
+[ WARN:1@87.283] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:49] ⚠️  Gather.png nem található (10/25), újrapróbálkozás...
+[22:52:49] 🔍 Gather.png keresése... (11/25)
+[ WARN:1@87.784] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:49] ⚠️  Gather.png nem található (11/25), újrapróbálkozás...
+[22:52:50] 🔍 Gather.png keresése... (12/25)
+[ WARN:1@88.285] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:50] ⚠️  Gather.png nem található (12/25), újrapróbálkozás...
+[22:52:50] 🔍 Gather.png keresése... (13/25)
+[ WARN:1@88.787] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:50] ⚠️  Gather.png nem található (13/25), újrapróbálkozás...
+[22:52:51] 🔍 Gather.png keresése... (14/25)
+[ WARN:1@89.288] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:51] ⚠️  Gather.png nem található (14/25), újrapróbálkozás...
+[22:52:51] 🔍 Gather.png keresése... (15/25)
+[ WARN:1@89.789] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:51] ⚠️  Gather.png nem található (15/25), újrapróbálkozás...
+[22:52:52] 🔍 Gather.png keresése... (16/25)
+[ WARN:1@90.290] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:52] ⚠️  Gather.png nem található (16/25), újrapróbálkozás...
+[22:52:52] 🔍 Gather.png keresése... (17/25)
+[ WARN:1@90.791] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:52] ⚠️  Gather.png nem található (17/25), újrapróbálkozás...
+[22:52:53] 🔍 Gather.png keresése... (18/25)
+[ WARN:1@91.292] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:53] ⚠️  Gather.png nem található (18/25), újrapróbálkozás...
+[22:52:53] 🔍 Gather.png keresése... (19/25)
+[ WARN:1@91.834] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:53] ⚠️  Gather.png nem található (19/25), újrapróbálkozás...
+[22:52:54] 🔍 Gather.png keresése... (20/25)
+[ WARN:1@92.335] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:54] ⚠️  Gather.png nem található (20/25), újrapróbálkozás...
+[22:52:54] 🔍 Gather.png keresése... (21/25)
+[ WARN:1@92.837] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:54] ⚠️  Gather.png nem található (21/25), újrapróbálkozás...
+[22:52:55] 🔍 Gather.png keresése... (22/25)
+[ WARN:1@93.338] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:55] ⚠️  Gather.png nem található (22/25), újrapróbálkozás...
+[22:52:55] 🔍 Gather.png keresése... (23/25)
+[ WARN:1@93.839] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:55] ⚠️  Gather.png nem található (23/25), újrapróbálkozás...
+[22:52:56] 🔍 Gather.png keresése... (24/25)
+[ WARN:1@94.341] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:56] ⚠️  Gather.png nem található (24/25), újrapróbálkozás...
+[22:52:56] 🔍 Gather.png keresése... (25/25)
+[ WARN:1@94.842] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:52:56] ⚠️  Gather.png nem található (25/25), újrapróbálkozás...
+[22:52:57] ❌ [Gathering] Gather gomb nem található! (1x)
+[22:52:57] ⚠️  [Gathering] Commander valószínűleg még úton van VAGY rossz képernyő
+[22:52:57] ℹ️  [Gathering] Task visszatéve queue-ba 5 perc múlvára
+[22:52:57] ⏳ [Gathering] Várakozás 6.9 mp
+[22:53:04] 🎬 [Gathering] SPACE #1 lenyomása (kigugrás)
+[22:53:05] 🎬 [Gathering] SPACE #2 lenyomása (városba vissza)
+[22:53:05] ℹ️  [Gathering] 2x SPACE → clean state (városban, minden bezárva)
+[22:53:05] ℹ️  [Timer] Timer hozzáadva: commander_1_gather_retry → 300s múlva (2025-12-17 22:58:05)
+[22:53:05] ✅ [Gathering] Commander #1 retry: 5 perc múlva
+[22:53:05] ℹ️  [Gathering] Commander #1 retry később
+============================================================
+[22:53:05] ✅ Task befejezve: commander_1_start (83.0 sec)
+============================================================
+[22:53:15] 🎬 Scheduler: Task futtatása → commander_2_start (gathering)
+============================================================
+[22:53:15] ℹ️  [Queue] Task kivéve: commander_2_start (gathering)
+[22:53:15] ℹ️  Task indítva: commander_2_start
+[22:53:15] ℹ️  Gathering Manager hívás: Commander #2
+============================================================
+[22:53:15] ℹ️  [Gathering] 🌾 COMMANDER #2 - GATHERING START
+============================================================
+[22:53:15] ℹ️  [Gathering] Commander #2 indítása...
+[22:53:15] ℹ️  [Gathering] Step 1/5: Resource OCR
+------------------------------------------------------------
+[22:53:15] ℹ️  [Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA
+------------------------------------------------------------
+[22:53:15] ℹ️  [Gathering] Erőforrások kiolvasása...
+[22:53:15] 📖 [Gathering] WHEAT OCR → Region: (x:1033, y:13, w:116, h:39)
+[22:53:15] ℹ️  [Gathering] WHEAT OCR nyers: '1.1M'
+[22:53:15] ✅ [Gathering] WHEAT: 1.1M → 1,100,000
+[22:53:15] 📖 [Gathering] WOOD OCR → Region: (x:1212, y:13, w:114, h:37)
+[22:53:15] ℹ️  [Gathering] WOOD OCR nyers: '1.9M'
+[22:53:15] ✅ [Gathering] WOOD: 1.9M → 1,900,000
+[22:53:15] 📖 [Gathering] STONE OCR → Region: (x:1399, y:13, w:118, h:37)
+[22:53:15] ℹ️  [Gathering] STONE OCR nyers: '4.8M'
+[22:53:15] ✅ [Gathering] STONE: 4.8M → 4,800,000
+[22:53:15] 📖 [Gathering] GOLD OCR → Region: (x:1581, y:12, w:122, h:41)
+[22:53:16] ℹ️  [Gathering] GOLD OCR nyers: '1.0M'
+[22:53:16] ✅ [Gathering] GOLD: 1.0M → 1,000,000
+[22:53:16] ℹ️  [Gathering] WHEAT adjusted: 1,100,000 ÷ 4 = 275000
+[22:53:16] ℹ️  [Gathering] WOOD adjusted: 1,900,000 ÷ 4 = 475000
+[22:53:16] ℹ️  [Gathering] STONE adjusted: 4,800,000 ÷ 3 = 1600000
+[22:53:16] ℹ️  [Gathering] GOLD adjusted: 1,000,000 ÷ 2 = 500000
+[22:53:16] ✅ [Gathering] Kiválasztva: WHEAT
+[22:53:16] ℹ️  [Gathering] Step 2/5: Térkép navigáció
+------------------------------------------------------------
+[22:53:16] ℹ️  [Gathering] 🗺️ TÉRKÉP MEGNYITÁSA
+------------------------------------------------------------
+[22:53:16] ℹ️  [Gathering] [1/13] SPACE billentyű
+[22:53:16] ⏳ [Gathering] Várakozás 9.1 mp
+[22:53:25] 🎬 [Gathering] SPACE lenyomása
+[22:53:25] ✅ [Gathering] SPACE OK
+[22:53:25] ℹ️  [Gathering] [2/13] B billentyű (térkép)
+[22:53:25] ⏳ [Gathering] Várakozás 6.7 mp
+[22:53:31] 🎬 [Gathering] B billentyű lenyomása
+[22:53:31] ✅ [Gathering] B OK
+[22:53:31] ℹ️  [Gathering] Step 3/5: Farm keresés
+------------------------------------------------------------
+[22:53:31] ℹ️  [Gathering] 🔍 WHEAT FARM KERESÉS
+------------------------------------------------------------
+[22:53:31] ℹ️  [Gathering] [3/13] Resource icon kattintás
+[22:53:31] ⏳ [Gathering] Várakozás 8.4 mp
+[22:53:40] 🖱️  [Gathering] WHEAT ikon → [676, 950]
+[22:53:40] ✅ [Gathering] Resource icon OK
+[22:53:40] ℹ️  [Gathering] [4/13] Level button kattintás
+[22:53:40] ⏳ [Gathering] Várakozás 7.2 mp
+[22:53:47] 🖱️  [Gathering] Szint gomb → [642, 603]
+[22:53:47] ✅ [Gathering] Level button OK
+[22:53:47] ℹ️  [Gathering] [5/13] Search button kattintás
+[22:53:47] ⏳ [Gathering] Várakozás 9.5 mp
+[22:53:57] 🖱️  [Gathering] Keresés gomb → [669, 733]
+[22:53:57] ✅ [Gathering] Search button OK
+[22:53:57] ℹ️  [Gathering] [5a/13] March.png detekció
+[22:54:02] ℹ️  [Gathering] Step 4/5: Farm process
+------------------------------------------------------------
+[22:54:02] ℹ️  [Gathering] 🎯 GATHERING INDÍTÁS
+------------------------------------------------------------
+[22:54:02] ℹ️  [Gathering] [6/13] Gather button keresés
+[22:54:02] ⏳ [Gathering] Várakozás 5.4 mp
+[22:54:08] 🔍 [Gathering] gather.png keresés...
+[22:54:08] 🔍 Gather.png keresése... (1/25)
+[ WARN:1@166.467] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:08] ⚠️  Gather.png nem található (1/25), újrapróbálkozás...
+[22:54:08] 🔍 Gather.png keresése... (2/25)
+[ WARN:1@166.968] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:08] ⚠️  Gather.png nem található (2/25), újrapróbálkozás...
+[22:54:09] 🔍 Gather.png keresése... (3/25)
+[ WARN:1@167.469] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:09] ⚠️  Gather.png nem található (3/25), újrapróbálkozás...
+[22:54:09] 🔍 Gather.png keresése... (4/25)
+[ WARN:1@167.971] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:09] ⚠️  Gather.png nem található (4/25), újrapróbálkozás...
+[22:54:10] 🔍 Gather.png keresése... (5/25)
+[ WARN:1@168.472] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:10] ⚠️  Gather.png nem található (5/25), újrapróbálkozás...
+[22:54:10] 🔍 Gather.png keresése... (6/25)
+[ WARN:1@168.973] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:10] ⚠️  Gather.png nem található (6/25), újrapróbálkozás...
+[22:54:11] 🔍 Gather.png keresése... (7/25)
+[ WARN:1@169.474] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:11] ⚠️  Gather.png nem található (7/25), újrapróbálkozás...
+[22:54:11] 🔍 Gather.png keresése... (8/25)
+[ WARN:1@170.020] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:11] ⚠️  Gather.png nem található (8/25), újrapróbálkozás...
+[22:54:12] 🔍 Gather.png keresése... (9/25)
+[ WARN:1@170.521] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:12] ⚠️  Gather.png nem található (9/25), újrapróbálkozás...
+[22:54:12] 🔍 Gather.png keresése... (10/25)
+[ WARN:1@171.022] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:12] ⚠️  Gather.png nem található (10/25), újrapróbálkozás...
+[22:54:13] 🔍 Gather.png keresése... (11/25)
+[ WARN:1@171.524] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:13] ⚠️  Gather.png nem található (11/25), újrapróbálkozás...
+[22:54:13] 🔍 Gather.png keresése... (12/25)
+[ WARN:1@172.025] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:13] ⚠️  Gather.png nem található (12/25), újrapróbálkozás...
+[22:54:14] 🔍 Gather.png keresése... (13/25)
+[ WARN:1@172.527] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:14] ⚠️  Gather.png nem található (13/25), újrapróbálkozás...
+[22:54:14] 🔍 Gather.png keresése... (14/25)
+[ WARN:1@173.028] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:14] ⚠️  Gather.png nem található (14/25), újrapróbálkozás...
+[22:54:15] 🔍 Gather.png keresése... (15/25)
+[ WARN:1@173.530] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:15] ⚠️  Gather.png nem található (15/25), újrapróbálkozás...
+[22:54:15] 🔍 Gather.png keresése... (16/25)
+[ WARN:1@174.031] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:15] ⚠️  Gather.png nem található (16/25), újrapróbálkozás...
+[22:54:16] 🔍 Gather.png keresése... (17/25)
+[ WARN:1@174.532] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:16] ⚠️  Gather.png nem található (17/25), újrapróbálkozás...
+[22:54:16] 🔍 Gather.png keresése... (18/25)
+[ WARN:1@175.033] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:16] ⚠️  Gather.png nem található (18/25), újrapróbálkozás...
+[22:54:17] 🔍 Gather.png keresése... (19/25)
+[ WARN:1@175.535] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:17] ⚠️  Gather.png nem található (19/25), újrapróbálkozás...
+[22:54:17] 🔍 Gather.png keresése... (20/25)
+[ WARN:1@176.037] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:17] ⚠️  Gather.png nem található (20/25), újrapróbálkozás...
+[22:54:18] 🔍 Gather.png keresése... (21/25)
+[ WARN:1@176.538] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:18] ⚠️  Gather.png nem található (21/25), újrapróbálkozás...
+[22:54:18] 🔍 Gather.png keresése... (22/25)
+[ WARN:1@177.040] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:18] ⚠️  Gather.png nem található (22/25), újrapróbálkozás...
+[22:54:19] 🔍 Gather.png keresése... (23/25)
+[ WARN:1@177.541] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:19] ⚠️  Gather.png nem található (23/25), újrapróbálkozás...
+[22:54:19] 🔍 Gather.png keresése... (24/25)
+[ WARN:1@178.042] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:19] ⚠️  Gather.png nem található (24/25), újrapróbálkozás...
+[22:54:20] 🔍 Gather.png keresése... (25/25)
+[ WARN:1@178.542] global loadsave.cpp:275 cv::findDecoder imread_('C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png'): can't open/read file: check file path/integrity
+⚠️  Template nem található: C:\Users\Mini-PC1\Documents\repo\ROK\images\gather.png
+[22:54:20] ⚠️  Gather.png nem található (25/25), újrapróbálkozás...
+[22:54:20] ❌ [Gathering] Gather gomb nem található! (1x)
+[22:54:20] ⚠️  [Gathering] Commander valószínűleg még úton van VAGY rossz képernyő
+[22:54:20] ℹ️  [Gathering] Task visszatéve queue-ba 5 perc múlvára
+[22:54:20] ⏳ [Gathering] Várakozás 9.7 mp
+[22:54:30] 🎬 [Gathering] SPACE #1 lenyomása (kigugrás)
+[22:54:31] 🎬 [Gathering] SPACE #2 lenyomása (városba vissza)
+[22:54:31] ℹ️  [Gathering] 2x SPACE → clean state (városban, minden bezárva)
+[22:54:31] ℹ️  [Timer] Timer hozzáadva: commander_2_gather_retry → 300s múlva (2025-12-17 22:59:31)
+[22:54:31] ✅ [Gathering] Commander #2 retry: 5 perc múlva
+[22:54:31] ℹ️  [Gathering] Commander #2 retry később
+============================================================
+[22:54:31] ✅ Task befejezve: commander_2_start (76.4 sec)
+============================================================
+[22:54:41] 🎬 Scheduler: Task futtatása → commander_3_start (gathering)
+============================================================
+[22:54:41] ℹ️  [Queue] Task kivéve: commander_3_start (gathering)
+[22:54:41] ℹ️  Task indítva: commander_3_start
+[22:54:41] ℹ️  Gathering Manager hívás: Commander #3
+============================================================
+[22:54:41] ℹ️  [Gathering] 🌾 COMMANDER #3 - GATHERING START
+============================================================
+[22:54:41] ℹ️  [Gathering] Commander #3 indítása...
+[22:54:41] ℹ️  [Gathering] Step 1/5: Resource OCR
+------------------------------------------------------------
+[22:54:41] ℹ️  [Gathering] 📊 ERŐFORRÁSOK KIOLVASÁSA
+------------------------------------------------------------
+[22:54:41] ℹ️  [Gathering] Erőforrások kiolvasása...
+[22:54:41] 📖 [Gathering] WHEAT OCR → Region: (x:1033, y:13, w:116, h:39)
+[22:54:41] ℹ️  [Gathering] WHEAT OCR nyers: '1.1M'
+[22:54:41] ✅ [Gathering] WHEAT: 1.1M → 1,100,000
+[22:54:41] 📖 [Gathering] WOOD OCR → Region: (x:1212, y:13, w:114, h:37)
+[22:54:41] ℹ️  [Gathering] WOOD OCR nyers: '1.9M'
+[22:54:41] ✅ [Gathering] WOOD: 1.9M → 1,900,000
+[22:54:41] 📖 [Gathering] STONE OCR → Region: (x:1399, y:13, w:118, h:37)
+[22:54:41] ℹ️  [Gathering] STONE OCR nyers: '4.8M'
+[22:54:41] ✅ [Gathering] STONE: 4.8M → 4,800,000
+[22:54:41] 📖 [Gathering] GOLD OCR → Region: (x:1581, y:12, w:122, h:41)
+[22:54:42] ℹ️  [Gathering] GOLD OCR nyers: '1.0M'
+[22:54:42] ✅ [Gathering] GOLD: 1.0M → 1,000,000
+[22:54:42] ℹ️  [Gathering] WHEAT adjusted: 1,100,000 ÷ 4 = 275000
+[22:54:42] ℹ️  [Gathering] WOOD adjusted: 1,900,000 ÷ 4 = 475000
+[22:54:42] ℹ️  [Gathering] STONE adjusted: 4,800,000 ÷ 3 = 1600000
+[22:54:42] ℹ️  [Gathering] GOLD adjusted: 1,000,000 ÷ 2 = 500000
+[22:54:42] ✅ [Gathering] Kiválasztva: WHEAT
+[22:54:42] ℹ️  [Gathering] Step 2/5: Térkép navigáció
+------------------------------------------------------------
+[22:54:42] ℹ️  [Gathering] 🗺️ TÉRKÉP MEGNYITÁSA
+------------------------------------------------------------
+[22:54:42] ℹ️  [Gathering] [1/13] SPACE billentyű
+[22:54:42] ⏳ [Gathering] Várakozás 9.7 mp
+############################################################
+[22:54:48] ⚠️  ⚠️  CTRL+C - Leállítás...
+############################################################
+[22:54:48] ℹ️  Connection Monitor leállítás...
+[22:54:50] ℹ️  [ConnectionMonitor] Monitor leállítva
+[22:54:50] ℹ️  Timer Manager leállítás...
+[22:54:50] ℹ️  [Timer] Timer Manager leállítva
+[22:54:50] ℹ️  Training Manager leállítás...
+[22:54:50] ℹ️  [Training] Manager leállítva
+[22:54:50] ℹ️  Alliance Manager leállítás...
+[22:54:51] ℹ️  Alliance Manager leállítva
+[22:54:51] ℹ️  Anti-AFK Manager leállítás...
+[22:54:51] ℹ️  Queue mentése...
+[22:54:51] ℹ️  Timer-ek mentése...
+[22:54:51] ℹ️  Logger bezárása...
+############################################################
+[22:54:51] ✅ ✅ Graceful shutdown befejezve
+############################################################
+Terminate batch job (Y/N)?
